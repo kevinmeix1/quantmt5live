@@ -1,0 +1,104 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quanthack"
+version = "0.1.0"
+description = "Slow, risk-first starter project for a quantitative trading hackathon."
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+data = [
+  "pyarrow>=15",
+]
+mt5 = [
+  "MetaTrader5>=5.0.45; platform_system == 'Windows'",
+]
+# Developer tooling (added in the quanthackclaude improvement pass).
+# Install with: python -m pip install -e ".[dev]"
+dev = [
+  "ruff>=0.6",
+  "mypy>=1.10",
+  "pytest>=8",
+]
+
+[project.scripts]
+quanthack = "quanthack.cli:main"
+quanthack-backtest = "quanthack.cli.backtest:main"
+quanthack-portfolio-backtest = "quanthack.cli.portfolio_backtest:main"
+quanthack-compare = "quanthack.cli.compare_strategies:main"
+quanthack-walk-forward = "quanthack.cli.walk_forward:main"
+quanthack-sweep = "quanthack.cli.parameter_sweep:main"
+quanthack-research-report = "quanthack.cli.research_report:main"
+quanthack-strategy-demo = "quanthack.cli.strategy_demo:main"
+quanthack-ml-alpha-report = "quanthack.cli.ml_alpha_report:main"
+quanthack-time-series-report = "quanthack.cli.time_series_report:main"
+quanthack-router-report = "quanthack.cli.router_report:main"
+quanthack-portfolio-attribution-report = "quanthack.cli.portfolio_attribution_report:main"
+quanthack-experiment-leaderboard = "quanthack.cli.experiment_leaderboard:main"
+quanthack-signal-diagnostics = "quanthack.cli.signal_diagnostics:main"
+quanthack-router-optimize = "quanthack.cli.router_optimize:main"
+quanthack-relative-strength-optimize = "quanthack.cli.relative_strength_optimize:main"
+quanthack-volatility-squeeze-optimize = "quanthack.cli.volatility_squeeze_optimize:main"
+quanthack-dual-squeeze-optimize = "quanthack.cli.dual_squeeze_optimize:main"
+quanthack-trend-pullback-optimize = "quanthack.cli.trend_pullback_optimize:main"
+quanthack-fixing-reversal-optimize = "quanthack.cli.fixing_reversal_optimize:main"
+quanthack-kalman-trend-optimize = "quanthack.cli.kalman_trend_optimize:main"
+quanthack-macd-momentum-optimize = "quanthack.cli.macd_momentum_optimize:main"
+quanthack-multi-horizon-momentum-optimize = "quanthack.cli.multi_horizon_momentum_optimize:main"
+quanthack-session-momentum-optimize = "quanthack.cli.session_momentum_optimize:main"
+quanthack-champion-ensemble-optimize = "quanthack.cli.champion_ensemble_optimize:main"
+quanthack-cross-rate-optimize = "quanthack.cli.cross_rate_optimize:main"
+quanthack-dashboard = "quanthack.cli.dashboard:main"
+quanthack-validate-data = "quanthack.cli.validate_market_data:main"
+quanthack-show-instruments = "quanthack.cli.show_instruments:main"
+quanthack-import-backtest-data = "quanthack.cli.import_backtest_data:main"
+quanthack-generate-sample-data = "quanthack.cli.generate_sample_data:main"
+quanthack-portfolio-compare = "quanthack.cli.portfolio_compare:main"
+quanthack-strategy-attribution = "quanthack.cli.strategy_attribution:main"
+quanthack-symbol-eligibility-optimize = "quanthack.cli.symbol_eligibility_optimize:main"
+quanthack-strategy-map-optimize = "quanthack.cli.strategy_map_optimize:main"
+quanthack-adaptive-strategy-select = "quanthack.cli.adaptive_strategy_select:main"
+quanthack-portfolio-universe-scan = "quanthack.cli.portfolio_universe_scan:main"
+quanthack-portfolio-walk-forward = "quanthack.cli.portfolio_walk_forward:main"
+quanthack-portfolio-fixed-warmup-walk-forward = "quanthack.cli.portfolio_fixed_warmup_walk_forward:main"
+quanthack-portfolio-router-walk-forward = "quanthack.cli.portfolio_router_walk_forward:main"
+quanthack-live-dry-run = "quanthack.cli.live_dry_run:main"
+quanthack-live-trade = "quanthack.cli.live_trade:main"
+quanthack-mt5-flatten = "quanthack.cli.mt5_flatten:main"
+quanthack-mt5-probe = "quanthack.cli.mt5_probe:main"
+quanthack-mt5-capture = "quanthack.cli.mt5_capture:main"
+quanthack-manual-ticket = "quanthack.cli.manual_ticket:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+# --- Developer tooling (added in the quanthackclaude improvement pass) ---------
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+# Pragmatic starter rule set: pyflakes, pycodestyle, isort, bugbear, comprehensions, pyupgrade.
+select = ["E", "F", "I", "B", "C4", "UP"]
+ignore = ["E501"]  # line length is handled by the formatter, not the linter
+
+[tool.mypy]
+python_version = "3.11"
+packages = ["quanthack"]
+mypy_path = "src"
+warn_unused_ignores = true
+warn_redundant_casts = true
+no_implicit_optional = true
+# Start lenient so it can be adopted incrementally, then tighten module by module.
+check_untyped_defs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+# The suite is unittest-style; pytest runs it unchanged and adds parallelism/filtering.
+addopts = "-q"

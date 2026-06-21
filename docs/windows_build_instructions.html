@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>QuantMT5Live — Windows Build &amp; Live Deploy</title>
+<style>
+  :root{--ink:#16202e;--mut:#5b6678;--line:#d8dee9;--soft:#eef2f7;--brand:#1f6feb;--brand2:#0b3d91;--good:#1f9d57;--warn:#c98a00;--bad:#c0392b;--code:#0f172a;}
+  *{box-sizing:border-box} html{font-size:13.5px}
+  body{font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;color:var(--ink);margin:0;line-height:1.5}
+  .page{padding:30px 40px}
+  h1{font-size:2rem;margin:0;color:var(--brand2)} h2{font-size:1.25rem;border-bottom:2px solid var(--brand);padding-bottom:3px;margin:1.4em 0 .5em;page-break-after:avoid}
+  h3{font-size:1rem;color:var(--brand2);margin:1em 0 .3em;page-break-after:avoid}
+  code{font-family:"SF Mono",Consolas,monospace;font-size:.82em;background:var(--soft);padding:1px 5px;border-radius:4px;color:var(--code)}
+  pre{background:var(--code);color:#e6edf3;padding:11px 14px;border-radius:7px;overflow:auto;font-family:"SF Mono",Consolas,monospace;font-size:.78rem;line-height:1.45;page-break-inside:avoid}
+  pre code{background:none;color:inherit;padding:0}
+  table{border-collapse:collapse;width:100%;margin:.7em 0;font-size:.85rem;page-break-inside:avoid}
+  th,td{border:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top} th{background:var(--soft)}
+  ol,ul{margin:.4em 0 .7em;padding-left:1.3em} li{margin:.25em 0}
+  .cover{background:linear-gradient(135deg,#0b3d91,#1f6feb 60%,#7048e8);color:#fff;padding:46px 40px;border-radius:0}
+  .cover h1{color:#fff} .cover .sub{font-size:1.1rem;opacity:.92;margin-top:.3em}
+  .cover .meta{margin-top:1.4em;font-size:.9rem;opacity:.92;line-height:1.8}
+  .callout{border-left:4px solid var(--brand);background:var(--soft);padding:9px 14px;border-radius:0 7px 7px 0;margin:.8em 0;font-size:.9rem}
+  .callout.bad{border-color:var(--bad);background:#fdecea} .callout.warn{border-color:var(--warn);background:#fff8e6} .callout.good{border-color:var(--good);background:#eafaf0}
+  .step{font-weight:700;color:var(--brand2)}
+  @page{size:A4;margin:13mm}
+  @media print{.cover{page-break-after:always}}
+</style>
+</head>
+<body>
+<section class="cover">
+  <h1>QuantMT5Live</h1>
+  <div class="sub">Windows Build &amp; MT5 Live-Trading Deployment Guide</div>
+  <div class="meta">
+    Quant trading hackathon &middot; MetaTrader&nbsp;5 live execution (simulated funds, real matching)<br>
+    Validated strategy recipe + competition-safe risk + resilient live loop, kill-switch &amp; auto-reconnect<br>
+    520 automated tests passing &middot; order logic verified with a fake MT5 module
+  </div>
+</section>
+<div class="page">
+
+<div class="callout bad">
+<strong>Read first — honest status.</strong> The order <em>logic</em> (lot sizing, BUY/SELL
+direction, position reconciliation, kill-switch, gates) is unit-tested with a fake MT5 module.
+The real <code>MetaTrader5.order_send</code> call has <strong>not</strong> been executed (that package
+is Windows-only). Validate on your Windows laptop using the §4 sequence <em>before</em> trading size.
+Run shadow mode first; it sends nothing.
+</div>
+
+<h2>1. Prerequisites (install once)</h2>
+<table>
+<tr><th>Component</th><th>Notes</th></tr>
+<tr><td><strong>Python 3.11 (64-bit)</strong></td><td>python.org → tick "Add python.exe to PATH". Must match your MT5 bitness (64-bit).</td></tr>
+<tr><td><strong>MetaTrader 5 terminal</strong></td><td>Install, log in to the competition account (Login / Password / Server from the organizer).</td></tr>
+<tr><td><strong>Git</strong> (optional)</td><td>Only if cloning from GitHub instead of copying the folder.</td></tr>
+</table>
+<p>In MT5: <strong>Tools → Options → Expert Advisors → tick "Allow algorithmic trading"</strong>, and click the
+toolbar <strong>"Algo Trading"</strong> button so it is green. Keep the terminal open while the bot runs.</p>
+
+<h2>2. Get the code + create the environment</h2>
+<p>Put the <code>quantmt5live</code> folder on the laptop (copy it, or <code>git clone</code> your repo). Then open
+<strong>PowerShell</strong> in that folder:</p>
+<pre><code>py -3.11 -m venv .venv
+.\.venv\Scripts\activate
+python -m pip install -U pip
+pip install -e ".[mt5]"     REM installs the package + MetaTrader5</code></pre>
+
+<h2>3. Configure credentials</h2>
+<pre><code>copy .env.example .env
+notepad .env</code></pre>
+<p>Fill in <code>MT5_LOGIN</code>, <code>MT5_PASSWORD</code>, <code>MT5_SERVER</code>, and
+<code>MT5_TERMINAL_PATH</code> (e.g. <code>C:\Program Files\MetaTrader 5\terminal64.exe</code>).
+<strong>Never commit <code>.env</code></strong> — it is git-ignored. If the broker uses suffixed symbols
+(e.g. <code>EURUSD.pro</code>), add <code>--mt5-symbol-map EURUSD=EURUSD.pro</code> (repeatable) to the run commands.</p>
+
+<h3>Verify the install (no orders placed)</h3>
+<pre><code>quanthack check-environment
+quanthack preflight
+python -m unittest discover -s tests     REM expect: OK (520 tests)</code></pre>
+
+<h2>4. Pre-go-live validation — DO THIS IN ORDER</h2>
+<ol>
+<li><span class="step">Read-only probe</span> — confirms login + live data, places nothing:
+<pre><code>quanthack mt5-probe --confirm-read-only-mt5</code></pre></li>
+<li><span class="step">Shadow run</span> — computes &amp; journals intended orders, <strong>sends nothing</strong>.
+Double-click <code>run_shadow.bat</code> (or run the command in §5 without
+<code>--i-understand-live-orders</code>). Watch <code>outputs\live_orders_journal.jsonl</code>: every line should be
+<code>MT5_SHADOW</code> with a sensible note ("would BUY 0.10 lots …"). Sanity-check symbols, directions, lot sizes.</li>
+<li><span class="step">One tiny manual order</span> — proves your broker accepts orders (independent path):
+<pre><code>quanthack manual-ticket --symbol EURUSD --side BUY --target-notional 5000 --price &lt;current-ask&gt;</code></pre>
+Place that small order once in MT5 and confirm it fills.</li>
+<li><span class="step">Go live small</span> — set a tiny <code>--max-order-lots</code> (e.g. 0.05), then
+<code>run_live.bat</code>. Journal lines become <code>MT5_FILLED</code>; confirm the position shows in MT5.
+Only then raise the cap.</li>
+</ol>
+
+<h2>5. The live command</h2>
+<pre><code>quanthack live-trade --config configs\competition.toml --adapter mt5 ^
+  --poll-seconds 60 --iterations 100000 --max-order-lots 0.20 ^
+  --strategy-map EURUSD=macd_momentum --strategy-map XAUUSD=macd_momentum ^
+  --strategy-map GBPUSD=multi_horizon_momentum --strategy-map USDCHF=multi_horizon_momentum ^
+  --strategy-map USDCAD=macd_momentum --strategy-map AUDUSD=macd_momentum ^
+  --strategy-map EURGBP=volatility_squeeze --strategy-map EURCHF=volatility_squeeze ^
+  --strategy-map XAGUSD=macd_momentum --strategy-map USDJPY=quality_trend ^
+  --i-understand-live-orders</code></pre>
+<p>Without <code>--i-understand-live-orders</code> it runs in <strong>shadow</strong> mode. Disable Windows sleep
+so the laptop stays awake the whole round.</p>
+
+<h2>6. Safety features (built in)</h2>
+<table>
+<tr><th>Feature</th><th>What it does</th></tr>
+<tr><td>Shadow default</td><td>No real order unless <code>--i-understand-live-orders</code> is passed.</td></tr>
+<tr><td>RiskEngine gate</td><td>Margin floor, daily-loss stop, drawdown brake, leverage &amp; per-symbol caps; blocked trades never reach the broker.</td></tr>
+<tr><td><code>--max-order-lots</code></td><td>Hard cap on any single order (last-resort backstop).</td></tr>
+<tr><td>Reconciliation</td><td>Repeated target sends only the delta — never stacks duplicate positions.</td></tr>
+<tr><td>Resilient loop</td><td>A transient tick error is logged &amp; skipped — the bot keeps running (avoids the &gt;8h inactivity elimination).</td></tr>
+<tr><td>Auto-reconnect</td><td>After a failed tick it closes + re-initializes the MT5 connection so a dropped link self-heals.</td></tr>
+<tr><td>Kill-switch</td><td><code>run_flatten.bat</code> / <code>quanthack mt5-flatten</code> closes ALL positions instantly.</td></tr>
+</table>
+
+<h3>Kill-switch (flatten everything)</h3>
+<pre><code>quanthack mt5-flatten --config configs\competition.toml                              REM SHADOW (reports)
+quanthack mt5-flatten --config configs\competition.toml --i-understand-live-orders   REM LIVE (closes all)</code></pre>
+
+<h2>7. Competition red-lines to respect</h2>
+<div class="callout warn">
+<ul style="margin:.2em 0">
+<li><strong>Log in within 8 hours of the 22:00 launch</strong> or you are eliminated — start tonight.</li>
+<li><strong>Forced liquidation (30% margin level) = elimination.</strong> The competition-safe config keeps leverage ~5x and margin level far above that; don't crank <code>--max-order-lots</code> toward the 28x discipline line.</li>
+<li><strong>API rate:</strong> stay well under 500 req/sec. <code>--poll-seconds 60</code> is far below that.</li>
+</ul>
+</div>
+
+<h2>8. Troubleshooting</h2>
+<table>
+<tr><th>Symptom</th><th>Fix</th></tr>
+<tr><td>order fails with a filling-mode error</td><td>Switch <code>type_filling</code> to <code>ORDER_FILLING_FOK</code> or <code>RETURN</code> in <code>src/quanthack/trading/mt5_executor.py</code>. The journal <code>note</code> shows the broker retcode/comment.</td></tr>
+<tr><td>"unknown instrument" / no ticks</td><td>Broker symbol is suffixed — add <code>--mt5-symbol-map EURUSD=EURUSD.pro</code> (and for metals/crosses too).</td></tr>
+<tr><td>wrong lot sizes in shadow</td><td>Metals/crypto contract sizes vary by broker; verify shadow lots before going live.</td></tr>
+<tr><td>bot stopped after reboot</td><td>Re-run <code>run_live.bat</code>. Consider Windows Task Scheduler to auto-restart.</td></tr>
+</table>
+
+<p style="margin-top:1.6em;font-size:.8rem;color:var(--mut);border-top:1px solid var(--line);padding-top:8px">
+Paper/simulated-funds competition tooling. Not financial advice. Validate the live path on Windows
+before trading size; the order round-trip was not executable on the build machine.</p>
+
+</div>
+</body>
+</html>

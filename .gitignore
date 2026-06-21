@@ -1,0 +1,17 @@
+.DS_Store
+.env
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+outputs/
+logs/
+data/downloaded_backtest_*.csv
+data/live_practice_*.csv
+data/*.parquet
+data/*.zip
+
+# Unrelated agent tooling (not part of the project)
+.agents/
