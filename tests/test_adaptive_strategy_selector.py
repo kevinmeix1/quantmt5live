@@ -198,6 +198,39 @@ class AdaptiveStrategySelectorTest(TestCase):
             )
             self.assertIn(fold.selected_strategy, result.strategy_names)
 
+    def test_training_gate_can_select_cash_fallback(self) -> None:
+        config = load_config("configs/default.toml")
+        data = generate_synthetic_market_data(
+            symbols=("EURUSD", "GBPUSD", "USDJPY"),
+            periods=72,
+            interval_minutes=15,
+            seed=509,
+        )
+
+        result = run_adaptive_strategy_selection(
+            config=config,
+            prices=data.prices,
+            quotes=data.quotes,
+            strategy_names=("simple_momentum", "macd_momentum"),
+            symbols=("EURUSD", "GBPUSD", "USDJPY"),
+            train_size=40,
+            test_size=8,
+            step_size=8,
+            min_train_fills=10_000,
+            cash_fallback_on_train_gate=True,
+        )
+
+        self.assertTrue(result.cash_fallback_on_train_gate)
+        self.assertIn("cash_fallback", result.strategy_names)
+        self.assertEqual(len(result.folds), 4)
+        for fold in result.folds:
+            self.assertEqual(fold.selected_strategy, "cash_fallback")
+            self.assertEqual(fold.selected_strategy_map, ())
+            self.assertEqual(len(fold.evaluation.fills), 0)
+            self.assertEqual(fold.metrics.return_pct, 0.0)
+            self.assertEqual(fold.risk_discipline.score, 100)
+            self.assertEqual(fold.selected_train_score.strategy_name, "cash_fallback")
+
     def test_can_select_between_single_strategy_and_candidate_map(self) -> None:
         config = load_config("configs/default.toml")
         data = generate_synthetic_market_data(
@@ -485,6 +518,7 @@ class AdaptiveStrategySelectorTest(TestCase):
         self.assertIn("train_fill_penalty_pct", summary_text)
         self.assertIn("per_symbol_selection", summary_text)
         self.assertIn("per_symbol_only", summary_text)
+        self.assertIn("cash_fallback_on_train_gate", summary_text)
         self.assertIn("selection_counts", summary_text)
         self.assertIn("selected_strategy", folds_text)
         self.assertIn("selected_strategy_map", folds_text)

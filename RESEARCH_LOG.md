@@ -534,6 +534,34 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   remains the best research sleeve, but the finer W480 stability check still
   rejects a live promotion or a GBPUSD strategy switch.
 
+## 2026-06-22 adaptive metal recipe cash-fallback refinement
+
+- Rechecked the metal-inclusive adaptive recipe universe:
+  XAGUSD/XAUUSD/USDCHF/AUDUSD/GBPUSD/EURUSD/EURGBP with base
+  `kalman_trend`, `champion_ensemble`, `macd_momentum`, plus recipe maps
+  `multi_top3`, `macd_7`, and `top5_static`.
+- W960 remained promising but not live-promotable:
+  `outputs/backtests/live_watch_adaptive_metal7_recheck_force_*` had 58
+  evaluation fills, 100/100 average risk discipline, no losing folds, stitched
+  OOS final equity $1,026,623.22, and `PAPER_ONLY` because total positive folds
+  were 4/6 (66.7%) versus the 67.0% live gate.
+- W480 disproved a direct live expansion:
+  `outputs/backtests/live_watch_adaptive_metal7_recheck_force_w480_*` fell to
+  29.4% positive folds, 62.5% active-positive folds, 82.4% non-negative folds,
+  1.584% worst drawdown, and stitched OOS final equity $987,049.33.
+- Added an opt-in adaptive selector guard:
+  `--cash-fallback-on-train-gate`. When every non-cooldown candidate fails the
+  training gate, the selector can now choose an explicit flat `cash_fallback`
+  fold instead of forcing the best raw failed candidate. Existing behavior is
+  unchanged unless the flag is passed.
+- The cash-fallback W480 check
+  `outputs/backtests/live_watch_adaptive_metal7_recheck_force_cash_w480_*`
+  improved survival but not promotion: 88.2% non-negative folds, 100/100 risk,
+  44 evaluation fills, stitched OOS final equity $999,040.92, and `PAPER_ONLY`.
+- Do not add XAUUSD/XAGUSD to the guarded live command yet. The cash fallback is
+  a useful research safety improvement, but the finer-fold evidence still does
+  not justify a live expansion.
+
 ## 2026-06-22 exact opportunity-probe intent rejection
 
 - Rechecked the latest all-symbol `opportunity_probe` diagnostic. It requested

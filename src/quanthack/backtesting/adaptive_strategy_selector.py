@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 from collections import Counter
+from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from datetime import datetime
 from pathlib import Path
@@ -15,7 +16,10 @@ from quanthack.backtesting.competition_score import (
     build_risk_discipline_report,
     risk_samples_from_portfolio_equity,
 )
-from quanthack.backtesting.portfolio_backtest import PortfolioBacktestEngine
+from quanthack.backtesting.portfolio_backtest import (
+    PortfolioBacktestEngine,
+    PortfolioEquityPoint,
+)
 from quanthack.backtesting.warmup import (
     WarmupPortfolioEvaluation,
     evaluate_portfolio_after_warmup,
@@ -28,6 +32,7 @@ from quanthack.strategies.strategy import normalize_strategy_name
 
 RETURN_EPSILON = 1e-12
 PER_SYMBOL_ADAPTIVE_LABEL = "per_symbol_adaptive"
+CASH_FALLBACK_LABEL = "cash_fallback"
 
 
 @dataclass(frozen=True)
@@ -159,6 +164,7 @@ class AdaptiveStrategySelectionResult:
     train_fill_penalty_pct: float = 0.0
     per_symbol_selection: bool = False
     per_symbol_only: bool = False
+    cash_fallback_on_train_gate: bool = False
 
     @property
     def positive_fold_fraction(self) -> float:
@@ -454,6 +460,7 @@ def run_adaptive_strategy_selection(
     train_fill_penalty_pct: float = 0.0,
     per_symbol_selection: bool = False,
     per_symbol_only: bool = False,
+    cash_fallback_on_train_gate: bool = False,
     clock: CompetitionClock | FixedModeClock | None = None,
 ) -> AdaptiveStrategySelectionResult:
     _validate_window_sizes(
@@ -594,20 +601,6 @@ def run_adaptive_strategy_selection(
                 ),
             )
         )
-        selected_strategy = (
-            eligible_train_scores[0].strategy_name
-            if eligible_train_scores
-            else train_scores[0].strategy_name
-        )
-        selected_candidate = (
-            dynamic_candidate
-            if (
-                dynamic_candidate is not None
-                and selected_strategy == dynamic_candidate.label
-            )
-            else _candidate_by_label(candidates, selected_strategy)
-        )
-
         combined_timestamps = train_timestamps + test_timestamps
         combined_prices = _slice_prices(
             prices,
@@ -619,17 +612,44 @@ def run_adaptive_strategy_selection(
             symbols=selected_symbols,
             timestamps=combined_timestamps,
         )
-        full_result = _run_candidate(
-            config=config,
-            prices=combined_prices,
-            quotes=combined_quotes,
-            candidate=selected_candidate,
-            clock=clock,
+        use_cash_fallback = (
+            cash_fallback_on_train_gate
+            and not eligible_train_scores
+            and bool(train_gate_blocked_strategies)
         )
-        evaluation = evaluate_portfolio_after_warmup(
-            full_result,
-            evaluation_start=test_timestamps[0],
-        )
+        if use_cash_fallback:
+            selected_strategy = CASH_FALLBACK_LABEL
+            selected_strategy_map: tuple[tuple[str, str], ...] = ()
+            train_scores = train_scores + (_cash_fallback_train_score(),)
+            evaluation = _cash_fallback_evaluation(test_timestamps)
+            full_run_fills = 0
+        else:
+            selected_strategy = (
+                eligible_train_scores[0].strategy_name
+                if eligible_train_scores
+                else train_scores[0].strategy_name
+            )
+            selected_candidate = (
+                dynamic_candidate
+                if (
+                    dynamic_candidate is not None
+                    and selected_strategy == dynamic_candidate.label
+                )
+                else _candidate_by_label(candidates, selected_strategy)
+            )
+            full_result = _run_candidate(
+                config=config,
+                prices=combined_prices,
+                quotes=combined_quotes,
+                candidate=selected_candidate,
+                clock=clock,
+            )
+            evaluation = evaluate_portfolio_after_warmup(
+                full_result,
+                evaluation_start=test_timestamps[0],
+            )
+            selected_strategy_map = selected_candidate.strategy_by_symbol
+            full_run_fills = len(full_result.fills)
         folds.append(
             AdaptiveStrategySelectionFold(
                 fold_index=fold_index,
@@ -638,12 +658,12 @@ def run_adaptive_strategy_selection(
                 test_start=test_timestamps[0].isoformat(),
                 test_end=test_timestamps[-1].isoformat(),
                 selected_strategy=selected_strategy,
-                selected_strategy_map=selected_candidate.strategy_by_symbol,
+                selected_strategy_map=selected_strategy_map,
                 cooldown_blocked_strategies=cooldown_blocked_strategies,
                 train_gate_blocked_strategies=train_gate_blocked_strategies,
                 train_scores=train_scores,
                 evaluation=evaluation,
-                full_run_fills=len(full_result.fills),
+                full_run_fills=full_run_fills,
             )
         )
         cooldowns = {
@@ -662,6 +682,7 @@ def run_adaptive_strategy_selection(
             if per_symbol_only
             else tuple(candidate.label for candidate in candidates)
             + ((PER_SYMBOL_ADAPTIVE_LABEL,) if per_symbol_selection else ())
+            + ((CASH_FALLBACK_LABEL,) if cash_fallback_on_train_gate else ())
         ),
         symbols=selected_symbols,
         folds=tuple(folds),
@@ -671,6 +692,51 @@ def run_adaptive_strategy_selection(
         train_fill_penalty_pct=train_fill_penalty_pct,
         per_symbol_selection=per_symbol_selection,
         per_symbol_only=per_symbol_only,
+        cash_fallback_on_train_gate=cash_fallback_on_train_gate,
+    )
+
+
+def _cash_fallback_train_score() -> AdaptiveStrategyTrainScore:
+    return AdaptiveStrategyTrainScore(
+        strategy_name=CASH_FALLBACK_LABEL,
+        strategy_map=(),
+        return_pct=0.0,
+        max_drawdown_pct=0.0,
+        sharpe_15m=0.0,
+        risk_discipline_score=100,
+        fills=0,
+        final_equity=1_000_000.0,
+    )
+
+
+def _cash_fallback_evaluation(
+    test_timestamps: Sequence[datetime],
+) -> WarmupPortfolioEvaluation:
+    equity_curve = tuple(
+        PortfolioEquityPoint(
+            timestamp=timestamp.isoformat(),
+            equity=1_000_000.0,
+            cash=1_000_000.0,
+            gross_notional_usd=0.0,
+            net_notional_usd=0.0,
+            drawdown_pct=0.0,
+            positions=(),
+        )
+        for timestamp in test_timestamps
+    )
+    metrics = build_competition_metrics(
+        equity_points=equity_curve,
+        fills=(),
+    )
+    risk_discipline = build_risk_discipline_report(
+        risk_samples_from_portfolio_equity(equity_curve)
+    )
+    return WarmupPortfolioEvaluation(
+        evaluation_start=test_timestamps[0].isoformat(),
+        equity_curve=equity_curve,
+        fills=(),
+        competition_metrics=metrics,
+        risk_discipline=risk_discipline,
     )
 
 
@@ -693,6 +759,7 @@ def write_adaptive_strategy_selection_summary_csv(
                 "train_fill_penalty_pct",
                 "per_symbol_selection",
                 "per_symbol_only",
+                "cash_fallback_on_train_gate",
                 "positive_fold_fraction",
                 "active_fold_fraction",
                 "active_positive_fold_fraction",
@@ -723,6 +790,9 @@ def write_adaptive_strategy_selection_summary_csv(
                 "train_fill_penalty_pct": result.train_fill_penalty_pct,
                 "per_symbol_selection": "yes" if result.per_symbol_selection else "no",
                 "per_symbol_only": "yes" if result.per_symbol_only else "no",
+                "cash_fallback_on_train_gate": (
+                    "yes" if result.cash_fallback_on_train_gate else "no"
+                ),
                 "positive_fold_fraction": result.positive_fold_fraction,
                 "active_fold_fraction": result.active_fold_fraction,
                 "active_positive_fold_fraction": result.active_positive_fold_fraction,

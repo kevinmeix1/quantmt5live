@@ -84,6 +84,14 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--cash-fallback-on-train-gate",
+        action="store_true",
+        help=(
+            "Select a flat cash fold instead of the best raw training score when "
+            "every non-cooldown candidate fails the training gate."
+        ),
+    )
+    parser.add_argument(
         "--min-train-adjusted-return-pct",
         type=float,
         default=None,
@@ -181,6 +189,7 @@ def run(args: argparse.Namespace) -> None:
         train_fill_penalty_pct=args.train_fill_penalty_pct,
         per_symbol_selection=args.per_symbol_selection,
         per_symbol_only=args.per_symbol_only,
+        cash_fallback_on_train_gate=args.cash_fallback_on_train_gate,
         clock=FixedModeClock() if args.force_qualify_mode else None,
     )
     write_adaptive_strategy_selection_summary_csv(result, args.summary_output)
@@ -216,6 +225,10 @@ def run(args: argparse.Namespace) -> None:
     print(f"  Train fill penalty: {result.train_fill_penalty_pct}")
     print(f"  Per-symbol selection: {'yes' if result.per_symbol_selection else 'no'}")
     print(f"  Per-symbol only: {'yes' if result.per_symbol_only else 'no'}")
+    print(
+        "  Cash fallback on train gate: "
+        f"{'yes' if result.cash_fallback_on_train_gate else 'no'}"
+    )
     print(f"  Positive fold fraction: {result.positive_fold_fraction:.1%}")
     print(f"  Active fold fraction: {result.active_fold_fraction:.1%}")
     print(
