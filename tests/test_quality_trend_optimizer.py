@@ -83,6 +83,7 @@ class QualityTrendOptimizerTest(TestCase):
 
         self.assertIn("rank,label,symbols,kalman_min_abs_slope_bps", text)
         self.assertIn("allowed_utc_hours", text)
+        self.assertIn("target_notional_usd", text)
         self.assertIn("promotion_status", text)
         self.assertIn("current", text)
 
@@ -163,3 +164,21 @@ class QualityTrendOptimizerTest(TestCase):
                 16,
                 allowed_utc_hours=(24,),
             )
+
+    def test_parameter_set_accepts_sizing_caps(self) -> None:
+        parameters = QualityTrendParameterSet(
+            "small",
+            0.25,
+            5.0,
+            2.0,
+            1.0,
+            0.20,
+            0.30,
+            2.0,
+            16,
+            target_notional_usd=250_000.0,
+            max_target_notional_usd=250_000.0,
+        )
+
+        self.assertEqual(parameters.target_notional_usd, 250_000.0)
+        self.assertEqual(parameters.max_target_notional_usd, 250_000.0)

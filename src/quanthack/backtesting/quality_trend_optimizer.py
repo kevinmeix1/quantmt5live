@@ -32,6 +32,8 @@ class QualityTrendParameterSet:
     min_expected_edge_bps: float
     max_holding_period: int
     allowed_utc_hours: tuple[int, ...] | None = None
+    target_notional_usd: float | None = None
+    max_target_notional_usd: float | None = None
 
     def __post_init__(self) -> None:
         if not self.label.strip():
@@ -57,6 +59,13 @@ class QualityTrendParameterSet:
                 raise ValueError("allowed_utc_hours cannot be empty")
             if any(hour < 0 or hour > 23 for hour in self.allowed_utc_hours):
                 raise ValueError("allowed_utc_hours must be between 0 and 23")
+        if self.target_notional_usd is not None and self.target_notional_usd <= 0:
+            raise ValueError("target_notional_usd must be positive")
+        if (
+            self.max_target_notional_usd is not None
+            and self.max_target_notional_usd <= 0
+        ):
+            raise ValueError("max_target_notional_usd must be positive")
 
 
 DEFAULT_QUALITY_TREND_PARAMETER_SETS: tuple[QualityTrendParameterSet, ...] = (
@@ -82,6 +91,46 @@ DEFAULT_QUALITY_TREND_PARAMETER_SETS: tuple[QualityTrendParameterSet, ...] = (
         2.0,
         16,
         allowed_utc_hours=(10, 11, 12, 13, 14, 15, 16, 17),
+    ),
+    QualityTrendParameterSet(
+        "small_current_h10_14_250k",
+        0.25,
+        5.0,
+        2.0,
+        1.0,
+        0.20,
+        0.30,
+        2.0,
+        16,
+        target_notional_usd=250_000.0,
+        max_target_notional_usd=250_000.0,
+    ),
+    QualityTrendParameterSet(
+        "micro_current_h10_14_100k",
+        0.25,
+        5.0,
+        2.0,
+        1.0,
+        0.20,
+        0.30,
+        2.0,
+        16,
+        target_notional_usd=100_000.0,
+        max_target_notional_usd=100_000.0,
+    ),
+    QualityTrendParameterSet(
+        "small_extended_h10_17_250k",
+        0.25,
+        5.0,
+        2.0,
+        1.0,
+        0.20,
+        0.30,
+        2.0,
+        16,
+        allowed_utc_hours=(10, 11, 12, 13, 14, 15, 16, 17),
+        target_notional_usd=250_000.0,
+        max_target_notional_usd=250_000.0,
     ),
     QualityTrendParameterSet(
         "liquid_h11_19",
@@ -260,6 +309,8 @@ def write_quality_trend_optimization_csv(
                 "min_expected_edge_bps",
                 "max_holding_period",
                 "allowed_utc_hours",
+                "target_notional_usd",
+                "max_target_notional_usd",
                 "proxy_score",
                 "final_equity",
                 "return_pct",
@@ -307,6 +358,16 @@ def write_quality_trend_optimization_csv(
                     "min_expected_edge_bps": parameters.min_expected_edge_bps,
                     "max_holding_period": parameters.max_holding_period,
                     "allowed_utc_hours": _hours_text(parameters.allowed_utc_hours),
+                    "target_notional_usd": (
+                        ""
+                        if parameters.target_notional_usd is None
+                        else parameters.target_notional_usd
+                    ),
+                    "max_target_notional_usd": (
+                        ""
+                        if parameters.max_target_notional_usd is None
+                        else parameters.max_target_notional_usd
+                    ),
                     "proxy_score": row.proxy_score,
                     "final_equity": metrics.final_equity,
                     "return_pct": metrics.return_pct,
@@ -381,6 +442,16 @@ def _config_with_parameters(
         ),
         min_expected_edge_bps=parameters.min_expected_edge_bps,
         max_holding_period=parameters.max_holding_period,
+        target_notional_usd=(
+            config.quality_trend.target_notional_usd
+            if parameters.target_notional_usd is None
+            else parameters.target_notional_usd
+        ),
+        max_target_notional_usd=(
+            config.quality_trend.max_target_notional_usd
+            if parameters.max_target_notional_usd is None
+            else parameters.max_target_notional_usd
+        ),
         forex_allowed_utc_hours=(
             config.quality_trend.forex_allowed_utc_hours
             if parameters.allowed_utc_hours is None

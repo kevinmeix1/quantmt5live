@@ -810,3 +810,24 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not extend live quality-trend hours. Future quality work should
   focus on sizing/risk-discipline improvement or symbol selection, not simply
   keeping the signal on later into the session.
+
+## 2026-06-22 quality-trend sizing pass
+
+- Extended `quality-trend-optimize` so candidates can test explicit
+  `target_notional_usd` and `max_target_notional_usd` caps.
+- Re-ran full-data W480 on the live-six universe with the same
+  `directional_probe` allocation and forced QUALIFY mode. Smaller quality
+  sizing improved the full-sample economics but did not pass promotion:
+  - `micro_current_h10_14_100k`: ranked best, return +0.031%, drawdown 0.028%,
+    28 evaluation fills, 75.0% active-positive folds, 88.9% non-negative folds,
+    and positive median active return.
+  - `small_current_h10_14_250k`: return +0.021%, same fold distribution, and
+    positive median active return.
+  - Both remained `REJECT` because average risk discipline stayed 93.3/100,
+    below the 95/100 gate. This appears concentration-driven: the quality sleeve
+    is often a one-symbol trade, so cutting notional does not remove the
+    single-instrument discipline penalty.
+- Decision: no live quality-trend sizing change yet. The 100k capped variant is
+  a better paper candidate than the original, but promotion needs either
+  cleaner multi-symbol concurrence or a verified rule change for tiny
+  concentration risk, not just smaller notional.

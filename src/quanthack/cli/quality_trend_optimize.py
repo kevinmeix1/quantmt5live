@@ -37,7 +37,8 @@ def build_parser() -> argparse.ArgumentParser:
             "kalman_min_expected_edge_bps,macd_min_histogram_bps,"
             "macd_min_macd_bps,macd_min_trend_efficiency,"
             "min_combined_confidence,min_expected_edge_bps,"
-            "max_holding_period[,allowed_utc_hours]. Use hours like 10|11|12."
+            "max_holding_period[,allowed_utc_hours][,target_notional_usd]"
+            "[,max_target_notional_usd]. Use hours like 10|11|12."
         ),
     )
     parser.add_argument("--include-walk-forward", action="store_true")
@@ -127,6 +128,8 @@ def run(args: argparse.Namespace) -> None:
             f"edge={params.min_expected_edge_bps:.2f}, "
             f"hold={params.max_holding_period}, "
             f"hours={_format_hours(params.allowed_utc_hours)}, "
+            f"target={_format_optional_notional(params.target_notional_usd)}, "
+            f"max_target={_format_optional_notional(params.max_target_notional_usd)}, "
             f"proxy={candidate.comparison_row.proxy_score:.1f}, "
             f"return={metrics.return_pct:.3%}, "
             f"drawdown={metrics.max_drawdown_pct:.3%}, "
@@ -144,13 +147,14 @@ def main(argv: Sequence[str] | None = None) -> None:
 
 def _parse_candidate(raw: str) -> QualityTrendParameterSet:
     parts = [part.strip() for part in raw.split(",")]
-    if len(parts) not in {9, 10}:
+    if len(parts) not in {9, 10, 11, 12}:
         raise argparse.ArgumentTypeError(
             "candidate must be label,kalman_min_abs_slope_bps,"
             "kalman_min_expected_edge_bps,macd_min_histogram_bps,"
             "macd_min_macd_bps,macd_min_trend_efficiency,"
             "min_combined_confidence,min_expected_edge_bps,"
-            "max_holding_period[,allowed_utc_hours]"
+            "max_holding_period[,allowed_utc_hours][,target_notional_usd]"
+            "[,max_target_notional_usd]"
         )
     (
         label,
@@ -163,6 +167,19 @@ def _parse_candidate(raw: str) -> QualityTrendParameterSet:
         min_expected_edge_bps,
         max_holding_period,
     ) = parts[:9]
+    allowed_utc_hours: tuple[int, ...] | None = None
+    target_notional_usd: float | None = None
+    max_target_notional_usd: float | None = None
+    optional = parts[9:]
+    if optional:
+        first = optional[0]
+        if _looks_like_hours(first):
+            allowed_utc_hours = _parse_hours(first)
+            optional = optional[1:]
+        if optional:
+            target_notional_usd = float(optional[0])
+        if len(optional) >= 2:
+            max_target_notional_usd = float(optional[1])
     try:
         return QualityTrendParameterSet(
             label=label,
@@ -174,7 +191,9 @@ def _parse_candidate(raw: str) -> QualityTrendParameterSet:
             min_combined_confidence=float(min_combined_confidence),
             min_expected_edge_bps=float(min_expected_edge_bps),
             max_holding_period=int(max_holding_period),
-            allowed_utc_hours=_parse_hours(parts[9]) if len(parts) == 10 else None,
+            allowed_utc_hours=allowed_utc_hours,
+            target_notional_usd=target_notional_usd,
+            max_target_notional_usd=max_target_notional_usd,
         )
     except ValueError as exc:
         raise argparse.ArgumentTypeError(str(exc)) from exc
@@ -196,3 +215,19 @@ def _format_hours(hours: tuple[int, ...] | None) -> str:
     if hours is None:
         return "config"
     return "|".join(str(hour) for hour in hours)
+
+
+def _format_optional_notional(value: float | None) -> str:
+    if value is None:
+        return "config"
+    return f"{value:.0f}"
+
+
+def _looks_like_hours(raw: str) -> bool:
+    stripped = raw.strip()
+    if any(separator in stripped for separator in ("|", ";", ":")):
+        return True
+    if stripped.isdigit():
+        hour = int(stripped)
+        return 0 <= hour <= 23
+    return False
