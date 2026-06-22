@@ -479,3 +479,36 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   risk discipline. AUDUSD lost $1,495.47 and EURUSD lost about $1,490.32.
 - Keep `opportunity_probe` monitor-only. This is the exact current aggressive
   trade idea, and the full-data evidence says not to force it live.
+
+## 2026-06-22 live-six strategy-map refinement
+
+- Refreshed MT5/live inputs and re-ran a bounded full-data strategy-map
+  optimization on the current live FX universe:
+  `AUDUSD EURGBP EURUSD GBPUSD USDCAD USDCHF`.
+- Candidate sleeves tested under default allocation with fixed-warmup
+  walk-forward ranking:
+  `champion_ensemble`, `macd_momentum`, `kalman_trend`,
+  `multi_horizon_momentum`, `asset_adaptive_dual_squeeze`, and
+  `quality_trend`.
+- Output files:
+  `outputs/backtests/live_watch_strategy_map_live6_refine_wf.csv` and
+  `outputs/backtests/live_watch_strategy_map_live6_refine_scores.csv`.
+- The best-ranked map remained the MACD core:
+  `AUDUSD=macd_momentum EURUSD=macd_momentum USDCAD=macd_momentum
+  USDCHF=macd_momentum`. Full-sample return was +2.759%, max drawdown 0.406%,
+  74 fills, Sharpe15 0.046, and risk discipline 100/100, but walk-forward
+  promotion stayed `PAPER_ONLY` with 44.4% total positive folds and 66.7%
+  active-positive folds.
+- Direct fixed-warmup recheck:
+  `outputs/backtests/live_watch_macd_core_live4_w960_summary.csv` confirmed the
+  same verdict: 18 folds, 70 evaluation fills, 66.7% active-positive folds,
+  77.8% non-negative folds, 0.289% worst drawdown, 100/100 risk discipline,
+  promotion `PAPER_ONLY`.
+- `quality_trend` looked clean but too sparse:
+  `outputs/backtests/live_watch_quality_live6_w960_summary.csv` produced only
+  20 evaluation fills across 3 active folds, with 16.7% total positive folds.
+  Keep it as a watchlist sleeve, not a live-map replacement.
+- Do not change the guarded live command from the current MACD/champion map on
+  this evidence. The refinement supports continuing to monitor the MACD core
+  and researching `quality_trend`, but it does not justify broadening live risk
+  just to increase trade frequency.
