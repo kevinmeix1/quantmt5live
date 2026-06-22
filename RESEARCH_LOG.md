@@ -404,3 +404,23 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   asset-adaptive-dual-squeeze signals, but current live diagnostics are flat
   and the promoted best-per-symbol map remains weaker than the exact current
   live map. Keep monitoring; no live-map change.
+
+## 2026-06-22 broad activity scan and USD-pressure router rejection
+
+- Ran a broader activity scan across current/live baskets and recovery baskets
+  with MACD, champion, dual squeeze, asset-adaptive squeeze, trend pullback,
+  volatility squeeze, and fixing reversal:
+  `outputs/backtests/live_watch_broad_activity_scan_latest.csv`. The top rows
+  were active and slightly positive, but all required concentrated directional
+  probe exposure and scored 0/100 risk discipline. Under default allocation,
+  the leading volatility/dual/asset-squeeze rows produced zero active
+  fixed-warmup evaluation folds and remained `REJECT`.
+- Tested `usd_pressure_router` because current sentiment was USD-supportive.
+  It is not a viable recovery sleeve: full-data directional-probe backtest lost
+  0.543% over 1,204 fills with 0/100 risk discipline, and fixed-warmup
+  validation had 0.0% non-negative folds, 592 evaluation fills, and promotion
+  `REJECT`.
+- Keep the live command on the promoted MACD/champion map. The current
+  read-only aggressive probes are useful as alerts, but not as live
+  configuration unless a future candidate clears both return/fold robustness
+  and risk-discipline gates.
