@@ -50,6 +50,22 @@ while ((Get-Date) -lt $Deadline) {
     "--history-jsonl", "outputs\live_strategy_diagnostics_directional_probe_history.jsonl",
     "--output-text", "outputs\live_strategy_diagnostics_directional_probe_latest.txt"
   )
+  Invoke-And-Log "candidate_diag_all_opportunity_probe" @(
+    "scripts\live_strategy_diagnostics.py",
+    "--strategy", "opportunity_probe",
+    "--allocation-profile", "directional_probe",
+    "--output-json", "outputs\candidate_all_opportunity_probe_live_strategy_diagnostics_latest.json",
+    "--history-jsonl", "outputs\candidate_all_opportunity_probe_live_strategy_diagnostics_history.jsonl",
+    "--output-text", "outputs\candidate_all_opportunity_probe_live_strategy_diagnostics_latest.txt"
+  )
+  Invoke-And-Log "candidate_diag_all_multi_horizon" @(
+    "scripts\live_strategy_diagnostics.py",
+    "--strategy", "multi_horizon_momentum",
+    "--allocation-profile", "directional_probe",
+    "--output-json", "outputs\candidate_all_multi_horizon_live_strategy_diagnostics_latest.json",
+    "--history-jsonl", "outputs\candidate_all_multi_horizon_live_strategy_diagnostics_history.jsonl",
+    "--output-text", "outputs\candidate_all_multi_horizon_live_strategy_diagnostics_latest.txt"
+  )
   Invoke-And-Log "candidate_diag_eurgbp_cross_rate" @(
     "scripts\live_strategy_diagnostics.py",
     "--strategy-map", "AUDUSD=macd_momentum",

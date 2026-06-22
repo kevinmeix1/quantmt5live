@@ -104,7 +104,7 @@ def build_snapshot(args: argparse.Namespace) -> dict:
     load_env_file(args.env_file)
     config = load_config(args.config)
     symbols = tuple(args.symbol or SYMBOLS)
-    strategy_map = tuple(args.strategy_map or _default_strategy_map_for(symbols))
+    strategy_map = _strategy_map_for_args(args, symbols)
     adapter_args = _mt5_adapter_args(args)
     market_adapter, account_adapter = _build_adapters(
         adapter_name="mt5",
@@ -402,6 +402,17 @@ def _default_strategy_map_for(symbols: tuple[str, ...]) -> tuple[str, ...]:
         for item in STRATEGY_MAP
         if item.split("=", 1)[0].strip().upper() in selected
     )
+
+
+def _strategy_map_for_args(
+    args: argparse.Namespace,
+    symbols: tuple[str, ...],
+) -> tuple[str, ...]:
+    if args.strategy_map:
+        return tuple(args.strategy_map)
+    if args.strategy == STRATEGY:
+        return _default_strategy_map_for(symbols)
+    return ()
 
 
 if __name__ == "__main__":

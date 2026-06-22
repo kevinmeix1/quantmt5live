@@ -361,3 +361,25 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   and passed walk-forward promotion, but returned 2.427% with 0.589% max
   drawdown, weaker than the exact current live map's 2.833% return and 0.421%
   max drawdown. Monitor it as a candidate, but do not replace the live map yet.
+
+## 2026-06-22 live diagnostics aggression guard
+
+- Fixed `live_strategy_diagnostics.py` so non-default strategy diagnostics no
+  longer silently inherit the default live symbol strategy map. This matters for
+  aggressive candidates such as `opportunity_probe`: diagnostics now show the
+  requested strategy's own live intent instead of the current guarded map.
+- Added read-only supervisor/status-summary diagnostics for all-symbol
+  `opportunity_probe` and all-symbol `multi_horizon_momentum`. They are
+  monitoring candidates only; the guarded live command remains on the promoted
+  MACD/champion map with sentiment, cooldown, max-lot, max-position, daily-loss,
+  and rolling-Sharpe brakes intact.
+- Current all-symbol `opportunity_probe` diagnostics show actionable risk on
+  `AUDUSD` long and `EURGBP` short, with `EURUSD` blocked by the 2-position
+  cap. Do not promote it: corrected full-data validation was negative across
+  the live universe and `USDJPY`, with 16.7% non-negative folds and `REJECT`.
+- Re-ran the clean full-data MACD responsiveness test on `AUDUSD EURUSD USDCAD
+  USDCHF`: `outputs/backtests/live_watch_macd_responsive_default_full.csv`.
+  The current live MACD parameters remain best (`PROMOTE`, +2.759%, 0.406%
+  max drawdown, 74 fills, 100.0% active-positive folds). Lower thresholds added
+  only six fills and reduced return to +2.396% while increasing max drawdown to
+  0.605%, so keep the current MACD gates.

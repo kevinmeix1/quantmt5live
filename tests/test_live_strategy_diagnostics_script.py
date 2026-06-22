@@ -102,6 +102,31 @@ class LiveStrategyDiagnosticsTest(TestCase):
             ("AUDUSD=macd_momentum", "USDCHF=macd_momentum"),
         )
 
+    def test_non_default_strategy_does_not_inherit_default_live_map(self) -> None:
+        args = live_strategy_diagnostics.build_parser().parse_args(
+            ["--strategy", "opportunity_probe"]
+        )
+
+        strategy_map = live_strategy_diagnostics._strategy_map_for_args(
+            args,
+            ("AUDUSD", "EURUSD"),
+        )
+
+        self.assertEqual(strategy_map, ())
+
+    def test_default_strategy_keeps_default_live_map(self) -> None:
+        args = live_strategy_diagnostics.build_parser().parse_args([])
+
+        strategy_map = live_strategy_diagnostics._strategy_map_for_args(
+            args,
+            ("AUDUSD", "EURUSD"),
+        )
+
+        self.assertEqual(
+            strategy_map,
+            ("AUDUSD=macd_momentum", "EURUSD=macd_momentum"),
+        )
+
     def test_parser_accepts_directional_probe_allocation_profile(self) -> None:
         args = live_strategy_diagnostics.build_parser().parse_args(
             ["--allocation-profile", "directional_probe"]

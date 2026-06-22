@@ -25,6 +25,8 @@ DEFAULT_BASKET_ACTIVITY_SCAN_CSV = (
     "outputs/backtests/live_watch_activity_gated_basket_scan.csv"
 )
 DEFAULT_CANDIDATE_DIAGNOSTICS_JSONS = (
+    "outputs/candidate_all_opportunity_probe_live_strategy_diagnostics_latest.json",
+    "outputs/candidate_all_multi_horizon_live_strategy_diagnostics_latest.json",
     "outputs/candidate_eurgbp_cross_rate_live_strategy_diagnostics_latest.json",
     "outputs/candidate_all_quality_trend_live_strategy_diagnostics_latest.json",
     "outputs/candidate_best_symbol_mix_live_strategy_diagnostics_latest.json",
