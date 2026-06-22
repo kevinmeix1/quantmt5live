@@ -464,3 +464,18 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   `outputs/backtests/live_watch_usdchf_usdcad_quality_w960_summary.csv`,
   was `REJECT` with zero active test folds. Do not loosen the live MACD
   session gate or promote this afternoon USDCHF/USDCAD sleeve.
+
+## 2026-06-22 exact opportunity-probe intent rejection
+
+- Rechecked the latest all-symbol `opportunity_probe` diagnostic. It requested
+  short AUDUSD and short EURUSD exposure, while USDCAD and USDCHF were blocked
+  by the two-position cap; the allocator marked the combined request
+  `PENALTY_RISK`.
+- Tested the exact actionable AUDUSD/EURUSD pair under both directional-probe
+  and default allocation:
+  `outputs/backtests/live_watch_opportunity_probe_audusd_eurusd_directional_*`
+  and `outputs/backtests/live_watch_opportunity_probe_audusd_eurusd_default_*`.
+  Both paths lost 0.299% over 877 fills, had negative Sharpe, and scored 0/100
+  risk discipline. AUDUSD lost $1,495.47 and EURUSD lost about $1,490.32.
+- Keep `opportunity_probe` monitor-only. This is the exact current aggressive
+  trade idea, and the full-data evidence says not to force it live.
