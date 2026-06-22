@@ -1,7 +1,7 @@
 @echo off
 REM == LIVE run: PLACES REAL ORDERS on the MT5 account. ==
 REM Only run after: (1) mt5-probe OK, (2) run_shadow.bat looked correct,
-REM (3) one tiny manual-ticket order confirmed. Start with a SMALL --max-order-lots.
+REM (3) one tiny manual-ticket order confirmed. Keep --max-order-lots staged.
 cd /d "%~dp0"
 call .venv\Scripts\activate
 quanthack live-trade ^
@@ -9,7 +9,7 @@ quanthack live-trade ^
   --adapter mt5 ^
   --poll-seconds 60 ^
   --iterations 100000 ^
-  --max-order-lots 0.10 ^
+  --max-order-lots 0.25 ^
   --max-live-positions 2 ^
   --reduce-only-daily-loss-pct 0.0012 ^
   --reduce-only-rolling-sharpe -2.0 ^

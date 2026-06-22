@@ -666,3 +666,28 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   folds, and 100/100 risk discipline. Live7 added only four evaluation fills.
 - Live diagnostics also requested zero current notional for both exact live-six
   and live7. No live restart or USDJPY expansion is warranted on this evidence.
+
+## 2026-06-22 staged live lot-cap lift
+
+- Current guarded live map remains the validated six-symbol mix:
+  `AUDUSD=macd_momentum`, `EURGBP=champion_ensemble`,
+  `EURUSD=macd_momentum`, `GBPUSD=champion_ensemble`,
+  `USDCAD=macd_momentum`, and `USDCHF=macd_momentum`. No USDJPY/metals
+  expansion and no `opportunity_probe` promotion were made.
+- Exact current live-six evidence still supports keeping the map live-enabled:
+  W960 promoted with 54 evaluation fills, 100.0% positive folds, 100.0%
+  active-positive folds, 0.406% worst drawdown, and 100/100 risk discipline.
+  The finer W480 check stayed `PAPER_ONLY`, so the entry gates and strategy map
+  remain unchanged.
+- The operational blocker was execution clipping: `--max-order-lots 0.10`
+  materially undersizes approved 25k USD targets on the active FX pairs. Raised
+  the staged live cap to `0.25` lots per order so a 25k USD-base target can fill
+  in one order and quote-USD pairs get closer to intended risk.
+- Risk brakes were kept intact: max two live positions, sentiment conflict
+  brake, symbol-state cooldown throttle, small-only recovery cap, daily-loss
+  reduce-only threshold, rolling-Sharpe reduce-only threshold, and guard
+  flattening thresholds. This is a bounded execution-cap adjustment, not a
+  relaxation of signal approval.
+- Aligned `run_shadow.bat`, `run_live.bat`, `scripts/live_guard.ps1`, live
+  diagnostics, and the Windows deployment guide around the same staged
+  `0.25`-lot cap and small-only symbol-state behavior.

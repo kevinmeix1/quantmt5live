@@ -134,6 +134,13 @@ class LiveStrategyDiagnosticsTest(TestCase):
 
         self.assertEqual(args.allocation_profile, "directional_probe")
 
+    def test_parser_accepts_staged_max_order_lots(self) -> None:
+        args = live_strategy_diagnostics.build_parser().parse_args(
+            ["--max-order-lots", "0.25"]
+        )
+
+        self.assertEqual(args.max_order_lots, 0.25)
+
     def test_default_symbol_states_match_live_throttle_shape(self) -> None:
         self.assertNotIn(
             "small_only_until_recovery",

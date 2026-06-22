@@ -56,6 +56,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--strategy", default=STRATEGY)
     parser.add_argument("--strategy-map", action="append", default=None)
     parser.add_argument("--symbol", action="append", default=None)
+    parser.add_argument("--max-order-lots", type=float, default=0.25)
     parser.add_argument("--max-live-positions", type=int, default=2)
     parser.add_argument("--reduce-only-daily-loss-pct", type=float, default=0.0012)
     parser.add_argument("--reduce-only-rolling-sharpe", type=float, default=-2.0)
@@ -126,7 +127,7 @@ def build_snapshot(args: argparse.Namespace) -> dict:
             journal_path=Path(args.journal),
             market_adapter=market_adapter,
             live=False,
-            max_order_lots=0.10,
+            max_order_lots=args.max_order_lots,
         )
         throttle = LiveRiskThrottle(
             max_active_positions=args.max_live_positions,
