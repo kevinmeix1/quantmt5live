@@ -1060,3 +1060,30 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not add USDJPY or the USD-pressure router to the live command.
   The extra symbol and router create the requested activity, but the full-data
   walk-forward result says the activity is negative expectancy after costs.
+
+## 2026-06-22 late-session USD pressure scan
+
+- Current live diagnostics at 20:32 UTC were flat with no blocked symbols, while
+  sentiment was supportive for USDCAD, USDCHF, and USDJPY and negative for
+  AUDUSD/GBPUSD. The deployed live map remained mostly session/threshold gated,
+  so I tested late-session candidates rather than loosening the live command.
+- Built the scan on the live-seven full-data slice using EURUSD, USDCAD, USDCHF,
+  and USDJPY with W480 fixed warmup, directional-probe allocation, and forced
+  QUALIFY mode.
+- Results:
+  - `late_fast_h20_23` MACD: +0.004% full-sample return, 4 trades, 100.0%
+    active-positive/non-negative folds, `PAPER_ONLY` because the single active
+    positive fold contributed 100.0% of walk-forward positive return.
+  - `late_current_h20_23` MACD: +0.001% return, 6 trades, 100.0%
+    active-positive/non-negative folds, `PAPER_ONLY` for the same concentration
+    reason.
+  - Wider `18-23 UTC` MACD variants produced 12-16 trades but all lost money
+    and fell to 25.0% active-positive folds and 66.7% non-negative folds.
+  - Late/evening multi-horizon momentum produced 103-436 trades but all variants
+    lost money, with 0.0%-11.1% non-negative folds.
+  - Late/evening quality-trend produced only 2 trades, lost money, and had 0.0%
+    active-positive folds.
+- Decision: keep the late USD MACD scan in the live status rollup as a
+  paper-only watch item, but do not extend live strategy hours or add USDJPY.
+  The validated late-session activity is either too sparse or negative
+  expectancy after costs.
