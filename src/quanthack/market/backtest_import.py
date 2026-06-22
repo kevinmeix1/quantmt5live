@@ -44,6 +44,7 @@ def import_pricer_zip_to_backtest_csv(
     progress_every_files: int | None = None,
     progress_callback: Callable[[str], None] | None = None,
 ) -> ImportedBacktestDataSummary:
+    """Convert a pricer zip archive or extracted pricer-output directory to CSV bars."""
     if not symbols:
         raise ValueError("at least one symbol is required")
     if bar_seconds < 1:
@@ -56,7 +57,7 @@ def import_pricer_zip_to_backtest_csv(
     input_file = Path(input_path).expanduser()
     if not input_file.exists():
         raise FileNotFoundError(f"backtest data archive not found: {input_file}")
-    if input_file.stat().st_size == 0:
+    if input_file.is_file() and input_file.stat().st_size == 0:
         raise ValueError(f"backtest data archive is empty: {input_file}")
 
     selected_symbols = tuple(_normalize_symbol(symbol) for symbol in symbols)
@@ -69,15 +70,17 @@ def import_pricer_zip_to_backtest_csv(
     imported_by_symbol = {symbol: 0 for symbol in selected_symbols}
 
     try:
-        with ZipFile(input_file) as archive:
-            names = tuple(name for name in archive.namelist() if name.endswith(".parquet"))
-            files_seen = len(names)
+        if input_file.is_dir():
+            paths = tuple(
+                sorted(path for path in input_file.glob("*.parquet") if path.is_file())
+            )
+            files_seen = len(paths)
             _emit_progress(
                 progress_callback,
-                f"archive contains {files_seen} parquet files",
+                f"directory contains {files_seen} parquet files",
             )
-            for name in names:
-                symbol = _symbol_from_pricer_name(name)
+            for path in paths:
+                symbol = _symbol_from_pricer_name(path.name)
                 if symbol not in selected_set:
                     continue
                 if (
@@ -85,7 +88,7 @@ def import_pricer_zip_to_backtest_csv(
                     and imported_by_symbol[symbol] >= max_files_per_symbol
                 ):
                     continue
-                with archive.open(name) as handle:
+                with path.open("rb") as handle:
                     rows = _read_pricer_rows(handle)
                 imported_by_symbol[symbol] += 1
                 files_imported += 1
@@ -116,6 +119,56 @@ def import_pricer_zip_to_backtest_csv(
                             f"built {len(bars):,} bars"
                         ),
                     )
+        else:
+            with ZipFile(input_file) as archive:
+                names = tuple(
+                    name for name in archive.namelist() if name.endswith(".parquet")
+                )
+                files_seen = len(names)
+                _emit_progress(
+                    progress_callback,
+                    f"archive contains {files_seen} parquet files",
+                )
+                for name in names:
+                    symbol = _symbol_from_pricer_name(name)
+                    if symbol not in selected_set:
+                        continue
+                    if (
+                        max_files_per_symbol is not None
+                        and imported_by_symbol[symbol] >= max_files_per_symbol
+                    ):
+                        continue
+                    with archive.open(name) as handle:
+                        rows = _read_pricer_rows(handle)
+                    imported_by_symbol[symbol] += 1
+                    files_imported += 1
+                    for row in rows:
+                        timestamp = _parse_pricer_time(str(row["time"]), timezone)
+                        if row["bid"] is None or row["ask"] is None:
+                            continue
+                        bid = float(row["bid"])
+                        ask = float(row["ask"])
+                        if bid <= 0 or ask <= 0 or ask < bid:
+                            continue
+                        row_symbol = _normalize_symbol(str(row.get("sym") or symbol))
+                        if row_symbol not in selected_set:
+                            continue
+                        bucket = _floor_timestamp(timestamp, bar_seconds)
+                        bars[(row_symbol, bucket)] = (bid, ask)
+                        ticks_seen += 1
+                    if (
+                        progress_callback is not None
+                        and progress_every_files is not None
+                        and files_imported % progress_every_files == 0
+                    ):
+                        _emit_progress(
+                            progress_callback,
+                            (
+                                f"imported {files_imported} files, "
+                                f"read {ticks_seen:,} ticks, "
+                                f"built {len(bars):,} bars"
+                            ),
+                        )
     except BadZipFile as exc:
         raise ValueError(
             f"{input_file} is not a complete readable zip archive. "

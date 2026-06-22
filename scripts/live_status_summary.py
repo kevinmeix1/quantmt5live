@@ -41,6 +41,7 @@ DEFAULT_CANDIDATE_DIAGNOSTICS_JSONS = (
     "outputs/live_strategy_diagnostics_directional_probe_latest.json",
 )
 DEFAULT_OPTIMIZER_SCAN_CSVS = (
+    "outputs/backtests/live_watch_eurusd_macd_evening_focus_w480.csv",
     "outputs/backtests/live_watch_quality_trend_size_opt_live6_w480.csv",
     "outputs/backtests/live_watch_quality_trend_opt_live6_w480.csv",
     "outputs/backtests/live_watch_opportunity_probe_opt_live6_w480.csv",

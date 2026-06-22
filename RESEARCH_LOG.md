@@ -844,3 +844,29 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   Current example: the best optimizer scan candidate is
   `micro_current_h10_14_100k`, but it remains `REJECT` because average risk
   discipline is 93.3/100 versus the 95/100 gate.
+
+## 2026-06-22 EURUSD full-data evening MACD pressure pass
+
+- Added extracted-directory support to the pricer importer so the Windows
+  laptop can work directly from `Downloads/pricer-output-2026-05-11_2026-06-10`
+  without rebuilding or rereading the 22GB zip archive.
+- Imported the full extracted EURUSD slice: 27 parquet files, 26,571,659 ticks,
+  and 2,212 fifteen-minute bars.
+- Re-tested current live MACD hours against deliberately more active evening
+  and all-day relaxed variants on the full EURUSD slice with W480 fixed warmup,
+  directional-probe allocation, and forced QUALIFY mode:
+  - `current_live_h6_14` ranked best: +0.012% full-sample return, 0.024%
+    drawdown, 24 trades, 50.0% active folds, 66.7% active-positive folds,
+    83.3% non-negative folds, but `REJECT` because average risk discipline was
+    87.8/100.
+  - `evening_current_h15_19` was positive but sparse: +0.007%, 14 trades,
+    33.3% active folds, 66.7% active-positive folds, 88.9% non-negative folds,
+    but still `REJECT` on risk discipline at 93.3/100.
+  - `evening_relaxed_h15_19` added only two trades and degraded active-positive
+    folds to 57.1%; `all_day_relaxed_h6_20` increased trades to 44 but lost
+    -0.011%; `late_usd_pressure_h16_20` lost -0.013% with 0.0% active-positive
+    folds.
+- Decision: do not widen EURUSD MACD hours or lower live MACD thresholds just
+  to force the current sell-pressure read. The full-data EURUSD evidence still
+  prefers the current live timing, and the more aggressive variants either
+  remain too sparse or turn negative.

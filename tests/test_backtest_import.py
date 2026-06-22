@@ -84,6 +84,35 @@ class BacktestImportTest(TestCase):
         self.assertTrue(any("imported 1 files" in message for message in messages))
         self.assertTrue(any("finished import" in message for message in messages))
 
+    def test_import_pricer_directory_resamples_ticks_to_backtest_csvs(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            archive = Path(tmpdir) / "pricer-output-sample.zip"
+            price_output = Path(tmpdir) / "prices.csv"
+            quote_output = Path(tmpdir) / "quotes.csv"
+            messages: list[str] = []
+            _write_sample_pricer_zip(archive)
+
+            summary = import_pricer_zip_to_backtest_csv(
+                input_path=Path(tmpdir),
+                price_output=price_output,
+                quote_output=quote_output,
+                symbols=("EURUSD",),
+                bar_seconds=900,
+                progress_every_files=1,
+                progress_callback=messages.append,
+            )
+            prices = load_price_history(price_output)
+            quotes = load_quote_history(quote_output)
+
+        self.assertEqual(summary.symbols, ("EURUSD",))
+        self.assertEqual(summary.files_seen, 2)
+        self.assertEqual(summary.files_imported, 1)
+        self.assertEqual(summary.ticks_seen, 4)
+        self.assertEqual(summary.bars_written, 3)
+        self.assertEqual(len(prices.for_symbol("EURUSD").bars), 3)
+        self.assertEqual(len(quotes.for_symbol("EURUSD").quotes), 3)
+        self.assertTrue(any("directory contains" in message for message in messages))
+
     def test_import_pricer_zip_rejects_empty_archive_file(self) -> None:
         with TemporaryDirectory() as tmpdir:
             archive = Path(tmpdir) / "empty.zip"
