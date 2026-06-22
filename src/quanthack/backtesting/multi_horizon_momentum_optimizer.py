@@ -14,6 +14,8 @@ from quanthack.backtesting.portfolio_strategy_compare import (
     PortfolioStrategyComparisonRow,
     compare_portfolio_strategies,
 )
+from quanthack.backtesting.portfolio_allocator import AllocationPolicy
+from quanthack.core.clock import CompetitionClock, FixedModeClock
 from quanthack.core.config import AppConfig
 from quanthack.market.market_data import PriceHistory, QuoteHistory
 
@@ -214,6 +216,8 @@ def optimize_multi_horizon_momentum_parameters(
     train_size: int = 960,
     test_size: int = 192,
     step_size: int = 192,
+    allocation_policy: AllocationPolicy | None = None,
+    clock: CompetitionClock | FixedModeClock | None = None,
 ) -> MultiHorizonMomentumOptimizationResult:
     if not parameter_sets:
         raise ValueError("multi-horizon momentum optimizer needs at least one parameter set")
@@ -228,6 +232,8 @@ def optimize_multi_horizon_momentum_parameters(
             quotes=quotes,
             strategy_names=("multi_horizon_momentum",),
             symbols=symbols,
+            allocation_policy=allocation_policy,
+            clock=clock,
         )
         if comparison.best is None:
             continue
@@ -242,6 +248,8 @@ def optimize_multi_horizon_momentum_parameters(
                 train_size=train_size,
                 test_size=test_size,
                 step_size=step_size,
+                allocation_policy=allocation_policy,
+                clock=clock,
             )
             if include_walk_forward
             else None

@@ -290,3 +290,19 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Keep the `EURGBP` cross-rate watchlist active, but do not switch the live map
   to `cross_rate_reversion` unless a future portfolio-level validation clears
   robustness and risk gates.
+
+## 2026-06-22 multi-horizon momentum correction
+
+- Added corrected research validation support to the multi-horizon momentum
+  optimizer: `--allocation-profile` and `--force-qualify-mode`, matching the
+  MACD, champion, squeeze, Kalman, strategy-map, and portfolio research paths.
+- The uncorrected run produced zero fills because the competition clock and
+  default allocation path made it unsuitable for live-watch research.
+- Re-ran full-data directional-probe, force-qualified optimization on `EURUSD`,
+  `GBPUSD`, `USDJPY`, `USDCAD`, and `USDCHF`:
+  `outputs/backtests/live_watch_multi_horizon_momentum_corrected.csv`.
+- No tested row is promotable. The least-bad liquid-hours row lost $324.68
+  over 257 trades, returned -0.032%, drew down 0.069%, and reached only 50.0%
+  non-negative folds. Broader/default/fast rows were worse. Keep
+  `multi_horizon_momentum` research-only until a future variant clears
+  portfolio-level return and fold robustness.

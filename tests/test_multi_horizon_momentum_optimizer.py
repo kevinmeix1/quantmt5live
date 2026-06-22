@@ -7,6 +7,11 @@ from quanthack.backtesting.multi_horizon_momentum_optimizer import (
     optimize_multi_horizon_momentum_parameters,
     write_multi_horizon_momentum_optimization_csv,
 )
+from quanthack.backtesting.allocation_profiles import (
+    ALLOCATION_PROFILE_DIRECTIONAL_PROBE,
+    allocation_policy_for_strategy,
+)
+from quanthack.core.clock import FixedModeClock
 from quanthack.core.config import load_config
 from quanthack.market.sample_data import generate_synthetic_market_data
 
@@ -118,6 +123,46 @@ class MultiHorizonMomentumOptimizerTest(TestCase):
                 10.0,
                 8,
             )
+
+    def test_optimizer_accepts_research_clock_and_allocation_policy(self) -> None:
+        config = load_config("configs/competition.toml")
+        data = generate_synthetic_market_data(
+            symbols=("EURUSD", "GBPUSD", "USDJPY"),
+            periods=128,
+            interval_minutes=15,
+            seed=703,
+        )
+
+        result = optimize_multi_horizon_momentum_parameters(
+            config=config,
+            prices=data.prices,
+            quotes=data.quotes,
+            symbols=("EURUSD", "GBPUSD", "USDJPY"),
+            parameter_sets=(
+                MultiHorizonMomentumParameterSet(
+                    "fast",
+                    3,
+                    10,
+                    4,
+                    24,
+                    0.5,
+                    1.0,
+                    0.0,
+                    0.0,
+                    10.0,
+                    8,
+                ),
+            ),
+            allocation_policy=allocation_policy_for_strategy(
+                "multi_horizon_momentum",
+                config,
+                profile=ALLOCATION_PROFILE_DIRECTIONAL_PROBE,
+            ),
+            clock=FixedModeClock(),
+        )
+
+        self.assertEqual(result.symbols, ("EURUSD", "GBPUSD", "USDJPY"))
+        self.assertEqual(len(result.candidates), 1)
 
     def test_parameter_set_accepts_session_hours(self) -> None:
         parameters = MultiHorizonMomentumParameterSet(

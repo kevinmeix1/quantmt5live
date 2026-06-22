@@ -12,6 +12,7 @@ from quanthack.cli import (
     champion_ensemble_optimize,
     kalman_trend_optimize,
     macd_momentum_optimize,
+    multi_horizon_momentum_optimize,
     portfolio_backtest,
     portfolio_fixed_warmup_walk_forward,
     portfolio_universe_scan,
@@ -79,6 +80,13 @@ class AllocationProfilesTest(TestCase):
                 "--force-qualify-mode",
             ]
         )
+        multi_horizon_args = multi_horizon_momentum_optimize.build_parser().parse_args(
+            [
+                "--allocation-profile",
+                ALLOCATION_PROFILE_DIRECTIONAL_PROBE,
+                "--force-qualify-mode",
+            ]
+        )
         champion_args = champion_ensemble_optimize.build_parser().parse_args(
             [
                 "--allocation-profile",
@@ -125,6 +133,10 @@ class AllocationProfilesTest(TestCase):
             ALLOCATION_PROFILE_DIRECTIONAL_PROBE,
         )
         self.assertEqual(
+            multi_horizon_args.allocation_profile,
+            ALLOCATION_PROFILE_DIRECTIONAL_PROBE,
+        )
+        self.assertEqual(
             champion_args.allocation_profile,
             ALLOCATION_PROFILE_DIRECTIONAL_PROBE,
         )
@@ -144,6 +156,7 @@ class AllocationProfilesTest(TestCase):
         self.assertTrue(warmup_args.force_qualify_mode)
         self.assertTrue(universe_args.force_qualify_mode)
         self.assertTrue(macd_args.force_qualify_mode)
+        self.assertTrue(multi_horizon_args.force_qualify_mode)
         self.assertTrue(champion_args.force_qualify_mode)
         self.assertTrue(strategy_map_args.force_qualify_mode)
         self.assertTrue(volatility_args.force_qualify_mode)

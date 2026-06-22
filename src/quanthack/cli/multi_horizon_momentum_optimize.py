@@ -3,6 +3,11 @@ from __future__ import annotations
 import argparse
 from collections.abc import Sequence
 
+from quanthack.backtesting.allocation_profiles import (
+    ALLOCATION_PROFILE_DEFAULT,
+    ALLOCATION_PROFILE_NAMES,
+    allocation_policy_for_strategy,
+)
 from quanthack.backtesting.multi_horizon_momentum_optimizer import (
     DEFAULT_MULTI_HORIZON_MOMENTUM_PARAMETER_SETS,
     MultiHorizonMomentumParameterSet,
@@ -10,6 +15,7 @@ from quanthack.backtesting.multi_horizon_momentum_optimizer import (
     write_multi_horizon_momentum_optimization_csv,
 )
 from quanthack.cli._format import money
+from quanthack.core.clock import FixedModeClock
 from quanthack.core.config import load_config
 from quanthack.market.market_data import load_price_history, load_quote_history
 
@@ -38,6 +44,17 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--test-size", type=int, default=192)
     parser.add_argument("--step-size", type=int, default=192)
     parser.add_argument(
+        "--allocation-profile",
+        choices=ALLOCATION_PROFILE_NAMES,
+        default=ALLOCATION_PROFILE_DEFAULT,
+        help="Optional research allocation policy profile for portfolio sizing.",
+    )
+    parser.add_argument(
+        "--force-qualify-mode",
+        action="store_true",
+        help="Use a fixed QUALIFY research clock instead of competition schedule gating.",
+    )
+    parser.add_argument(
         "--output",
         default="outputs/backtests/multi_horizon_momentum_optimization.csv",
     )
@@ -63,6 +80,12 @@ def run(args: argparse.Namespace) -> None:
         train_size=args.train_size,
         test_size=args.test_size,
         step_size=args.step_size,
+        allocation_policy=allocation_policy_for_strategy(
+            "multi_horizon_momentum",
+            config,
+            profile=args.allocation_profile,
+        ),
+        clock=FixedModeClock() if args.force_qualify_mode else None,
     )
     write_multi_horizon_momentum_optimization_csv(result, args.output)
 
@@ -71,6 +94,8 @@ def run(args: argparse.Namespace) -> None:
     print(f"  Price CSV: {price_csv}")
     print(f"  Quote CSV: {quote_csv}")
     print(f"  Walk-forward: {'yes' if args.include_walk_forward else 'no'}")
+    print(f"  Allocation profile: {args.allocation_profile}")
+    print(f"  Force qualify mode: {'yes' if args.force_qualify_mode else 'no'}")
     print(f"  Output CSV: {args.output}")
     print("Ranked candidates")
     for rank, candidate in enumerate(result.candidates, start=1):
