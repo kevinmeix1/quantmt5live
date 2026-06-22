@@ -243,6 +243,14 @@ from quanthack.backtesting.opportunity_probe_optimizer import (
     optimize_opportunity_probe_parameters,
     write_opportunity_probe_optimization_csv,
 )
+from quanthack.backtesting.quality_trend_optimizer import (
+    DEFAULT_QUALITY_TREND_PARAMETER_SETS,
+    QualityTrendOptimizationCandidate,
+    QualityTrendOptimizationResult,
+    QualityTrendParameterSet,
+    optimize_quality_trend_parameters,
+    write_quality_trend_optimization_csv,
+)
 from quanthack.core.status import ProjectStatus, build_status
 from quanthack.strategies.strategy import (
     AlphaRouterConfig,
@@ -542,6 +550,7 @@ __all__ = [
     "optimize_fixing_reversal_parameters",
     "optimize_kalman_trend_parameters",
     "optimize_opportunity_probe_parameters",
+    "optimize_quality_trend_parameters",
     "optimize_router_weights",
     "optimize_relative_strength_parameters",
     "optimize_symbol_eligibility",

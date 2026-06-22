@@ -32,6 +32,7 @@ from quanthack.cli import (
     portfolio_router_walk_forward,
     portfolio_universe_scan,
     portfolio_walk_forward,
+    quality_trend_optimize,
     relative_strength_optimize,
     router_optimize,
     session_momentum_optimize,
@@ -542,6 +543,27 @@ class CliTest(TestCase):
         self.assertIn("Opportunity Probe Optimization", output)
         self.assertIn("fast", csv_text)
         self.assertIn("promotion_status", csv_text)
+
+    def test_quality_trend_optimizer_cli_writes_csv(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            output_path = Path(tmpdir) / "quality_trend_opt.csv"
+
+            output = _capture(
+                quality_trend_optimize.main,
+                [
+                    "--symbol",
+                    "EURUSD",
+                    "--candidate",
+                    "current,0.25,5.0,2.0,1.0,0.20,0.30,2.0,16,10|11|12",
+                    "--output",
+                    str(output_path),
+                ],
+            )
+            csv_text = output_path.read_text(encoding="utf-8")
+
+        self.assertIn("Quality Trend Optimization", output)
+        self.assertIn("current", csv_text)
+        self.assertIn("allowed_utc_hours", csv_text)
 
     def test_session_momentum_optimizer_cli_writes_csv(self) -> None:
         with TemporaryDirectory() as tmpdir:

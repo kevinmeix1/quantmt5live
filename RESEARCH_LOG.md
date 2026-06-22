@@ -789,3 +789,24 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: keep `opportunity_probe` out of the guarded live map. The optimizer
   is useful for future tuning, but today's full-data evidence says the probe is
   still paying for fill count with a bad fold distribution.
+
+## 2026-06-22 quality-trend hour extension pass
+
+- Added a repeatable `quality-trend-optimize` research CLI to tune the clean but
+  sparse quality-trend sleeve through the same portfolio and fixed-warmup gates
+  used by the rest of the research stack.
+- Ran full-data W480 on the live-six universe with `directional_probe`
+  allocation and forced QUALIFY mode. The original 10-14 UTC quality window was
+  still best, but all tested variants were rejected:
+  - `current_h10_14`: return +0.014%, 28 evaluation fills, 44.4% active folds,
+    75.0% active-positive folds, 88.9% non-negative folds, and tiny positive
+    median active return, but `REJECT` because average risk discipline was
+    93.3/100 versus the 95/100 gate.
+  - `extended_h10_17` and `liquid_h11_19`: more active at 34 evaluation fills
+    and 55.6% active folds, but non-negative folds fell to 66.7% and median
+    active return turned negative.
+  - `late_strict_h14_19`: also rejected with only 25.0% active-positive folds
+    and 66.7% non-negative folds.
+- Decision: do not extend live quality-trend hours. Future quality work should
+  focus on sizing/risk-discipline improvement or symbol selection, not simply
+  keeping the signal on later into the session.

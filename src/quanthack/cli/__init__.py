@@ -168,6 +168,10 @@ COMMANDS: dict[str, tuple[str, str]] = {
         "quanthack.cli.opportunity_probe_optimize",
         "Optimize opportunity-probe parameters with portfolio backtests.",
     ),
+    "quality-trend-optimize": (
+        "quanthack.cli.quality_trend_optimize",
+        "Optimize quality-trend parameters with portfolio backtests.",
+    ),
     "champion-ensemble-optimize": (
         "quanthack.cli.champion_ensemble_optimize",
         "Optimize champion-ensemble weights with portfolio backtests.",

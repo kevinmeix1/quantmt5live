@@ -17,6 +17,7 @@ from quanthack.cli import (
     portfolio_backtest,
     portfolio_fixed_warmup_walk_forward,
     portfolio_universe_scan,
+    quality_trend_optimize,
     strategy_map_optimize,
     volatility_squeeze_optimize,
 )
@@ -123,6 +124,13 @@ class AllocationProfilesTest(TestCase):
                 "--force-qualify-mode",
             ]
         )
+        quality_args = quality_trend_optimize.build_parser().parse_args(
+            [
+                "--allocation-profile",
+                ALLOCATION_PROFILE_DIRECTIONAL_PROBE,
+                "--force-qualify-mode",
+            ]
+        )
 
         self.assertEqual(
             backtest_args.allocation_profile,
@@ -162,6 +170,10 @@ class AllocationProfilesTest(TestCase):
         )
         self.assertEqual(
             opportunity_args.allocation_profile,
+            ALLOCATION_PROFILE_DIRECTIONAL_PROBE,
+        )
+        self.assertEqual(
+            quality_args.allocation_profile,
             ALLOCATION_PROFILE_DIRECTIONAL_PROBE,
         )
         self.assertTrue(backtest_args.force_qualify_mode)
