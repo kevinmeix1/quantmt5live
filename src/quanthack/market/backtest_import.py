@@ -17,6 +17,7 @@ except ImportError:  # Python < 3.11
 PRICE_FIELDS = ("timestamp", "symbol", "close")
 QUOTE_FIELDS = ("timestamp", "symbol", "bid", "ask")
 PRICER_REQUIRED_COLUMNS = ("time", "sym", "bid", "ask")
+PRICER_BATCH_SIZE = 250_000
 
 
 @dataclass(frozen=True)
@@ -88,24 +89,24 @@ def import_pricer_zip_to_backtest_csv(
                     and imported_by_symbol[symbol] >= max_files_per_symbol
                 ):
                     continue
-                with path.open("rb") as handle:
-                    rows = _read_pricer_rows(handle)
                 imported_by_symbol[symbol] += 1
                 files_imported += 1
-                for row in rows:
-                    timestamp = _parse_pricer_time(str(row["time"]), timezone)
-                    if row["bid"] is None or row["ask"] is None:
-                        continue
-                    bid = float(row["bid"])
-                    ask = float(row["ask"])
-                    if bid <= 0 or ask <= 0 or ask < bid:
-                        continue
-                    row_symbol = _normalize_symbol(str(row.get("sym") or symbol))
-                    if row_symbol not in selected_set:
-                        continue
-                    bucket = _floor_timestamp(timestamp, bar_seconds)
-                    bars[(row_symbol, bucket)] = (bid, ask)
-                    ticks_seen += 1
+                with path.open("rb") as handle:
+                    rows = _iter_pricer_rows(handle)
+                    for row in rows:
+                        timestamp = _parse_pricer_time(str(row["time"]), timezone)
+                        if row["bid"] is None or row["ask"] is None:
+                            continue
+                        bid = float(row["bid"])
+                        ask = float(row["ask"])
+                        if bid <= 0 or ask <= 0 or ask < bid:
+                            continue
+                        row_symbol = _normalize_symbol(str(row.get("sym") or symbol))
+                        if row_symbol not in selected_set:
+                            continue
+                        bucket = _floor_timestamp(timestamp, bar_seconds)
+                        bars[(row_symbol, bucket)] = (bid, ask)
+                        ticks_seen += 1
                 if (
                     progress_callback is not None
                     and progress_every_files is not None
@@ -138,24 +139,26 @@ def import_pricer_zip_to_backtest_csv(
                         and imported_by_symbol[symbol] >= max_files_per_symbol
                     ):
                         continue
-                    with archive.open(name) as handle:
-                        rows = _read_pricer_rows(handle)
                     imported_by_symbol[symbol] += 1
                     files_imported += 1
-                    for row in rows:
-                        timestamp = _parse_pricer_time(str(row["time"]), timezone)
-                        if row["bid"] is None or row["ask"] is None:
-                            continue
-                        bid = float(row["bid"])
-                        ask = float(row["ask"])
-                        if bid <= 0 or ask <= 0 or ask < bid:
-                            continue
-                        row_symbol = _normalize_symbol(str(row.get("sym") or symbol))
-                        if row_symbol not in selected_set:
-                            continue
-                        bucket = _floor_timestamp(timestamp, bar_seconds)
-                        bars[(row_symbol, bucket)] = (bid, ask)
-                        ticks_seen += 1
+                    with archive.open(name) as handle:
+                        rows = _iter_pricer_rows(handle)
+                        for row in rows:
+                            timestamp = _parse_pricer_time(str(row["time"]), timezone)
+                            if row["bid"] is None or row["ask"] is None:
+                                continue
+                            bid = float(row["bid"])
+                            ask = float(row["ask"])
+                            if bid <= 0 or ask <= 0 or ask < bid:
+                                continue
+                            row_symbol = _normalize_symbol(
+                                str(row.get("sym") or symbol)
+                            )
+                            if row_symbol not in selected_set:
+                                continue
+                            bucket = _floor_timestamp(timestamp, bar_seconds)
+                            bars[(row_symbol, bucket)] = (bid, ask)
+                            ticks_seen += 1
                     if (
                         progress_callback is not None
                         and progress_every_files is not None
@@ -245,7 +248,7 @@ def _emit_progress(callback: Callable[[str], None] | None, message: str) -> None
         callback(message)
 
 
-def _read_pricer_rows(handle) -> list[dict]:
+def _iter_pricer_rows(handle):
     try:
         import pyarrow.parquet as pq
     except ImportError as exc:
@@ -254,8 +257,20 @@ def _read_pricer_rows(handle) -> list[dict]:
             "Install it with: python -m pip install pyarrow"
         ) from exc
 
-    table = pq.read_table(handle, columns=list(PRICER_REQUIRED_COLUMNS))
-    return table.to_pylist()
+    parquet_file = pq.ParquetFile(handle)
+    for batch in parquet_file.iter_batches(
+        batch_size=PRICER_BATCH_SIZE,
+        columns=list(PRICER_REQUIRED_COLUMNS),
+    ):
+        columns = batch.to_pydict()
+        row_count = batch.num_rows
+        for idx in range(row_count):
+            yield {
+                "time": columns["time"][idx],
+                "sym": columns["sym"][idx],
+                "bid": columns["bid"][idx],
+                "ask": columns["ask"][idx],
+            }
 
 
 def _symbol_from_pricer_name(name: str) -> str:

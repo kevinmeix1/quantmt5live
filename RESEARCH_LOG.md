@@ -870,3 +870,19 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   to force the current sell-pressure read. The full-data EURUSD evidence still
   prefers the current live timing, and the more aggressive variants either
   remain too sparse or turn negative.
+
+## 2026-06-22 extracted-data importer batching pass
+
+- Switched the pricer importer from whole-file `pyarrow` materialization to
+  parquet batch iteration. This keeps memory bounded while scanning the large
+  extracted Downloads parquet files and makes repeated symbol-slice imports more
+  usable during live supervision.
+- Verified the batch path against real extracted files with a bounded
+  EURGBP/GBPUSD smoke import: 2 files, 2,258,251 ticks, and 192 fifteen-minute
+  bars written from `Downloads/pricer-output-2026-05-11_2026-06-10`.
+- Re-ran the EURUSD evening MACD optimizer artifact after the importer change;
+  ranking and promotion results were unchanged, with `current_live_h6_14` still
+  best and all aggressive evening/all-day variants still `REJECT`.
+- Decision: continue importing additional symbol slices as research needs them,
+  but do not loosen live trading thresholds from this pass. The infrastructure
+  improvement helps us test more quickly; it is not itself a reason to add risk.

@@ -10,6 +10,7 @@ outputs/
 logs/
 data/downloaded_backtest_*.csv
 data/*_full_backtest_*.csv
+data/live_smoke_backtest_*.csv
 data/live_practice_*.csv
 data/*.parquet
 data/*.zip
