@@ -909,3 +909,23 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   repeatable positive fold behavior after costs. Keep the guarded live command
   unchanged and continue looking for a trade-seeking sleeve that passes
   promotion gates instead of forcing known-losing churn.
+
+## 2026-06-22 AUDUSD full-data aggressive MACD pass
+
+- Imported the full extracted AUDUSD slice from Downloads: 27 parquet files,
+  28,329,500 ticks, and 2,212 fifteen-minute bars.
+- Tested current live MACD timing against evening/all-day relaxed and faster
+  variants with W480 fixed warmup, directional-probe allocation, and forced
+  QUALIFY mode:
+  - `current_live_h6_14` was the only positive full-sample row at +0.026%, but
+    it still rejected: 42.9% active-positive folds, 55.6% non-negative folds,
+    and negative active median return.
+  - `fast_all_day_h6_20` increased fills to 86 and improved active-positive
+    folds to 57.1%, but full-sample return was -0.019% and non-negative folds
+    were only 66.7%.
+  - `all_day_relaxed_h6_20` increased fills to 78 but lost -0.045% with only
+    44.4% non-negative folds.
+- Decision: keep AUDUSD on the existing live MACD settings and do not widen
+  hours or lower thresholds. The current live timing is still the least-bad
+  AUDUSD sleeve, while the trade-frequency variants turn the current heuristic
+  sell pressure into negative expected value.
