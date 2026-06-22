@@ -65,6 +65,7 @@ def import_pricer_zip_to_backtest_csv(
     selected_set = set(selected_symbols)
     timezone = ZoneInfo(source_timezone)
     bars: dict[tuple[str, datetime], tuple[float, float]] = {}
+    bucket_cache: dict[tuple[str, int], datetime] = {}
     ticks_seen = 0
     files_seen = 0
     files_imported = 0
@@ -92,21 +93,15 @@ def import_pricer_zip_to_backtest_csv(
                 imported_by_symbol[symbol] += 1
                 files_imported += 1
                 with path.open("rb") as handle:
-                    rows = _iter_pricer_rows(handle)
-                    for row in rows:
-                        timestamp = _parse_pricer_time(str(row["time"]), timezone)
-                        if row["bid"] is None or row["ask"] is None:
-                            continue
-                        bid = float(row["bid"])
-                        ask = float(row["ask"])
-                        if bid <= 0 or ask <= 0 or ask < bid:
-                            continue
-                        row_symbol = _normalize_symbol(str(row.get("sym") or symbol))
-                        if row_symbol not in selected_set:
-                            continue
-                        bucket = _floor_timestamp(timestamp, bar_seconds)
-                        bars[(row_symbol, bucket)] = (bid, ask)
-                        ticks_seen += 1
+                    ticks_seen += _add_pricer_rows_to_bars(
+                        handle,
+                        fallback_symbol=symbol,
+                        selected_symbols=selected_set,
+                        source_timezone=timezone,
+                        bar_seconds=bar_seconds,
+                        bars=bars,
+                        bucket_cache=bucket_cache,
+                    )
                 if (
                     progress_callback is not None
                     and progress_every_files is not None
@@ -142,23 +137,15 @@ def import_pricer_zip_to_backtest_csv(
                     imported_by_symbol[symbol] += 1
                     files_imported += 1
                     with archive.open(name) as handle:
-                        rows = _iter_pricer_rows(handle)
-                        for row in rows:
-                            timestamp = _parse_pricer_time(str(row["time"]), timezone)
-                            if row["bid"] is None or row["ask"] is None:
-                                continue
-                            bid = float(row["bid"])
-                            ask = float(row["ask"])
-                            if bid <= 0 or ask <= 0 or ask < bid:
-                                continue
-                            row_symbol = _normalize_symbol(
-                                str(row.get("sym") or symbol)
-                            )
-                            if row_symbol not in selected_set:
-                                continue
-                            bucket = _floor_timestamp(timestamp, bar_seconds)
-                            bars[(row_symbol, bucket)] = (bid, ask)
-                            ticks_seen += 1
+                        ticks_seen += _add_pricer_rows_to_bars(
+                            handle,
+                            fallback_symbol=symbol,
+                            selected_symbols=selected_set,
+                            source_timezone=timezone,
+                            bar_seconds=bar_seconds,
+                            bars=bars,
+                            bucket_cache=bucket_cache,
+                        )
                     if (
                         progress_callback is not None
                         and progress_every_files is not None
@@ -248,7 +235,51 @@ def _emit_progress(callback: Callable[[str], None] | None, message: str) -> None
         callback(message)
 
 
-def _iter_pricer_rows(handle):
+def _add_pricer_rows_to_bars(
+    handle,
+    *,
+    fallback_symbol: str,
+    selected_symbols: set[str],
+    source_timezone: ZoneInfo,
+    bar_seconds: int,
+    bars: dict[tuple[str, datetime], tuple[float, float]],
+    bucket_cache: dict[tuple[str, int], datetime],
+) -> int:
+    ticks_seen = 0
+    for columns, row_count in _iter_pricer_batches(handle):
+        times = columns["time"]
+        symbols = columns["sym"]
+        bids = columns["bid"]
+        asks = columns["ask"]
+        for idx in range(row_count):
+            bid = bids[idx]
+            ask = asks[idx]
+            if bid is None or ask is None:
+                continue
+            bid_float = float(bid)
+            ask_float = float(ask)
+            if bid_float <= 0 or ask_float <= 0 or ask_float < bid_float:
+                continue
+            raw_symbol = symbols[idx] or fallback_symbol
+            row_symbol = (
+                fallback_symbol
+                if raw_symbol == fallback_symbol
+                else _normalize_symbol(str(raw_symbol))
+            )
+            if row_symbol not in selected_symbols:
+                continue
+            timestamp = _pricer_time_bucket(
+                str(times[idx]),
+                source_timezone=source_timezone,
+                bar_seconds=bar_seconds,
+                bucket_cache=bucket_cache,
+            )
+            bars[(row_symbol, timestamp)] = (bid_float, ask_float)
+            ticks_seen += 1
+    return ticks_seen
+
+
+def _iter_pricer_batches(handle):
     try:
         import pyarrow.parquet as pq
     except ImportError as exc:
@@ -262,15 +293,44 @@ def _iter_pricer_rows(handle):
         batch_size=PRICER_BATCH_SIZE,
         columns=list(PRICER_REQUIRED_COLUMNS),
     ):
-        columns = batch.to_pydict()
-        row_count = batch.num_rows
-        for idx in range(row_count):
-            yield {
-                "time": columns["time"][idx],
-                "sym": columns["sym"][idx],
-                "bid": columns["bid"][idx],
-                "ask": columns["ask"][idx],
-            }
+        yield batch.to_pydict(), batch.num_rows
+
+
+def _pricer_time_bucket(
+    value: str,
+    *,
+    source_timezone: ZoneInfo,
+    bar_seconds: int,
+    bucket_cache: dict[tuple[str, int], datetime],
+) -> datetime:
+    if (
+        getattr(source_timezone, "key", None) == "UTC"
+        and 0 < bar_seconds <= 86_400
+        and 86_400 % bar_seconds == 0
+    ):
+        date_text = value[:10]
+        seconds = (
+            int(value[11:13]) * 3_600
+            + int(value[14:16]) * 60
+            + int(value[17:19])
+        )
+        bucket_seconds = (seconds // bar_seconds) * bar_seconds
+        cache_key = (date_text, bucket_seconds)
+        cached = bucket_cache.get(cache_key)
+        if cached is not None:
+            return cached
+        bucket = datetime(
+            int(date_text[:4]),
+            int(date_text[5:7]),
+            int(date_text[8:10]),
+            bucket_seconds // 3_600,
+            (bucket_seconds % 3_600) // 60,
+            bucket_seconds % 60,
+            tzinfo=UTC,
+        )
+        bucket_cache[cache_key] = bucket
+        return bucket
+    return _floor_timestamp(_parse_pricer_time(value, source_timezone), bar_seconds)
 
 
 def _symbol_from_pricer_name(name: str) -> str:

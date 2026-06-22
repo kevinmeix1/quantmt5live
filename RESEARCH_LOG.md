@@ -886,3 +886,26 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: continue importing additional symbol slices as research needs them,
   but do not loosen live trading thresholds from this pass. The infrastructure
   improvement helps us test more quickly; it is not itself a reason to add risk.
+
+## 2026-06-22 aggressive EURGBP/GBPUSD trade-frequency pass
+
+- Imported the full extracted EURGBP/GBPUSD slice from Downloads after the
+  importer speedup: 54 parquet files, 49,816,604 ticks, and 4,424 fifteen-minute
+  bars. This gives a real full-data test for the two live ensemble symbols
+  currently producing heuristic probe pressure.
+- Tested lower-threshold champion ensemble variants on EURGBP/GBPUSD with W480
+  fixed warmup, directional-probe allocation, and forced QUALIFY mode. The best
+  lower-entry candidate increased fills to 59 but still lost -0.010%, had only
+  45.5% active-positive folds, and stayed `REJECT`.
+- Tested aggressive opportunity-probe/scalping variants on the same full slice.
+  The candidates produced 526-813 trades, but every row lost money:
+  - Best-ranked `hyper_filtered_s3_00_hold4_20`: -0.140% return, 0.160%
+    drawdown, 526 trades, 27.8% active-positive folds, 27.8% non-negative
+    folds, and negative active median return.
+  - Looser probe variants traded even more and lost more, down to -0.238% with
+    809 trades.
+- Decision: do not wire these aggressive sleeves into live. They satisfy the
+  desire for more fills but fail the only thing that matters for survival:
+  repeatable positive fold behavior after costs. Keep the guarded live command
+  unchanged and continue looking for a trade-seeking sleeve that passes
+  promotion gates instead of forcing known-losing churn.
