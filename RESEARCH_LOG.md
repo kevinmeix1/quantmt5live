@@ -691,3 +691,44 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Aligned `run_shadow.bat`, `run_live.bat`, `scripts/live_guard.ps1`, live
   diagnostics, and the Windows deployment guide around the same staged
   `0.25`-lot cap and small-only symbol-state behavior.
+
+## 2026-06-22 aggressive live-candidate refresh
+
+- Refreshed live MT5 diagnostics, sentiment, pair analysis, deal attribution,
+  and status summary after the staged cap lift. The account remained flat:
+  equity/balance $999,181.58, day P/L -$818.42, margin 0, positions 0, and the
+  guarded live loop reported `no_order`.
+- Current live diagnostics requested no new risk across AUDUSD, EURGBP, EURUSD,
+  GBPUSD, USDCAD, and USDCHF. Pair analysis briefly surfaced USDJPY as a
+  heuristic tiny-probe idea, but live strategy diagnostics had no USDJPY signal
+  and the earlier full-data USDJPY expansion checks rejected adding it.
+- Tested more active full-data candidates on the imported full pricer data
+  (`data/full_20gb_15m_prices.csv` and `data/full_20gb_15m_quotes.csv`) with
+  fixed-warmup W480 gates:
+  - `usd_pressure_router` on live-six was very active (514 evaluation fills)
+    but rejected: 33.3% non-negative folds, negative median active return,
+    1.534% worst drawdown.
+  - `opportunity_probe` on live-six with directional-probe allocation was
+    rejected despite 1,945 evaluation fills: 16.7% non-negative folds, negative
+    median active return, and 93.3/100 average risk discipline.
+  - Replacing EURGBP with `cross_rate_reversion` stayed `PAPER_ONLY`: 44.4%
+    positive folds, 66.7% active-positive folds, 77.8% non-negative folds, 74
+    fills, and 0.289% worst drawdown. It did not improve over the current live
+    map's W480 profile.
+  - Replacing GBPUSD with `multi_horizon_momentum` was rejected: 61.1%
+    non-negative folds and only 50.0% active-positive folds.
+- Tested relaxed/extended MACD variants to increase trade frequency. All were
+  rejected on W480. The extended-hours current MACD variant increased fills
+  from 106 to 144 but degraded stability to 27.8% positive folds, 38.5%
+  active-positive folds, and 55.6% non-negative folds. The faster relaxed
+  variants also failed non-negative fold gates.
+- Tested adaptive active-map selection over current live, EURGBP cross-rate,
+  all-MACD, MACD core, USD-MACD, and cash fallback. It improved survival but
+  remained `PAPER_ONLY`: 83.3% non-negative folds, 66.7% active-positive folds,
+  33.3% total positive folds, 60 evaluation fills, and stitched OOS final
+  equity $1,024,545.76.
+- Decision: keep the guarded live command unchanged. The aggressive candidates
+  either trade more while losing more often, or remain paper-only without
+  improving the current live map. Continue monitoring EURGBP cross-rate and
+  adaptive active-map selection as watchlist candidates, but do not bypass live
+  promotion gates just to increase fill count.
