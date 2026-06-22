@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import TestCase
@@ -13,6 +13,8 @@ from quanthack.market.adapters import (
     MT5ConnectionSettings,
     MT5MarketDataAdapter,
     MT5UnavailableError,
+    _mt5_server_time_offset,
+    _normalize_mt5_server_timestamp,
     StaticAccountAdapter,
     parse_symbol_map,
 )
@@ -94,6 +96,29 @@ class MarketAdapterTest(TestCase):
         self.assertEqual([bar.close for bar in bars], [1.101, 1.102])
         self.assertEqual(account.equity, 999_000)
         self.assertEqual(account.margin_level_pct, 1_250)
+
+    def test_mt5_timestamp_normalization_removes_whole_hour_server_offset(self) -> None:
+        now = datetime(2026, 6, 22, 14, 44, 39, tzinfo=UTC)
+        broker_timestamp = datetime(2026, 6, 22, 15, 45, 0, tzinfo=UTC)
+
+        normalized = _normalize_mt5_server_timestamp(
+            broker_timestamp,
+            now=now,
+        )
+
+        self.assertEqual(normalized, datetime(2026, 6, 22, 14, 45, 0, tzinfo=UTC))
+        self.assertEqual(
+            _mt5_server_time_offset(broker_timestamp, now=now),
+            timedelta(hours=1),
+        )
+
+    def test_mt5_timestamp_normalization_leaves_plausible_utc_time_unchanged(self) -> None:
+        now = datetime(2026, 6, 22, 14, 44, 39, tzinfo=UTC)
+        timestamp = datetime(2026, 6, 22, 14, 44, 55, tzinfo=UTC)
+
+        normalized = _normalize_mt5_server_timestamp(timestamp, now=now)
+
+        self.assertEqual(normalized, timestamp)
 
     def test_mt5_account_adapter_treats_zero_margin_level_as_unknown(self) -> None:
         fake_mt5 = _FakeMT5()

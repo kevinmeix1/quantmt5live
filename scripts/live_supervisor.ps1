@@ -100,6 +100,18 @@ while ((Get-Date) -lt $Deadline) {
     "--history-jsonl", "outputs\candidate_promoted_best_per_symbol_live_strategy_diagnostics_history.jsonl",
     "--output-text", "outputs\candidate_promoted_best_per_symbol_live_strategy_diagnostics_latest.txt"
   )
+  Invoke-And-Log "candidate_diag_expanded_best_per_symbol" @(
+    "scripts\live_strategy_diagnostics.py",
+    "--strategy-map", "AUDUSD=macd_momentum",
+    "--strategy-map", "EURGBP=champion_ensemble",
+    "--strategy-map", "EURUSD=macd_momentum",
+    "--strategy-map", "GBPUSD=multi_horizon_momentum",
+    "--strategy-map", "USDCAD=macd_momentum",
+    "--strategy-map", "USDCHF=macd_momentum",
+    "--output-json", "outputs\candidate_expanded_best_per_symbol_live_strategy_diagnostics_latest.json",
+    "--history-jsonl", "outputs\candidate_expanded_best_per_symbol_live_strategy_diagnostics_history.jsonl",
+    "--output-text", "outputs\candidate_expanded_best_per_symbol_live_strategy_diagnostics_latest.txt"
+  )
   Invoke-And-Log "candidate_diag_promoted_top4_macd" @(
     "scripts\live_strategy_diagnostics.py",
     "--strategy-map", "AUDUSD=macd_momentum",

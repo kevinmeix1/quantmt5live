@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
 from importlib import import_module
 from typing import Any, Protocol
 
@@ -197,7 +197,10 @@ class MT5MarketDataAdapter:
             raise MT5UnavailableError(
                 f"MT5 returned a non-positive tick for {mt5_symbol}: bid={bid}, ask={ask}"
             )
-        timestamp = _timestamp_from_mt5_tick(tick)
+        timestamp = _normalize_mt5_server_timestamp(
+            _timestamp_from_mt5_tick(tick),
+            now=datetime.now(tz=UTC),
+        )
         return QuoteSnapshot(timestamp=timestamp, symbol=canonical, bid=bid, ask=ask)
 
     def get_recent_bars(
@@ -219,13 +222,21 @@ class MT5MarketDataAdapter:
             raise MT5UnavailableError(
                 f"MT5 returned no bars for {mt5_symbol}: {self._last_error_text()}"
             )
+        raw_timestamps = tuple(
+            datetime.fromtimestamp(int(_field(row, "time")), tz=UTC)
+            for row in rows
+        )
+        offset = _mt5_server_time_offset(
+            max(raw_timestamps),
+            now=datetime.now(tz=UTC),
+        )
         bars = tuple(
             PriceBar(
-                timestamp=datetime.fromtimestamp(int(_field(row, "time")), tz=UTC),
+                timestamp=timestamp - offset,
                 symbol=canonical,
                 close=float(_field(row, "close")),
             )
-            for row in rows
+            for row, timestamp in zip(rows, raw_timestamps, strict=True)
         )
         return tuple(sorted(bars, key=lambda bar: bar.timestamp))
 
@@ -336,6 +347,34 @@ def _timestamp_from_mt5_tick(tick: Any) -> datetime:
     if time_msc is not None and time_msc > 0:
         return datetime.fromtimestamp(time_msc / 1_000, tz=UTC)
     return datetime.fromtimestamp(int(_field(tick, "time")), tz=UTC)
+
+
+def _normalize_mt5_server_timestamp(
+    timestamp: datetime,
+    *,
+    now: datetime,
+) -> datetime:
+    return timestamp - _mt5_server_time_offset(timestamp, now=now)
+
+
+def _mt5_server_time_offset(timestamp: datetime, *, now: datetime) -> timedelta:
+    if timestamp.tzinfo is None:
+        timestamp = timestamp.replace(tzinfo=UTC)
+    if now.tzinfo is None:
+        raise ValueError("now must be timezone-aware")
+    timestamp_utc = timestamp.astimezone(UTC)
+    now_utc = now.astimezone(UTC)
+    skew_seconds = (timestamp_utc - now_utc).total_seconds()
+    if skew_seconds <= 5 * 60 or skew_seconds > 14 * 60 * 60:
+        return timedelta(0)
+    offset_hours = round(skew_seconds / 3600)
+    if offset_hours < 1:
+        return timedelta(0)
+    offset = timedelta(hours=offset_hours)
+    residual_seconds = abs((timestamp_utc - offset - now_utc).total_seconds())
+    if residual_seconds > 30 * 60:
+        return timedelta(0)
+    return offset
 
 
 _MISSING = object()

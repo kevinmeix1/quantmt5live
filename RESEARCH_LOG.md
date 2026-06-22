@@ -341,3 +341,23 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   worst drawdown 0.406%, 54 evaluation fills, and 100/100 average risk
   discipline. Keep the guarded live map unchanged unless a future candidate
   beats this robustness profile.
+
+## 2026-06-22 live MT5 timestamp normalization and expanded map check
+
+- Found live MT5 tick/bar timestamps arriving about +3,620 seconds ahead of
+  wall-clock UTC across the live FX symbols. That made session-filtered
+  strategies see 15:00 UTC while the actual UTC wall clock was 14:00, causing
+  accidental early session gates.
+- Added MT5 adapter timestamp normalization for clear whole-hour broker-server
+  offsets. After the fix, live diagnostics showed quote skew near +21 seconds
+  instead of +3,620 seconds, and MACD reasons moved from `session_gated` to the
+  intended threshold checks.
+- Restarted only the guard-owned `live-trade` process so the real-order loop
+  imports the adapter fix while preserving the same max-lot, max-position,
+  sentiment, cooldown, daily-loss, and rolling-Sharpe brakes.
+- Ran an expanded full-data strategy-map search including more active sleeves:
+  `outputs/backtests/live_watch_strategy_map_expanded_full.csv`. The promoted
+  six-symbol candidate with `GBPUSD=multi_horizon_momentum` produced 112 fills
+  and passed walk-forward promotion, but returned 2.427% with 0.589% max
+  drawdown, weaker than the exact current live map's 2.833% return and 0.421%
+  max drawdown. Monitor it as a candidate, but do not replace the live map yet.
