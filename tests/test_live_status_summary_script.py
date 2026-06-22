@@ -154,6 +154,7 @@ class LiveStatusSummaryScriptTest(TestCase):
             candidate_diagnostics = (
                 root / "candidate_eurgbp_cross_rate_live_strategy_diagnostics_latest.json"
             )
+            optimizer_scan = root / "quality_trend_opt.csv"
             output_json = root / "summary.json"
             output_text = root / "summary.txt"
             history = root / "summary.jsonl"
@@ -442,6 +443,31 @@ class LiveStatusSummaryScriptTest(TestCase):
                 ),
                 encoding="utf-8",
             )
+            optimizer_scan.write_text(
+                "\n".join(
+                    [
+                        (
+                            "rank,label,symbols,promotion_status,"
+                            "promotion_live_ready,promotion_reason,return_pct,"
+                            "max_drawdown_pct,wf_positive_fold_fraction,"
+                            "wf_active_fold_fraction,"
+                            "wf_active_positive_fold_fraction,"
+                            "wf_non_negative_fold_fraction,"
+                            "wf_median_active_test_return_pct,"
+                            "wf_worst_test_drawdown_pct,"
+                            "wf_total_evaluation_fills"
+                        ),
+                        (
+                            "1,micro_current,AUDUSD EURUSD,REJECT,False,"
+                            "average risk discipline 93.3/100 is below 95.0/100,"
+                            "0.00031,0.00028,0.3333,0.4444,0.7500,"
+                            "0.8889,0.000051,0.00014,28"
+                        ),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
 
             live_status_summary.main(
                 [
@@ -477,6 +503,8 @@ class LiveStatusSummaryScriptTest(TestCase):
                     str(research_cycle),
                     "--candidate-diagnostics-json",
                     str(candidate_diagnostics),
+                    "--optimizer-scan-csv",
+                    str(optimizer_scan),
                     "--output-json",
                     str(output_json),
                     "--output-text",
@@ -518,6 +546,14 @@ class LiveStatusSummaryScriptTest(TestCase):
         self.assertIn("alloc_status=OK", text)
         self.assertIn("focus=EURGBP", text)
         self.assertIn("strategy=cross_rate_reversion raw=0.00 alloc=0.00", text)
+        self.assertEqual(summary["optimizer_scans"]["scan_count"], 1)
+        self.assertEqual(
+            summary["optimizer_scans"]["top_candidates"][0]["label"],
+            "micro_current",
+        )
+        self.assertIn("optimizer_scans scans=1 top=micro_current", text)
+        self.assertIn("status=REJECT live_ready=no", text)
+        self.assertIn("nonneg=88.9%", text)
         self.assertIn("candidate_maps candidates=2 top_consensus=PROMOTE", text)
         self.assertIn("candidate=map=promote", text)
         self.assertIn("parameters consensus=REJECT top=live_current", text)

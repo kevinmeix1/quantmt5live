@@ -40,6 +40,11 @@ DEFAULT_CANDIDATE_DIAGNOSTICS_JSONS = (
     "outputs/candidate_promoted_top4_macd_live_strategy_diagnostics_latest.json",
     "outputs/live_strategy_diagnostics_directional_probe_latest.json",
 )
+DEFAULT_OPTIMIZER_SCAN_CSVS = (
+    "outputs/backtests/live_watch_quality_trend_size_opt_live6_w480.csv",
+    "outputs/backtests/live_watch_quality_trend_opt_live6_w480.csv",
+    "outputs/backtests/live_watch_opportunity_probe_opt_live6_w480.csv",
+)
 
 LIVE_LOOP_PATTERN = re.compile(
     r"iteration=(?P<iteration>\d+)\s+timestamp=(?P<timestamp>\S+)\s+"
@@ -64,6 +69,7 @@ def build_summary(
     basket_activity_scan: dict[str, Any] | None = None,
     research_cycle: dict[str, Any] | None = None,
     candidate_strategy_diagnostics: dict[str, Any] | None = None,
+    optimizer_scans: dict[str, Any] | None = None,
     generated_at_utc: str | None = None,
 ) -> dict[str, Any]:
     generated_at = generated_at_utc or datetime.now(UTC).isoformat()
@@ -152,6 +158,7 @@ def build_summary(
         "candidate_strategy_diagnostics": _compact_candidate_strategy_diagnostics(
             candidate_strategy_diagnostics
         ),
+        "optimizer_scans": _compact_optimizer_scans(optimizer_scans),
         "research_live_gate": _research_live_gate(
             research_cycle=compact_research_cycle,
             pair_rows=pair_rows,
@@ -284,6 +291,27 @@ def read_candidate_strategy_diagnostics(paths: list[str] | tuple[str, ...]) -> d
     }
 
 
+def read_optimizer_scans(paths: list[str] | tuple[str, ...]) -> dict[str, Any]:
+    rows: list[dict[str, Any]] = []
+    for path in paths:
+        scan_path = Path(path)
+        if not scan_path.exists():
+            continue
+        with scan_path.open("r", encoding="utf-8", newline="") as handle:
+            scan_rows = list(csv.DictReader(handle))
+        if not scan_rows:
+            continue
+        top_row = dict(scan_rows[0])
+        top_row["source_path"] = str(scan_path)
+        top_row["source_label"] = scan_path.stem
+        rows.append(top_row)
+    rows.sort(key=_optimizer_scan_rank_key)
+    return {
+        "scan_count": len(rows),
+        "top_candidates": rows,
+    }
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Build a compact monitor-only summary of live MT5 readiness."
@@ -334,6 +362,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Read-only candidate strategy diagnostics JSON to surface; repeatable.",
     )
+    parser.add_argument(
+        "--optimizer-scan-csv",
+        action="append",
+        default=None,
+        help="Optimizer result CSV to surface; repeatable.",
+    )
     parser.add_argument("--output-json", default="outputs/live_status_summary_latest.json")
     parser.add_argument("--output-text", default="outputs/live_status_summary_latest.txt")
     parser.add_argument("--history-jsonl", default="outputs/live_status_summary_history.jsonl")
@@ -369,6 +403,9 @@ def main(argv: list[str] | None = None) -> None:
                 args.candidate_diagnostics_json
                 or DEFAULT_CANDIDATE_DIAGNOSTICS_JSONS
             )
+        ),
+        optimizer_scans=read_optimizer_scans(
+            tuple(args.optimizer_scan_csv or DEFAULT_OPTIMIZER_SCAN_CSVS)
         ),
     )
     write_summary_json(summary, args.output_json)
@@ -726,6 +763,52 @@ def _compact_candidate_strategy_diagnostics(
     }
 
 
+def _compact_optimizer_scans(
+    scans: dict[str, Any] | None,
+) -> dict[str, Any]:
+    if not scans:
+        return {}
+    compact_rows = []
+    for row in scans.get("top_candidates", [])[:5]:
+        if not isinstance(row, dict):
+            continue
+        compact_rows.append(
+            {
+                "source_path": row.get("source_path", ""),
+                "source_label": row.get("source_label", ""),
+                "label": row.get("label", ""),
+                "symbols": row.get("symbols", ""),
+                "promotion_status": row.get("promotion_status", ""),
+                "promotion_live_ready": _boolish(row.get("promotion_live_ready")),
+                "promotion_reason": row.get("promotion_reason", ""),
+                "return_pct": _float_or_zero(row.get("return_pct")),
+                "max_drawdown_pct": _float_or_zero(row.get("max_drawdown_pct")),
+                "wf_positive_fold_fraction": _float_or_zero(
+                    row.get("wf_positive_fold_fraction")
+                ),
+                "wf_active_fold_fraction": _float_or_zero(
+                    row.get("wf_active_fold_fraction")
+                ),
+                "wf_active_positive_fold_fraction": _float_or_zero(
+                    row.get("wf_active_positive_fold_fraction")
+                ),
+                "wf_non_negative_fold_fraction": _float_or_zero(
+                    row.get("wf_non_negative_fold_fraction")
+                ),
+                "wf_median_active_test_return_pct": _float_or_zero(
+                    row.get("wf_median_active_test_return_pct")
+                ),
+                "wf_total_evaluation_fills": int(
+                    _float_or_zero(row.get("wf_total_evaluation_fills"))
+                ),
+            }
+        )
+    return {
+        "scan_count": int(_float_or_zero(scans.get("scan_count"))),
+        "top_candidates": compact_rows,
+    }
+
+
 def _compact_research_cycle(
     cycle: dict[str, Any] | None,
 ) -> dict[str, Any]:
@@ -843,6 +926,7 @@ def _summary_text(summary: dict[str, Any]) -> str:
     basket_scan = summary.get("basket_activity_scan", {})
     research_cycle = summary.get("research_cycle", {})
     candidate_diagnostics = summary.get("candidate_strategy_diagnostics", {})
+    optimizer_scans = summary.get("optimizer_scans", {})
     research_live_gate = summary.get("research_live_gate", {})
     heuristic_only = summary.get("heuristic_only_probes", {})
     lines = [
@@ -959,6 +1043,22 @@ def _summary_text(summary: dict[str, Any]) -> str:
             f"alloc={top_symbol.get('allocation_change_notional_usd', 0.0):.2f} "
             f"bucket={top_symbol.get('raw_reason_bucket', '')}"
         )
+    if optimizer_scans.get("scan_count", 0) > 0:
+        top = optimizer_scans.get("top_candidates", [{}])[0]
+        lines.append(
+            "optimizer_scans "
+            f"scans={optimizer_scans.get('scan_count', 0)} "
+            f"top={top.get('label', '')} "
+            f"source={Path(top.get('source_path', '')).name if top.get('source_path') else 'n/a'} "
+            f"status={top.get('promotion_status', '')} "
+            f"live_ready={'yes' if top.get('promotion_live_ready') else 'no'} "
+            f"active={top.get('wf_active_fold_fraction', 0.0):.1%} "
+            f"active_pos={top.get('wf_active_positive_fold_fraction', 0.0):.1%} "
+            f"nonneg={top.get('wf_non_negative_fold_fraction', 0.0):.1%} "
+            f"median_active={top.get('wf_median_active_test_return_pct', 0.0):.3%} "
+            f"fills={top.get('wf_total_evaluation_fills', 0)} "
+            f"reason={top.get('promotion_reason', '')}"
+        )
     candidate_map_rows = _candidate_map_rows(candidate_map)
     if candidate_map_rows:
         top_map = candidate_map_rows[0]
@@ -1063,6 +1163,18 @@ def _candidate_strategy_diagnostic_rank_key(row: dict[str, Any]) -> tuple[int, f
     )
 
 
+def _optimizer_scan_rank_key(row: dict[str, Any]) -> tuple[int, float, float, float, float, str]:
+    status_rank = {"PROMOTE": 0, "PAPER_ONLY": 1, "REJECT": 2}
+    return (
+        status_rank.get(row.get("promotion_status", ""), 3),
+        -_float_or_zero(row.get("wf_active_positive_fold_fraction")),
+        -_float_or_zero(row.get("wf_non_negative_fold_fraction")),
+        -_float_or_zero(row.get("wf_median_active_test_return_pct")),
+        _float_or_zero(row.get("wf_worst_test_drawdown_pct")),
+        row.get("source_label", ""),
+    )
+
+
 def _candidate_strategy_symbol_rank_key(row: dict[str, Any]) -> tuple[int, int, float, float, str]:
     status_rank = {
         "actionable_allocation": 0,
@@ -1093,6 +1205,14 @@ def _float_or_zero(raw_value: Any) -> float:
     if raw_value in (None, ""):
         return 0.0
     return float(raw_value)
+
+
+def _boolish(raw_value: Any) -> bool:
+    if isinstance(raw_value, bool):
+        return raw_value
+    if raw_value is None:
+        return False
+    return str(raw_value).strip().lower() in {"1", "true", "yes", "y"}
 
 
 if __name__ == "__main__":

@@ -831,3 +831,16 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   a better paper candidate than the original, but promotion needs either
   cleaner multi-symbol concurrence or a verified rule change for tiny
   concentration risk, not just smaller notional.
+
+## 2026-06-22 live status optimizer rollup
+
+- Extended `scripts/live_status_summary.py` to surface compact optimizer scan
+  results from the latest quality-trend and opportunity-probe optimizer CSVs.
+- The live monitor now prints the top optimizer candidate, source CSV,
+  promotion status, live-ready flag, active/non-negative fold rates, median
+  active return, fills, and promotion rejection reason.
+- This keeps future heartbeat checks honest when live candidate diagnostics
+  request risk from a sleeve that has already failed full-data promotion gates.
+  Current example: the best optimizer scan candidate is
+  `micro_current_h10_14_100k`, but it remains `REJECT` because average risk
+  discipline is 93.3/100 versus the 95/100 gate.
