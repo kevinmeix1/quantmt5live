@@ -929,3 +929,40 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   hours or lower thresholds. The current live timing is still the least-bad
   AUDUSD sleeve, while the trade-frequency variants turn the current heuristic
   sell pressure into negative expected value.
+
+## 2026-06-22 USDCAD/USDCHF full-data MACD pressure pass
+
+- Imported the full extracted USDCAD/USDCHF slice from Downloads: 54 parquet
+  files, 43,388,397 ticks, and 4,424 fifteen-minute bars.
+- Tested current live MACD settings against lower-band, faster-window, all-day,
+  late-session, and strict-slope variants with W480 fixed warmup,
+  directional-probe allocation, and forced QUALIFY mode:
+  - `current_live_h6_14` ranked best by the promotion sort: +0.018% full-sample
+    return, 53 trades, 66.7% active-positive folds, 66.7% non-negative folds,
+    and `REJECT`.
+  - `strict_slope_h6_14` improved full-sample return to +0.022% and fills to
+    57, but active-positive folds fell to 62.5% and non-negative folds stayed
+    at 66.7%, so it also rejected.
+  - Lower-threshold and all-day variants increased fills to 65-89 but all lost
+    money and dropped to 44.4% active-positive/non-negative folds.
+- Decision: keep USDCAD and USDCHF on the current live MACD settings. The
+  live sentiment/technical pressure is real enough to monitor, but loosening
+  the MACD band to force trades has negative full-data expectancy.
+
+## 2026-06-22 AUDUSD/GBPUSD asset-adaptive squeeze signal check
+
+- The live research cycle kept surfacing `asset_adaptive_dual_squeeze` on
+  GBPUSD and AUDUSD, so I tested the pure sleeve on the full extracted slices
+  before considering any live routing change.
+- Results with W480 fixed warmup, directional-probe allocation, and forced
+  QUALIFY mode:
+  - `AUDUSD=asset_adaptive_dual_squeeze`: +0.011% full-sample return, 22
+    trades, 66.7% active-positive folds, 77.8% non-negative folds, and
+    `REJECT` because average risk discipline was 88.9/100.
+  - `GBPUSD=asset_adaptive_dual_squeeze`: +0.009% full-sample return, only 8
+    trades, 100.0% active-positive/non-negative folds, but `PAPER_ONLY`
+    because one positive fold contributed 93.9% of positive walk-forward
+    return.
+- Decision: do not switch AUDUSD or GBPUSD live routing. GBPUSD squeeze is
+  worth continued paper-watch because it matches the live research-cycle signal,
+  but it is too sparse and too fold-concentrated to promote.

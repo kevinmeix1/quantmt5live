@@ -41,6 +41,9 @@ DEFAULT_CANDIDATE_DIAGNOSTICS_JSONS = (
     "outputs/live_strategy_diagnostics_directional_probe_latest.json",
 )
 DEFAULT_OPTIMIZER_SCAN_CSVS = (
+    "outputs/backtests/live_watch_gbpusd_asset_squeeze_w480_summary.csv",
+    "outputs/backtests/live_watch_audusd_asset_squeeze_w480_summary.csv",
+    "outputs/backtests/live_watch_usdcad_usdchf_macd_aggressive_w480.csv",
     "outputs/backtests/live_watch_audusd_macd_aggressive_w480.csv",
     "outputs/backtests/live_watch_eurgbp_gbpusd_opportunity_probe_aggressive_w480.csv",
     "outputs/backtests/live_watch_eurgbp_gbpusd_champion_aggressive_w480.csv",
