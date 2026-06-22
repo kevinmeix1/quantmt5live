@@ -551,7 +551,20 @@ class LiveStatusSummaryScriptTest(TestCase):
             summary["optimizer_scans"]["top_candidates"][0]["label"],
             "micro_current",
         )
+        self.assertIn(
+            "source_mtime_utc",
+            summary["optimizer_scans"]["top_candidates"][0],
+        )
+        self.assertGreaterEqual(
+            summary["optimizer_scans"]["top_candidates"][0]["source_age_minutes"],
+            0.0,
+        )
+        self.assertFalse(
+            summary["optimizer_scans"]["top_candidates"][0]["source_stale"]
+        )
         self.assertIn("optimizer_scans scans=1 top=micro_current", text)
+        self.assertIn("age=", text)
+        self.assertIn("stale=no", text)
         self.assertIn("status=REJECT live_ready=no", text)
         self.assertIn("nonneg=88.9%", text)
         self.assertIn("candidate_maps candidates=2 top_consensus=PROMOTE", text)

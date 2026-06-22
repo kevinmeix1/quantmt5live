@@ -45,6 +45,7 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_quality_trend_opt_live6_w480.csv",
     "outputs/backtests/live_watch_opportunity_probe_opt_live6_w480.csv",
 )
+OPTIMIZER_SCAN_STALE_MINUTES = 6 * 60
 
 LIVE_LOOP_PATTERN = re.compile(
     r"iteration=(?P<iteration>\d+)\s+timestamp=(?P<timestamp>\S+)\s+"
@@ -291,12 +292,19 @@ def read_candidate_strategy_diagnostics(paths: list[str] | tuple[str, ...]) -> d
     }
 
 
-def read_optimizer_scans(paths: list[str] | tuple[str, ...]) -> dict[str, Any]:
+def read_optimizer_scans(
+    paths: list[str] | tuple[str, ...],
+    *,
+    now_utc: datetime | None = None,
+) -> dict[str, Any]:
+    now = now_utc or datetime.now(UTC)
     rows: list[dict[str, Any]] = []
     for path in paths:
         scan_path = Path(path)
         if not scan_path.exists():
             continue
+        mtime_utc = datetime.fromtimestamp(scan_path.stat().st_mtime, UTC)
+        age_minutes = max(0.0, (now - mtime_utc).total_seconds() / 60.0)
         with scan_path.open("r", encoding="utf-8", newline="") as handle:
             scan_rows = list(csv.DictReader(handle))
         if not scan_rows:
@@ -304,6 +312,9 @@ def read_optimizer_scans(paths: list[str] | tuple[str, ...]) -> dict[str, Any]:
         top_row = dict(scan_rows[0])
         top_row["source_path"] = str(scan_path)
         top_row["source_label"] = scan_path.stem
+        top_row["source_mtime_utc"] = mtime_utc.isoformat()
+        top_row["source_age_minutes"] = age_minutes
+        top_row["source_stale"] = age_minutes > OPTIMIZER_SCAN_STALE_MINUTES
         rows.append(top_row)
     rows.sort(key=_optimizer_scan_rank_key)
     return {
@@ -776,6 +787,11 @@ def _compact_optimizer_scans(
             {
                 "source_path": row.get("source_path", ""),
                 "source_label": row.get("source_label", ""),
+                "source_mtime_utc": row.get("source_mtime_utc", ""),
+                "source_age_minutes": _float_or_zero(
+                    row.get("source_age_minutes")
+                ),
+                "source_stale": _boolish(row.get("source_stale")),
                 "label": row.get("label", ""),
                 "symbols": row.get("symbols", ""),
                 "promotion_status": row.get("promotion_status", ""),
@@ -1050,6 +1066,8 @@ def _summary_text(summary: dict[str, Any]) -> str:
             f"scans={optimizer_scans.get('scan_count', 0)} "
             f"top={top.get('label', '')} "
             f"source={Path(top.get('source_path', '')).name if top.get('source_path') else 'n/a'} "
+            f"age={_format_age_minutes(top.get('source_age_minutes'))} "
+            f"stale={'yes' if top.get('source_stale') else 'no'} "
             f"status={top.get('promotion_status', '')} "
             f"live_ready={'yes' if top.get('promotion_live_ready') else 'no'} "
             f"active={top.get('wf_active_fold_fraction', 0.0):.1%} "
@@ -1142,6 +1160,13 @@ def _format_pct(raw_value: Any) -> str:
         return f"{float(raw_value):.1%}"
     except (TypeError, ValueError):
         return ""
+
+
+def _format_age_minutes(raw_value: Any) -> str:
+    minutes = _float_or_zero(raw_value)
+    if minutes < 60:
+        return f"{minutes:.0f}m"
+    return f"{minutes / 60:.1f}h"
 
 
 def _candidate_map_rank_key(row: dict[str, str]) -> tuple[int, float, float, float]:
