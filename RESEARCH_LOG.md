@@ -732,3 +732,41 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   improving the current live map. Continue monitoring EURGBP cross-rate and
   adaptive active-map selection as watchlist candidates, but do not bypass live
   promotion gates just to increase fill count.
+
+## 2026-06-22 evening/session candidate refresh
+
+- Refreshed live diagnostics after the 0.25-lot staged cap lift. The live loop
+  was healthy and flat: equity/balance $999,181.58, day P/L -$818.42, positions
+  0, margin 0, and `no_order` through the latest iterations.
+- Sentiment/pair analysis moved enough to flag heuristic tiny-probe sells on
+  EURGBP and EURUSD, but the actual guarded live strategy still requested zero
+  allocation across AUDUSD, EURGBP, EURUSD, GBPUSD, USDCAD, and USDCHF.
+- Checked current live diagnostics for evening-capable alternatives
+  (`session_momentum`, `volatility_squeeze`, `trend_pullback`, and
+  `mean_reversion`) under directional-probe allocation. None requested current
+  risk.
+- Ran W480 fixed-warmup full-data checks on the live-six universe:
+  - `session_momentum`: 129 fills, but `REJECT`; 55.6% non-negative folds,
+    20.0% active-positive folds, and negative median active return.
+  - `volatility_squeeze`: `PAPER_ONLY`; 10 fills, 100.0% non-negative folds,
+    100.0% active-positive folds, and 0.127% worst drawdown, but only 11.1%
+    active folds.
+  - `trend_pullback`: 68 fills, but `REJECT`; 66.7% non-negative folds,
+    negative median active return, and 1.644% worst drawdown.
+  - `mean_reversion`: `REJECT`; no active evaluation folds.
+  - `alpha_router`: 808 fills, but `REJECT`; only 16.7% non-negative folds and
+    negative median active return.
+  - `relative_strength`: 532 fills, but `REJECT`; 61.1% non-negative folds,
+    negative median active return, and 2.479% worst drawdown.
+  - `cross_rate_reversion`: `REJECT`; no active fixed-warmup evaluation folds
+    as a standalone live-six strategy.
+  - `dual_squeeze`: 22 fills, but `REJECT`; 88.9% non-negative folds, but
+    median active return stayed negative.
+- Tried to make the clean but underactive `volatility_squeeze` sleeve more
+  liquid. The liquid 20/6/0.75/1.5 variant increased full-sample fills to 122
+  but lost 1.432%, drew down 1.594%, and failed walk-forward eligibility. The
+  current squeeze parameters stayed safer but too sparse.
+- Decision: do not add an evening/session sleeve to the guarded live command
+  yet. More active candidates are currently buying fills by accepting a losing
+  fold distribution. Keep `volatility_squeeze` as a low-drawdown watchlist item,
+  but do not promote the liquid variant or any router/relative/session strategy.
