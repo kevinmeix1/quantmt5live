@@ -1158,3 +1158,20 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   high-frequency families create the requested trade count but consistently
   lose after costs. Keep the low-drawdown hybrid scan in the status rollup as a
   research watch item.
+
+## 2026-06-22 default-allocation low-drawdown validation
+
+- Re-ran the strongest low-drawdown hybrid maps on the live-seven full-data
+  slice with W480 fixed warmup, default allocation, and forced QUALIFY mode.
+  This checks whether the earlier risk-discipline failures were caused by the
+  diagnostic directional-probe allocator rather than the signals themselves.
+- Results:
+  - `all_quality_trend`: +0.637% full-sample return, 22 trades, 100/100 risk
+    discipline, 100.0% active-positive and non-negative folds, but
+    `PAPER_ONLY` because only 42.9% of all walk-forward folds were positive.
+  - `best_per_symbol_all`: +0.533% return, 26 trades, 100/100 risk discipline,
+    66.7% active-positive folds and 85.7% non-negative folds, `PAPER_ONLY`.
+  - `top4_lowdd`: only 4 trades and 0.0% active-positive folds, `REJECT`.
+- Decision: the default allocator repaired risk discipline but did not clear
+  live promotion robustness. Add the scan to the status rollup, keep the live
+  map unchanged, and continue watching for additional fold confirmation.

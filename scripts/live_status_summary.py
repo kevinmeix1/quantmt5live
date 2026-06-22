@@ -42,6 +42,7 @@ DEFAULT_CANDIDATE_DIAGNOSTICS_JSONS = (
     "outputs/live_strategy_diagnostics_directional_probe_latest.json",
 )
 DEFAULT_OPTIMIZER_SCAN_CSVS = (
+    "outputs/backtests/live_watch_active_lowdd_maps_default_w480_summary.csv",
     "outputs/backtests/live_watch_active_lowdd_maps_w480_summary.csv",
     "outputs/backtests/live_watch_sentiment_pressure_maps_w480_summary.csv",
     "outputs/backtests/live_watch_quality_trend_risk_repair_live6_w480.csv",
