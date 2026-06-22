@@ -988,3 +988,22 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   than the current live map in full-sample return and by-symbol attribution, but
   it still fails fold stability. Keep it in the live status optimizer rollup and
   continue looking for a version that reaches at least 70% non-negative folds.
+
+## 2026-06-22 live-six opportunity-probe exact map rejection
+
+- Refreshed live sentiment, attribution, pair analysis, and diagnostics. The
+  opportunity-probe candidate briefly surfaced actionable AUDUSD/EURUSD risk,
+  then cooled back to `strategy_no_change`; USDCHF remained a heuristic tiny
+  probe candidate.
+- Tested exact live-six maps that force those probe ideas through W480
+  fixed-warmup validation:
+  - `recent_aud_eur_probe_map`: 1,053 trades, -0.314% return, 11.1%
+    active-positive folds, 11.1% non-negative folds, `REJECT`.
+  - `usdchf_probe_map`: 619 trades, -0.154% return, 22.2%
+    active-positive/non-negative folds, `REJECT`.
+  - `aud_eur_usdchf_probe_map`: 1,423 trades, -0.432% return, 22.2%
+    active-positive/non-negative folds, `REJECT`.
+  - `all_opportunity_probe`: 2,520 trades, -0.792% return, 11.1%
+    active-positive/non-negative folds, `REJECT`.
+- Decision: do not route live symbols to `opportunity_probe`. These maps create
+  the requested churn but destroy expectancy and fold stability after costs.
