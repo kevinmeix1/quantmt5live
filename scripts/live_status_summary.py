@@ -43,6 +43,7 @@ DEFAULT_CANDIDATE_DIAGNOSTICS_JSONS = (
 )
 DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_sentiment_pressure_maps_w480_summary.csv",
+    "outputs/backtests/live_watch_quality_trend_risk_repair_live6_w480.csv",
     "outputs/backtests/live_watch_late_usd_macd_w480.csv",
     "outputs/backtests/live_watch_late_usd_multi_horizon_w480.csv",
     "outputs/backtests/live_watch_late_usd_quality_w480.csv",

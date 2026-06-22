@@ -1107,3 +1107,25 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
     variants lost money and fell to 33.3%-44.4% non-negative folds.
 - Decision: do not promote the compact sentiment map. Add it to read-only live
   diagnostics and optimizer rollups so it can be watched if conditions improve.
+
+## 2026-06-22 risk-repair and cross-rate refinement pass
+
+- Re-checked the pressure to force more trades against the full-data promotion
+  gates instead of loosening live controls. The account was flat, day P/L was
+  -$818.42, and no symbols were blocked or small-only.
+- Tested smaller/tighter quality-trend variants on the live-six data with W480
+  fixed warmup, directional-probe allocation, and forced QUALIFY mode:
+  - `small_current_h10_14_50k`: +0.039% return, 26 trades, 100.0%
+    non-negative folds, but `REJECT` because average risk discipline was
+    91.4/100 versus the 95.0/100 promotion floor.
+  - `tiny_hold8_h10_14_25k`: +0.020% return, 26 trades, 100.0%
+    non-negative folds, but `REJECT` because average risk discipline was
+    94.3/100.
+  - Later/stricter variants cut activity or stability and also rejected.
+- Re-ran the cross-rate scan with a broader EURGBP parameter set. EURGBP stayed
+  the only eligible cross-rate symbol; the best row improved to quality 1.56,
+  28 active signals, 67.9% hit rate, and +0.35 bps edge after cost.
+- Decision: keep live execution unchanged. Add the risk-repair quality scan to
+  the status optimizer rollup and feed the stronger cross-rate file into the
+  read-only watchlist, but do not promote either path until the promotion gates
+  are met.
