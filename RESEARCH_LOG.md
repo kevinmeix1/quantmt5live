@@ -510,6 +510,30 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   evidence. Keep the guarded live map unchanged and continue monitoring for
   genuine live-map approval rather than forcing sparse fold-concentrated alpha.
 
+## 2026-06-22 FX8 strategy-map expansion check
+
+- Refreshed the live inputs at 16:36Z. The guarded live map still requested no
+  risk; `opportunity_probe` requested AUDUSD/EURUSD long exposure with
+  `PENALTY_RISK`, matching the previously rejected concentration pattern.
+- Ran an expanded FX8 strategy-map search on
+  AUDUSD/EURCHF/EURGBP/EURUSD/GBPUSD/USDCAD/USDCHF/USDJPY with
+  `macd_momentum`, `champion_ensemble`, `quality_trend`,
+  `multi_horizon_momentum`, and `asset_adaptive_dual_squeeze`:
+  `outputs/backtests/live_watch_strategy_map_fx8_refine_wf.csv` and
+  `outputs/backtests/live_watch_strategy_map_fx8_refine_scores.csv`.
+- W960 produced apparent `PROMOTE` rows, including the familiar MACD core
+  (AUDUSD/EURUSD/USDCAD/USDCHF) and a six-symbol map that changes GBPUSD to
+  `multi_horizon_momentum`. Because earlier finer-fold checks were weaker, this
+  was treated as a candidate for confirmation, not a live change.
+- Confirmation run:
+  `outputs/backtests/live_watch_strategy_map_live6_refine_confirm_w480.csv`.
+  The MACD core reverted to `PAPER_ONLY` (44.4% positive folds, 66.7%
+  active-positive, 77.8% non-negative), and the six-symbol map was `REJECT`
+  (38.9% positive, 50.0% active-positive, 61.1% non-negative).
+- No live-map change. The W960 result is useful evidence that the MACD core
+  remains the best research sleeve, but the finer W480 stability check still
+  rejects a live promotion or a GBPUSD strategy switch.
+
 ## 2026-06-22 exact opportunity-probe intent rejection
 
 - Rechecked the latest all-symbol `opportunity_probe` diagnostic. It requested
