@@ -1129,3 +1129,32 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   the status optimizer rollup and feed the stronger cross-rate file into the
   read-only watchlist, but do not promote either path until the promotion gates
   are met.
+
+## 2026-06-22 evening active-strategy rejection pass
+
+- The live stack was healthy but flat at 20:58 UTC: equity $999,181.58, day P/L
+  -$818.42, no open positions, no margin, and no blocked symbols. Current
+  pair analysis was USD-positive, especially USDJPY, but the deployed map was
+  mostly session or threshold gated.
+- Tested higher-activity full-data sleeves on the balanced live-seven slice
+  with W480 fixed warmup, directional-probe allocation, and forced QUALIFY:
+  - `session_momentum` on EURUSD/USDCAD/USDCHF/USDJPY: 110 evaluation fills,
+    0.0% non-negative folds, `REJECT`.
+  - `mean_reversion`: 5,543 fills, 0.0% non-negative folds, `REJECT`.
+  - `relative_strength`: 5,151 fills, 0.0% non-negative folds, `REJECT`.
+  - `breakout` and `regime_switch`: 2,330 and 2,759 fills respectively, both
+    0.0% non-negative folds, `REJECT`.
+  - `trend_pullback`, `session_breakout`, and `fixing_reversal` were less bad
+    but still only 28.6%-42.9% non-negative folds, `REJECT`.
+- Ran a smaller hybrid optimizer around the least-bad low-drawdown candidates:
+  - `best_per_symbol_positive_only`: +0.061% full-sample return, 33 trades,
+    100.0% active-positive/non-negative folds, but `REJECT` because average
+    risk discipline was 90.0/100.
+  - `top_4_best_symbol_strategies`: +0.060% return, 26 trades, 100.0%
+    active-positive/non-negative folds, but risk discipline was 87.1/100.
+  - `compact_lowdd`: 52 trades, 85.7% active-positive/non-negative folds, but
+    slightly negative full-sample return and risk discipline 84.3/100.
+- Decision: no live promotion and no guardrail loosening. The aggressive
+  high-frequency families create the requested trade count but consistently
+  lose after costs. Keep the low-drawdown hybrid scan in the status rollup as a
+  research watch item.
