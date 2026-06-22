@@ -8,6 +8,7 @@ from quanthack.backtesting.strategy_map_optimizer import (
     write_symbol_strategy_scores_csv,
 )
 from quanthack.backtesting.allocation_profiles import allocation_policy_for_strategy
+from quanthack.cli.strategy_map_optimize import _parse_candidate_map
 from quanthack.core.clock import FixedModeClock
 from quanthack.core.config import load_config
 from quanthack.market.sample_data import generate_synthetic_market_data
@@ -119,4 +120,57 @@ class StrategyMapOptimizerTest(TestCase):
         self.assertTrue(result.candidates)
         self.assertTrue(
             all(candidate.walk_forward is not None for candidate in result.candidates)
+        )
+
+    def test_optimizer_accepts_exact_candidate_map(self) -> None:
+        config = load_config("configs/default.toml")
+        data = generate_synthetic_market_data(
+            symbols=("EURUSD", "GBPUSD"),
+            periods=72,
+            interval_minutes=15,
+            seed=405,
+        )
+
+        result = optimize_strategy_map(
+            config=config,
+            prices=data.prices,
+            quotes=data.quotes,
+            strategy_names=("simple_momentum", "macd_momentum"),
+            symbols=("EURUSD", "GBPUSD"),
+            candidate_maps=(
+                (
+                    "manual_hybrid",
+                    (
+                        ("EURUSD", "simple_momentum"),
+                        ("GBPUSD", "macd_momentum"),
+                    ),
+                ),
+            ),
+            top_symbol_counts=(1,),
+        )
+
+        manual = [
+            candidate
+            for candidate in result.candidates
+            if candidate.label == "manual_hybrid"
+        ]
+        self.assertEqual(len(manual), 1)
+        self.assertEqual(
+            manual[0].strategy_map_text,
+            "EURUSD=simple_momentum GBPUSD=macd_momentum",
+        )
+
+    def test_parse_candidate_map(self) -> None:
+        label, pairs = _parse_candidate_map(
+            "manual:AUDUSD=macd_momentum,GBPUSD=asset_adaptive_dual_squeeze",
+            index=1,
+        )
+
+        self.assertEqual(label, "manual")
+        self.assertEqual(
+            pairs,
+            (
+                ("AUDUSD", "macd_momentum"),
+                ("GBPUSD", "asset_adaptive_dual_squeeze"),
+            ),
         )

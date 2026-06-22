@@ -124,6 +124,7 @@ def optimize_strategy_map(
     quotes: QuoteHistory,
     strategy_names: tuple[str, ...],
     symbols: tuple[str, ...] | None = None,
+    candidate_maps: tuple[tuple[str, tuple[tuple[str, str], ...]], ...] = (),
     include_walk_forward: bool = False,
     train_size: int = 960,
     test_size: int = 192,
@@ -135,6 +136,10 @@ def optimize_strategy_map(
 ) -> StrategyMapOptimizationResult:
     selected_symbols = _selected_symbols(prices=prices, quotes=quotes, symbols=symbols)
     normalized_strategies = _normalize_unique_strategy_names(strategy_names)
+    normalized_candidate_maps = _normalize_candidate_maps(
+        candidate_maps=candidate_maps,
+        selected_symbols=selected_symbols,
+    )
     if not normalized_strategies:
         raise ValueError("strategy-map optimizer needs at least one strategy")
 
@@ -162,6 +167,7 @@ def optimize_strategy_map(
         min_positive_pnl_usd=min_positive_pnl_usd,
         top_symbol_counts=top_symbol_counts,
     )
+    candidate_specs = normalized_candidate_maps + candidate_specs
 
     candidates: list[StrategyMapCandidate] = []
     seen_maps: set[tuple[tuple[str, str], ...]] = set()
@@ -522,6 +528,45 @@ def _candidate_specs(
         )
 
     return tuple(specs)
+
+
+def _normalize_candidate_maps(
+    *,
+    candidate_maps: tuple[tuple[str, tuple[tuple[str, str], ...]], ...],
+    selected_symbols: tuple[str, ...],
+) -> tuple[tuple[str, dict[str, str]], ...]:
+    selected_symbol_set = set(selected_symbols)
+    normalized_maps: list[tuple[str, dict[str, str]]] = []
+    seen_labels: set[str] = set()
+    for raw_label, raw_map in candidate_maps:
+        label = raw_label.strip()
+        if not label:
+            raise ValueError("custom strategy-map candidate label is required")
+        if label in seen_labels:
+            raise ValueError(f"duplicate custom strategy-map candidate label {label!r}")
+        seen_labels.add(label)
+        strategy_by_symbol: dict[str, str] = {}
+        for raw_symbol, raw_strategy in raw_map:
+            symbol = instrument_for(raw_symbol).symbol
+            if symbol not in selected_symbol_set:
+                raise ValueError(
+                    f"custom strategy-map candidate {label!r} uses symbol "
+                    f"{symbol!r}, which is not in the selected data symbols"
+                )
+            strategy = normalize_strategy_name(raw_strategy)
+            if strategy not in STRATEGY_NAMES:
+                raise ValueError(f"unsupported strategy {raw_strategy!r}")
+            if symbol in strategy_by_symbol:
+                raise ValueError(
+                    f"custom strategy-map candidate {label!r} repeats symbol {symbol!r}"
+                )
+            strategy_by_symbol[symbol] = strategy
+        if not strategy_by_symbol:
+            raise ValueError(
+                f"custom strategy-map candidate {label!r} needs at least one symbol"
+            )
+        normalized_maps.append((label, strategy_by_symbol))
+    return tuple(normalized_maps)
 
 
 def _best_score_by_symbol(

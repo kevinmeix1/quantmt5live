@@ -29,6 +29,15 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--symbol", action="append", default=None)
     parser.add_argument("--price-csv", default=None)
     parser.add_argument("--quote-csv", default=None)
+    parser.add_argument(
+        "--candidate-map",
+        action="append",
+        default=None,
+        help=(
+            "Exact map to evaluate as label:SYMBOL=STRATEGY,SYMBOL=STRATEGY. "
+            "Repeat to compare several hand-built maps."
+        ),
+    )
     parser.add_argument("--include-walk-forward", action="store_true")
     parser.add_argument("--train-size", type=int, default=960)
     parser.add_argument("--test-size", type=int, default=192)
@@ -83,6 +92,10 @@ def run(args: argparse.Namespace) -> None:
         quotes=load_quote_history(quote_csv),
         strategy_names=strategies,
         symbols=tuple(args.symbol) if args.symbol else None,
+        candidate_maps=tuple(
+            _parse_candidate_map(value, index=index)
+            for index, value in enumerate(args.candidate_map or (), start=1)
+        ),
         include_walk_forward=args.include_walk_forward,
         train_size=args.train_size,
         test_size=args.test_size,
@@ -155,3 +168,39 @@ def run(args: argparse.Namespace) -> None:
 
 def main(argv: Sequence[str] | None = None) -> None:
     run(build_parser().parse_args(argv))
+
+
+def _parse_candidate_map(
+    raw: str,
+    *,
+    index: int,
+) -> tuple[str, tuple[tuple[str, str], ...]]:
+    label = f"custom_map_{index}"
+    map_text = raw.strip()
+    if not map_text:
+        raise argparse.ArgumentTypeError("candidate-map cannot be empty")
+    if ":" in map_text:
+        label_part, map_text = map_text.split(":", 1)
+        label = label_part.strip() or label
+    pairs: list[tuple[str, str]] = []
+    for item in map_text.split(","):
+        item = item.strip()
+        if not item:
+            continue
+        if "=" not in item:
+            raise argparse.ArgumentTypeError(
+                "candidate-map entries must use SYMBOL=STRATEGY"
+            )
+        symbol, strategy = item.split("=", 1)
+        symbol = symbol.strip()
+        strategy = strategy.strip()
+        if not symbol or not strategy:
+            raise argparse.ArgumentTypeError(
+                "candidate-map entries must include both symbol and strategy"
+            )
+        pairs.append((symbol, strategy))
+    if not pairs:
+        raise argparse.ArgumentTypeError(
+            "candidate-map needs at least one SYMBOL=STRATEGY entry"
+        )
+    return label, tuple(pairs)

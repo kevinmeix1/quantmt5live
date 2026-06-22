@@ -966,3 +966,25 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not switch AUDUSD or GBPUSD live routing. GBPUSD squeeze is
   worth continued paper-watch because it matches the live research-cycle signal,
   but it is too sparse and too fold-concentrated to promote.
+
+## 2026-06-22 live-six exact map optimizer pass
+
+- Added `strategy-map-optimize --candidate-map` so hand-built live maps can be
+  evaluated through the same shared-risk backtest, W480 fixed-warmup
+  walk-forward, promotion decision, and CSV writer as generated optimizer maps.
+- Built a combined live-six full-data research slice from the extracted
+  AUDUSD, EURGBP, EURUSD, GBPUSD, USDCAD, and USDCHF imports: 2,212 bars per
+  symbol.
+- Compared the current live map against a more aggressive hybrid that moves
+  AUDUSD and GBPUSD to `asset_adaptive_dual_squeeze` while keeping EURGBP on
+  `champion_ensemble` and EURUSD/USDCAD/USDCHF on `macd_momentum`:
+  - `current_live_map`: -0.035% full-sample return, 228 trades, 55.6%
+    active-positive folds, 55.6% non-negative folds, `REJECT`.
+  - `aud_gbp_squeeze_map`: +0.021% full-sample return, 150 trades, 55.6%
+    active-positive folds, 55.6% non-negative folds, `REJECT`.
+  - Generated `best_per_symbol_positive_only`: +0.048% full-sample return and
+    79 trades, but also only 55.6% non-negative folds, so it rejected.
+- Decision: no live map promotion yet. The AUD/GBP squeeze hybrid is better
+  than the current live map in full-sample return and by-symbol attribution, but
+  it still fails fold stability. Keep it in the live status optimizer rollup and
+  continue looking for a version that reaches at least 70% non-negative folds.
