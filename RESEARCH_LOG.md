@@ -481,6 +481,35 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   GBPUSD about -$1,216.31. Keep this basket out of live promotion despite the
   current actionable diagnostic.
 
+## 2026-06-22 MACD basket and parameter recheck
+
+- Rechecked the activity-scan `usd_ok/macd_momentum` idea with the fixed
+  QUALIFY clock:
+  `outputs/backtests/live_watch_usd_ok_macd_eurusd_usdcad_usdjpy_*`.
+  Full-sample was positive (+0.440%, 18 fills, 100/100 risk discipline), but
+  fixed-warmup validation stayed `PAPER_ONLY`; one fold contributed 93.0% of
+  positive walk-forward return.
+- Removing weak USDJPY produced a cleaner EURUSD/USDCAD pair:
+  `outputs/backtests/live_watch_usd_ok_macd_eurusd_usdcad_*`. It returned
+  +0.389% with 100/100 risk and lower drawdown, but only 12 full-sample fills;
+  W960 and W480 fixed-warmup both stayed `PAPER_ONLY` because the gains were
+  concentrated in one fold.
+- Tested `clean_recovery/macd_momentum`
+  (EURUSD/GBPUSD/USDCAD/USDJPY):
+  `outputs/backtests/live_watch_clean_recovery_macd_eurusd_gbpusd_usdcad_usdjpy_*`.
+  It had 30 fills and 100/100 risk discipline, but W960 validation remained
+  `PAPER_ONLY`; symbol attribution showed GBPUSD and USDJPY were both negative.
+- Re-ran focused MACD parameter validation on
+  AUDUSD/EURUSD/USDCAD/USDCHF/USDJPY:
+  `outputs/backtests/live_watch_macd_param_recheck_5symbols_w960.csv` and
+  `outputs/backtests/live_watch_macd_param_recheck_5symbols_w480.csv`.
+  The current 8/21/8 parameter family was still best by full-sample return, but
+  promotion remained `PAPER_ONLY`: W960 missed the total-positive gate by a
+  narrow 4/6 folds (66.7% vs 67.0%), and W480 dropped to 44.4% positive folds.
+- Do not add USDJPY, widen MACD hours, or switch MACD parameters on this
+  evidence. Keep the guarded live map unchanged and continue monitoring for
+  genuine live-map approval rather than forcing sparse fold-concentrated alpha.
+
 ## 2026-06-22 exact opportunity-probe intent rejection
 
 - Rechecked the latest all-symbol `opportunity_probe` diagnostic. It requested
