@@ -3,10 +3,15 @@ from __future__ import annotations
 import csv
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from zipfile import BadZipFile, ZipFile
 from zoneinfo import ZoneInfo
+
+try:
+    from datetime import UTC
+except ImportError:  # Python < 3.11
+    UTC = timezone.utc
 
 
 PRICE_FIELDS = ("timestamp", "symbol", "close")

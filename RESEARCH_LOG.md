@@ -424,3 +424,26 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   read-only aggressive probes are useful as alerts, but not as live
   configuration unless a future candidate clears both return/fold robustness
   and risk-discipline gates.
+
+## 2026-06-22 recovery directional scan and fixed-warmup rejection
+
+- Ran a bounded recovery scan with directional-probe allocation across
+  current/live and recovery baskets using quality trend, relative strength,
+  regime switch, mean reversion, session momentum, autocorrelation regime,
+  trend pullback, and volatility squeeze:
+  `outputs/backtests/live_watch_recovery_directional_cycle.csv`.
+- The scan produced active-but-small positive top rows:
+  `current_live/volatility_squeeze` returned 0.0185% over 38 fills,
+  `gbp_aud_chf/quality_trend` returned 0.0180% over 20 fills, and
+  `recovery_fx/quality_trend` returned 0.0123% over 11 fills. These are
+  monitor-only because the directional-probe path is not enough evidence for a
+  live-map change.
+- Validated the three top rows with fixed-warmup walk-forward:
+  `outputs/backtests/live_watch_vol_squeeze_current_live_w960_summary.csv`,
+  `outputs/backtests/live_watch_quality_gbp_aud_chf_w960_summary.csv`, and
+  `outputs/backtests/live_watch_quality_recovery_fx_w960_summary.csv`. All
+  three were `REJECT` with zero active test folds. Do not promote them.
+- Also refreshed broad signal diagnostics. The only qualified signals remained
+  champion ensemble asset-adaptive-dual-squeeze signals on GBPUSD, AUDUSD, and
+  USDJPY. Current live diagnostics are still flat/no approved risk, so keep
+  these as watchlist evidence only.

@@ -495,6 +495,7 @@ class LiveStatusSummaryScriptTest(TestCase):
             "EURGBP",
         )
         self.assertIn("candidate_diagnostics candidates=1", text)
+        self.assertIn("alloc_status=OK", text)
         self.assertIn("focus=EURGBP", text)
         self.assertIn("strategy=cross_rate_reversion raw=0.00 alloc=0.00", text)
         self.assertIn("candidate_maps candidates=2 top_consensus=PROMOTE", text)

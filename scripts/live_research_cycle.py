@@ -4,9 +4,14 @@ import argparse
 import json
 import sys
 from dataclasses import asdict
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+try:
+    from datetime import UTC
+except ImportError:  # Python < 3.11
+    UTC = timezone.utc
 
 project_root = Path(__file__).resolve().parents[1]
 src_path = project_root / "src"

@@ -2,10 +2,15 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
-from datetime import UTC
+from datetime import timezone
 from enum import StrEnum
 from math import exp, isfinite, log, sqrt
 from typing import Protocol
+
+try:
+    from datetime import UTC
+except ImportError:  # Python < 3.11
+    UTC = timezone.utc
 
 from quanthack.core.instruments import AssetClass, instrument_for
 from quanthack.market.market_data import QuoteSnapshot

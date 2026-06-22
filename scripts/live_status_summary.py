@@ -4,9 +4,14 @@ import argparse
 import csv
 import json
 import re
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+try:
+    from datetime import UTC
+except ImportError:  # Python < 3.11
+    UTC = timezone.utc
 
 
 BLOCKED_FRESH_RISK_STATES = {
@@ -890,6 +895,7 @@ def _summary_text(summary: dict[str, Any]) -> str:
             f"candidates={candidate_diagnostics.get('candidate_count', 0)} "
             f"top={top.get('label', '')} "
             f"profile={top.get('allocation_profile', 'default')} "
+            f"alloc_status={top.get('allocation_status', '')} "
             f"requested={top.get('requested_gross_notional_usd', 0.0):.2f} "
             f"adjusted={top.get('adjusted_gross_notional_usd', 0.0):.2f} "
             f"actionable={top.get('actionable_symbol_count', 0)} "

@@ -3,9 +3,14 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+try:
+    from datetime import UTC
+except ImportError:  # Python < 3.11
+    UTC = timezone.utc
 
 
 BLOCKED_FRESH_RISK_STATES = {
