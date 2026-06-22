@@ -1032,3 +1032,31 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: no live promotion yet. Keep this scan in the live status optimizer
   rollup because it is the closest evidence for a more active map, but do not
   bypass the promotion gates while the account is already down on the day.
+
+## 2026-06-22 live-seven USDJPY pressure pass
+
+- Imported USDJPY from the extracted Downloads parquet set and merged it with
+  the live-six slice, producing a balanced live-seven research set with 2,212
+  fifteen-minute bars per symbol in both price and quote files.
+- Tested USDJPY alongside AUDUSD, EURGBP, EURUSD, GBPUSD, USDCAD, and USDCHF
+  using the active/research sleeves: `champion_ensemble`, `macd_momentum`,
+  `asset_adaptive_dual_squeeze`, `volatility_squeeze`, `quality_trend`,
+  `multi_horizon_momentum`, `cross_rate_reversion`, and `usd_pressure_router`.
+- Results with W480 fixed warmup, directional-probe allocation, and forced
+  QUALIFY mode:
+  - `best_per_symbol_all`: +0.070% full-sample return, 78 trades, 62.5%
+    active-positive folds, 66.7% non-negative folds, `REJECT`. The optimizer
+    selected USDJPY as `cross_rate_reversion`, but the promoted subset still
+    effectively matched the earlier six-symbol map because USDJPY did not add a
+    stable positive sleeve.
+  - `live7_current_plus_usdjpy_macd`: -0.039% return, 242 trades, 44.4%
+    active-positive/non-negative folds, `REJECT`.
+  - `live7_research_asset_pressure`: +0.021% return, 114 trades, 44.4%
+    active-positive/non-negative folds, `REJECT`.
+  - `live7_usd_pressure_overlay`: -0.251% return, 610 trades, 11.1%
+    active-positive/non-negative folds, `REJECT`.
+  - `all_usd_pressure_router`: -0.645% return, 1,449 trades, 0.0%
+    non-negative folds, `REJECT`.
+- Decision: do not add USDJPY or the USD-pressure router to the live command.
+  The extra symbol and router create the requested activity, but the full-data
+  walk-forward result says the activity is negative expectancy after costs.
