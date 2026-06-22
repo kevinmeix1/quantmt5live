@@ -641,3 +641,28 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Do not switch the guarded live command to adaptive selection yet. The fix
   restores useful research evidence and finds more active paper candidates, but
   the live promotion gate still rejects a live-map change.
+
+## 2026-06-22 USDJPY live expansion check
+
+- Rechecked whether the currently supportive USDJPY sentiment justifies adding
+  USDJPY to the guarded live map.
+- USDJPY alone under `macd_momentum` was inactive on both windows:
+  `outputs/backtests/live_watch_usdjpy_macd_w960_summary.csv` and
+  `outputs/backtests/live_watch_usdjpy_macd_w480_summary.csv` produced zero
+  evaluation fills and were `REJECT`.
+- USDJPY alone under `opportunity_probe` was active but strongly rejected:
+  W960 had 220 fills, 0.0% non-negative folds, negative median return, negative
+  Sharpe, and 0/100 average risk discipline; W480 stayed negative with 342
+  fills, 5.6% non-negative folds, and 0/100 risk discipline.
+- Adding `USDJPY=macd_momentum` to the current live-six map passed the coarse
+  W960 check but did not improve the setup:
+  `live_watch_live7_add_usdjpy_macd_w960_summary.csv` was `PROMOTE` with 58
+  fills, 83.3% positive folds, 83.3% active-positive folds, 0.490% worst
+  drawdown, and 100/100 risk discipline, versus the exact live-six W960's 54
+  fills, 100.0% positive folds, 100.0% active-positive folds, and 0.406% worst
+  drawdown.
+- The finer W480 check remained `PAPER_ONLY` for both exact live-six and live7:
+  50.0% total positive folds, 69.2% active-positive folds, 77.8% non-negative
+  folds, and 100/100 risk discipline. Live7 added only four evaluation fills.
+- Live diagnostics also requested zero current notional for both exact live-six
+  and live7. No live restart or USDJPY expansion is warranted on this evidence.
