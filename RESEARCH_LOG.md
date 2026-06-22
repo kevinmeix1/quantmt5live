@@ -512,3 +512,35 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   this evidence. The refinement supports continuing to monitor the MACD core
   and researching `quality_trend`, but it does not justify broadening live risk
   just to increase trade frequency.
+
+## 2026-06-22 adaptive live-six research-clock fix
+
+- Added `--force-qualify-mode` to `adaptive-strategy-select` and threaded the
+  optional fixed research clock through adaptive training, dynamic per-symbol
+  scoring, and selected-candidate evaluation. This aligns adaptive selection
+  with the other full-data research CLIs; without the override, historical bars
+  can be classified outside QUALIFY and adaptive scans can misleadingly produce
+  zero active folds.
+- Added monitor clarity to `live_status_summary.py`: when pair analysis reports
+  an `eligible_*probe*` action but live strategy diagnostics request no risk,
+  the text summary now emits `heuristic_only_probes`. This makes it explicit
+  that a tiny-probe heuristic is not the same thing as live strategy approval.
+- Verification:
+  `.venv/Scripts/python.exe -m unittest tests.test_cli
+  tests.test_adaptive_strategy_selector tests.test_live_status_summary_script`,
+  `.venv/Scripts/python.exe -m py_compile ...`, and default `python -m unittest
+  tests.test_live_status_summary_script` all passed.
+- Re-ran adaptive live-six refinement with the fixed clock:
+  `outputs/backtests/live_watch_adaptive_live6_refine_force_*`. It produced 74
+  evaluation fills, 100/100 risk discipline, 61.1% active folds, 63.6%
+  active-positive folds, 77.8% non-negative folds, 0.347% worst drawdown, and
+  stitched OOS final equity $1,023,214.20. Promotion remained `PAPER_ONLY`.
+- Re-ran the stricter training-fill/churn variant:
+  `outputs/backtests/live_watch_adaptive_live6_refine_force_gated_*`. It
+  produced 90 evaluation fills and stitched OOS final equity $1,025,030.16, but
+  fold stability still missed live promotion: 44.4% total positive folds,
+  61.5% active-positive folds, 72.2% non-negative folds, promotion
+  `PAPER_ONLY`.
+- Do not switch the guarded live command to adaptive selection yet. The fix
+  restores useful research evidence and finds more active paper candidates, but
+  the live promotion gate still rejects a live-map change.

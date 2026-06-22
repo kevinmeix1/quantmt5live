@@ -363,6 +363,7 @@ class CliTest(TestCase):
                     "8",
                     "--step-size",
                     "8",
+                    "--force-qualify-mode",
                     "--min-train-fills",
                     "1",
                     "--min-train-adjusted-return-pct",
@@ -389,6 +390,7 @@ class CliTest(TestCase):
 
         self.assertIn("Adaptive Strategy Selection", output)
         self.assertIn("Candidates: simple_momentum, hybrid_map", output)
+        self.assertIn("Force qualify mode: yes", output)
         self.assertIn("Min train fills: 1", output)
         self.assertIn("Train fill penalty: 2e-06", output)
         self.assertIn("Per-symbol selection: yes", output)

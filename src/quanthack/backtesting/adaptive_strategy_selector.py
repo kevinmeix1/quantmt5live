@@ -20,6 +20,7 @@ from quanthack.backtesting.warmup import (
     WarmupPortfolioEvaluation,
     evaluate_portfolio_after_warmup,
 )
+from quanthack.core.clock import CompetitionClock, FixedModeClock
 from quanthack.core.config import AppConfig
 from quanthack.core.instruments import instrument_for
 from quanthack.market.market_data import PriceBar, PriceHistory, QuoteHistory, QuoteSnapshot
@@ -453,6 +454,7 @@ def run_adaptive_strategy_selection(
     train_fill_penalty_pct: float = 0.0,
     per_symbol_selection: bool = False,
     per_symbol_only: bool = False,
+    clock: CompetitionClock | FixedModeClock | None = None,
 ) -> AdaptiveStrategySelectionResult:
     _validate_window_sizes(
         train_size=train_size,
@@ -519,6 +521,7 @@ def run_adaptive_strategy_selection(
                         prices=train_prices,
                         quotes=train_quotes,
                         candidate=candidate,
+                        clock=clock,
                     )
                     for candidate in candidates
                 ),
@@ -537,12 +540,14 @@ def run_adaptive_strategy_selection(
                 symbols=selected_symbols,
                 strategy_names=strategy_names,
                 train_fill_penalty_pct=train_fill_penalty_pct,
+                clock=clock,
             )
             dynamic_score = _score_training_candidate(
                 config=config,
                 prices=train_prices,
                 quotes=train_quotes,
                 candidate=dynamic_candidate,
+                clock=clock,
             )
             candidate_scores = (
                 (dynamic_score,)
@@ -619,6 +624,7 @@ def run_adaptive_strategy_selection(
             prices=combined_prices,
             quotes=combined_quotes,
             candidate=selected_candidate,
+            clock=clock,
         )
         evaluation = evaluate_portfolio_after_warmup(
             full_result,
@@ -1006,12 +1012,14 @@ def _score_training_candidate(
     prices: PriceHistory,
     quotes: QuoteHistory,
     candidate: AdaptiveStrategyCandidate,
+    clock: CompetitionClock | FixedModeClock | None = None,
 ) -> AdaptiveStrategyTrainScore:
     result = _run_candidate(
         config=config,
         prices=prices,
         quotes=quotes,
         candidate=candidate,
+        clock=clock,
     )
     metrics = build_competition_metrics(
         equity_points=result.equity_curve,
@@ -1040,6 +1048,7 @@ def _build_per_symbol_adaptive_candidate(
     symbols: tuple[str, ...],
     strategy_names: tuple[str, ...],
     train_fill_penalty_pct: float,
+    clock: CompetitionClock | FixedModeClock | None = None,
 ) -> AdaptiveStrategyCandidate:
     normalized_strategies = _normalize_unique_strategy_names(strategy_names)
     if not normalized_strategies:
@@ -1058,6 +1067,7 @@ def _build_per_symbol_adaptive_candidate(
                             label=strategy_name,
                             strategy_by_symbol=((symbol, strategy_name),),
                         ),
+                        clock=clock,
                     )
                     for strategy_name in normalized_strategies
                 ),
@@ -1097,6 +1107,7 @@ def _run_candidate(
     prices: PriceHistory,
     quotes: QuoteHistory,
     candidate: AdaptiveStrategyCandidate,
+    clock: CompetitionClock | FixedModeClock | None = None,
 ):
     engine = PortfolioBacktestEngine(
         strategies={
@@ -1115,7 +1126,7 @@ def _run_candidate(
             )
             for symbol, _ in candidate.strategy_by_symbol
         },
-        clock=config.competition.to_clock(),
+        clock=clock or config.competition.to_clock(),
         fill_model=FillModel(slippage_bps=config.backtest.slippage_bps),
         periods_per_year=config.backtest.periods_per_year,
     )

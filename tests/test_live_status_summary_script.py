@@ -178,6 +178,11 @@ class LiveStatusSummaryScriptTest(TestCase):
                 json.dumps(
                     {
                         "pairs": {
+                            "AUDUSD": {
+                                "action": "eligible_tiny_probe_sell",
+                                "combined_score": -1.9,
+                                "technical_score": -2.2,
+                            },
                             "EURUSD": {
                                 "action": "cooldown_realized_drag",
                                 "combined_score": -2.0,
@@ -223,6 +228,13 @@ class LiveStatusSummaryScriptTest(TestCase):
                     {
                         "allocation": {"status": "OK"},
                         "symbols": {
+                            "AUDUSD": {
+                                "status": "strategy_no_change",
+                                "raw_reason_bucket": "threshold_gated",
+                                "raw_reason": "live strategy flat",
+                                "raw_change_notional_usd": 0,
+                                "allocation_change_notional_usd": 0,
+                            },
                             "EURUSD": {
                                 "status": "strategy_no_change",
                                 "raw_reason_bucket": "threshold_gated",
@@ -244,6 +256,7 @@ class LiveStatusSummaryScriptTest(TestCase):
                 json.dumps(
                     {
                         "pairs": {
+                            "AUDUSD": {"score": 0.5},
                             "EURUSD": {"score": 0.0},
                             "GBPUSD": {"score": -1.25},
                         }
@@ -479,8 +492,15 @@ class LiveStatusSummaryScriptTest(TestCase):
 
         self.assertEqual(summary["live_loop"]["iteration"], 9)
         self.assertEqual(summary["latest_order"]["symbol"], "EURUSD")
+        self.assertEqual(summary["heuristic_only_probes"]["candidate_count"], 2)
+        self.assertEqual(
+            summary["heuristic_only_probes"]["top_candidates"][0]["symbol"],
+            "AUDUSD",
+        )
         self.assertIn("status=FLAT_FRESH_RISK_BLOCKED", text)
         self.assertIn("reentry_queue candidates=2 next=GBPUSD", text)
+        self.assertIn("heuristic_only_probes candidates=2 top=AUDUSD", text)
+        self.assertIn("gate=strategy_no_change state=", text)
         self.assertIn("after=working clear=2026-01-01T01:00:00+00:00", text)
         self.assertIn("research consensus=REJECT", text)
         self.assertIn("fixed_warmup consensus=PAPER_ONLY", text)

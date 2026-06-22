@@ -15,6 +15,7 @@ from quanthack.backtesting.adaptive_strategy_selector import (
     write_adaptive_strategy_stitched_equity_csv,
 )
 from quanthack.cli._format import money
+from quanthack.core.clock import FixedModeClock
 from quanthack.core.config import load_config
 from quanthack.core.instruments import instrument_for
 from quanthack.market.market_data import load_price_history, load_quote_history
@@ -58,6 +59,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--train-size", type=int, default=960)
     parser.add_argument("--test-size", type=int, default=192)
     parser.add_argument("--step-size", type=int, default=192)
+    parser.add_argument(
+        "--force-qualify-mode",
+        action="store_true",
+        help="Use a fixed QUALIFY research clock instead of competition schedule gating.",
+    )
     parser.add_argument(
         "--loss-cooldown-folds",
         type=int,
@@ -175,6 +181,7 @@ def run(args: argparse.Namespace) -> None:
         train_fill_penalty_pct=args.train_fill_penalty_pct,
         per_symbol_selection=args.per_symbol_selection,
         per_symbol_only=args.per_symbol_only,
+        clock=FixedModeClock() if args.force_qualify_mode else None,
     )
     write_adaptive_strategy_selection_summary_csv(result, args.summary_output)
     write_adaptive_strategy_selection_folds_csv(result, args.folds_output)
@@ -198,6 +205,7 @@ def run(args: argparse.Namespace) -> None:
     print(f"  Candidates: {', '.join(result.strategy_names)}")
     print(f"  Price CSV: {price_csv}")
     print(f"  Quote CSV: {quote_csv}")
+    print(f"  Force qualify mode: {'yes' if args.force_qualify_mode else 'no'}")
     print(f"  Folds: {len(result.folds)}")
     print(f"  Loss cooldown folds: {result.loss_cooldown_folds}")
     print(f"  Min train fills: {result.min_train_fills}")

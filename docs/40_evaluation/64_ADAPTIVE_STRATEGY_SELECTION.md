@@ -50,6 +50,7 @@ quanthack adaptive-strategy-select \
   --train-size 480 \
   --test-size 96 \
   --step-size 96 \
+  --force-qualify-mode \
   --loss-cooldown-folds 1 \
   --summary-output outputs/backtests/adaptive_strategy_selection_summary.csv \
   --folds-output outputs/backtests/adaptive_strategy_selection_folds.csv \
@@ -57,6 +58,10 @@ quanthack adaptive-strategy-select \
   --stitched-equity-output outputs/backtests/adaptive_strategy_selection_stitched_equity.csv \
   --promotion-output outputs/backtests/adaptive_strategy_selection_promotion.csv
 ```
+
+Use `--force-qualify-mode` for historical full-data research during a live
+competition. Without it, the competition clock can correctly classify older
+historical bars as non-QUALIFY and produce no active folds.
 
 ## How To Read It
 

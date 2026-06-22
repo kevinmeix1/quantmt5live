@@ -141,6 +141,7 @@ def build_summary(
             pair_rows,
             live_symbols=set(diagnostics_symbols),
         ),
+        "heuristic_only_probes": _heuristic_only_probes(pair_rows),
         "research_consensus": research_consensus or {},
         "fixed_warmup_consensus": fixed_warmup_consensus or {},
         "candidate_watchlist": _compact_candidate_watchlist(candidate_watchlist),
@@ -506,6 +507,43 @@ def _reentry_queue(
     }
 
 
+def _heuristic_only_probes(
+    pair_rows: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    rows = []
+    for symbol, row in pair_rows.items():
+        action = str(row.get("action", ""))
+        raw_change = _float_or_zero(row.get("raw_change_notional_usd"))
+        alloc_change = _float_or_zero(row.get("allocation_change_notional_usd"))
+        if not action.startswith("eligible_") or "probe" not in action:
+            continue
+        if raw_change != 0 or alloc_change != 0:
+            continue
+        diagnostic_status = row.get("diagnostic_status", "")
+        rows.append(
+            {
+                "symbol": symbol,
+                "action": action,
+                "live_gate": diagnostic_status or "no_live_strategy_signal",
+                "deal_state": row.get("deal_state", ""),
+                "combined_score": _float_or_zero(row.get("combined_score")),
+                "sentiment_score": _float_or_zero(row.get("sentiment_score")),
+                "diagnostic_status": diagnostic_status,
+                "diagnostic_bucket": row.get("diagnostic_bucket", ""),
+            }
+        )
+    rows.sort(
+        key=lambda item: (
+            -abs(item["combined_score"]),
+            item["symbol"],
+        )
+    )
+    return {
+        "candidate_count": len(rows),
+        "top_candidates": rows[:5],
+    }
+
+
 def _compact_candidate_watchlist(
     watchlist: dict[str, Any] | None,
 ) -> dict[str, Any]:
@@ -806,6 +844,7 @@ def _summary_text(summary: dict[str, Any]) -> str:
     research_cycle = summary.get("research_cycle", {})
     candidate_diagnostics = summary.get("candidate_strategy_diagnostics", {})
     research_live_gate = summary.get("research_live_gate", {})
+    heuristic_only = summary.get("heuristic_only_probes", {})
     lines = [
         f"{summary['timestamp_utc']} status={summary['status']}",
         (
@@ -852,6 +891,19 @@ def _summary_text(summary: dict[str, Any]) -> str:
             f"clear={top.get('estimated_state_clear_utc') or 'n/a'} "
             f"action={top.get('action', '')} "
             f"diag={top.get('diagnostic_status', '')} "
+            f"score={top.get('combined_score', 0.0):.2f}"
+        )
+    if heuristic_only.get("candidate_count", 0) > 0:
+        top = heuristic_only.get("top_candidates", [{}])[0]
+        lines.append(
+            "heuristic_only_probes "
+            f"candidates={heuristic_only.get('candidate_count', 0)} "
+            f"top={top.get('symbol', '')} "
+            f"action={top.get('action', '')} "
+            f"gate={top.get('live_gate', '')} "
+            f"state={top.get('deal_state', '')} "
+            f"diag={top.get('diagnostic_status', '')} "
+            f"bucket={top.get('diagnostic_bucket', '')} "
             f"score={top.get('combined_score', 0.0):.2f}"
         )
     if research:
