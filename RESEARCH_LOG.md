@@ -383,3 +383,24 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   max drawdown, 74 fills, 100.0% active-positive folds). Lower thresholds added
   only six fills and reduced return to +2.396% while increasing max drawdown to
   0.605%, so keep the current MACD gates.
+
+## 2026-06-22 afternoon activity and actionable-probe check
+
+- Re-ran MACD afternoon/hour-extension candidates with the clean
+  force-qualified default allocation path:
+  `outputs/backtests/live_watch_macd_afternoon_default_w960.csv`. Adding 15:00
+  UTC produced more fills but reduced return and fold stability:
+  `add_15_only_6_15` returned +2.548% over 86 fills with 66.7% positive folds
+  and stayed `PAPER_ONLY`; the pure 15-17 UTC sleeve was `REJECT`. Do not widen
+  MACD hours just to force afternoon trades.
+- Tested the exact current aggressive read-only intent,
+  `opportunity_probe` on `EURUSD USDCHF`, because live diagnostics showed both
+  symbols actionable. Full-data results rejected it decisively:
+  `outputs/backtests/live_watch_opportunity_probe_eurusd_usdchf_*` lost
+  0.280% over 846 fills, had 16.7% non-negative folds, average risk discipline
+  6.7/100, and promotion `REJECT`.
+- Refreshed signal diagnostics on champion/cross-rate sleeves. Champion still
+  shows historical component edge for `GBPUSD` and `AUDUSD`
+  asset-adaptive-dual-squeeze signals, but current live diagnostics are flat
+  and the promoted best-per-symbol map remains weaker than the exact current
+  live map. Keep monitoring; no live-map change.
