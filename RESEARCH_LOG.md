@@ -1007,3 +1007,28 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
     active-positive/non-negative folds, `REJECT`.
 - Decision: do not route live symbols to `opportunity_probe`. These maps create
   the requested churn but destroy expectancy and fold stability after costs.
+
+## 2026-06-22 live-six positive-subset pressure pass
+
+- Tested a broader live-six optimizer pass on AUDUSD, EURGBP, EURUSD, GBPUSD,
+  USDCAD, and USDCHF using `champion_ensemble`, `macd_momentum`,
+  `asset_adaptive_dual_squeeze`, `quality_trend`, `volatility_squeeze`, and
+  `multi_horizon_momentum` with W480 fixed warmup, directional-probe allocation,
+  and forced QUALIFY mode.
+- The closest higher-frequency candidates improved full-sample return but still
+  missed walk-forward stability:
+  - `best_per_symbol_all`: +0.070% full-sample return, 78 trades, 62.5%
+    active-positive folds, 66.7% non-negative folds, `REJECT`. Map:
+    AUDUSD/EURGBP/USDCAD on `volatility_squeeze`, EURUSD on `quality_trend`,
+    GBPUSD on `asset_adaptive_dual_squeeze`, and USDCHF on `macd_momentum`.
+  - `top_5_best_symbol_strategies`: +0.069% return, 70 trades, 62.5%
+    active-positive folds, 66.7% non-negative folds, `REJECT`.
+  - `all_quality_trend`: +0.014% return, 30 trades, 75.0% active-positive
+    folds, 88.9% non-negative folds, `REJECT` because average risk discipline
+    was 93.3/100 versus the 95.0/100 promotion floor.
+  - `all_volatility_squeeze`: +0.018% return, 38 trades, 60.0%
+    active-positive folds, 77.8% non-negative folds, `PAPER_ONLY` because total
+    positive and active-positive fold rates missed the live promotion gate.
+- Decision: no live promotion yet. Keep this scan in the live status optimizer
+  rollup because it is the closest evidence for a more active map, but do not
+  bypass the promotion gates while the account is already down on the day.
