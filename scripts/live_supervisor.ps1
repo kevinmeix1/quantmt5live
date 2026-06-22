@@ -88,6 +88,32 @@ while ((Get-Date) -lt $Deadline) {
     "--history-jsonl", "outputs\candidate_best_symbol_mix_live_strategy_diagnostics_history.jsonl",
     "--output-text", "outputs\candidate_best_symbol_mix_live_strategy_diagnostics_latest.txt"
   )
+  Invoke-And-Log "candidate_diag_promoted_best_per_symbol" @(
+    "scripts\live_strategy_diagnostics.py",
+    "--strategy-map", "AUDUSD=macd_momentum",
+    "--strategy-map", "EURGBP=champion_ensemble",
+    "--strategy-map", "EURUSD=macd_momentum",
+    "--strategy-map", "GBPUSD=asset_adaptive_dual_squeeze",
+    "--strategy-map", "USDCAD=macd_momentum",
+    "--strategy-map", "USDCHF=macd_momentum",
+    "--output-json", "outputs\candidate_promoted_best_per_symbol_live_strategy_diagnostics_latest.json",
+    "--history-jsonl", "outputs\candidate_promoted_best_per_symbol_live_strategy_diagnostics_history.jsonl",
+    "--output-text", "outputs\candidate_promoted_best_per_symbol_live_strategy_diagnostics_latest.txt"
+  )
+  Invoke-And-Log "candidate_diag_promoted_top4_macd" @(
+    "scripts\live_strategy_diagnostics.py",
+    "--strategy-map", "AUDUSD=macd_momentum",
+    "--strategy-map", "EURUSD=macd_momentum",
+    "--strategy-map", "USDCAD=macd_momentum",
+    "--strategy-map", "USDCHF=macd_momentum",
+    "--symbol", "AUDUSD",
+    "--symbol", "EURUSD",
+    "--symbol", "USDCAD",
+    "--symbol", "USDCHF",
+    "--output-json", "outputs\candidate_promoted_top4_macd_live_strategy_diagnostics_latest.json",
+    "--history-jsonl", "outputs\candidate_promoted_top4_macd_live_strategy_diagnostics_history.jsonl",
+    "--output-text", "outputs\candidate_promoted_top4_macd_live_strategy_diagnostics_latest.txt"
+  )
   Invoke-And-Log "candidate_watchlist" @(
     "scripts\live_candidate_watchlist.py",
     "--candidates-csv", "outputs\backtests\live_watch_cross_rate_live6_h4_strict.csv",

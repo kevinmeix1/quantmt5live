@@ -28,6 +28,8 @@ DEFAULT_CANDIDATE_DIAGNOSTICS_JSONS = (
     "outputs/candidate_eurgbp_cross_rate_live_strategy_diagnostics_latest.json",
     "outputs/candidate_all_quality_trend_live_strategy_diagnostics_latest.json",
     "outputs/candidate_best_symbol_mix_live_strategy_diagnostics_latest.json",
+    "outputs/candidate_promoted_best_per_symbol_live_strategy_diagnostics_latest.json",
+    "outputs/candidate_promoted_top4_macd_live_strategy_diagnostics_latest.json",
     "outputs/live_strategy_diagnostics_directional_probe_latest.json",
 )
 
