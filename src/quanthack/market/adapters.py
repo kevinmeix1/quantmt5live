@@ -185,6 +185,7 @@ class MT5MarketDataAdapter:
         self._ensure_connected()
         canonical = instrument_for(symbol).symbol
         mt5_symbol = self._mt5_symbol(canonical)
+        self._ensure_symbol_selected(mt5_symbol)
         tick = self._module().symbol_info_tick(mt5_symbol)
         if tick is None:
             raise MT5UnavailableError(
@@ -192,6 +193,10 @@ class MT5MarketDataAdapter:
             )
         bid = float(_field(tick, "bid"))
         ask = float(_field(tick, "ask"))
+        if bid <= 0 or ask <= 0:
+            raise MT5UnavailableError(
+                f"MT5 returned a non-positive tick for {mt5_symbol}: bid={bid}, ask={ask}"
+            )
         timestamp = _timestamp_from_mt5_tick(tick)
         return QuoteSnapshot(timestamp=timestamp, symbol=canonical, bid=bid, ask=ask)
 
@@ -207,6 +212,7 @@ class MT5MarketDataAdapter:
         self._ensure_connected()
         canonical = instrument_for(symbol).symbol
         mt5_symbol = self._mt5_symbol(canonical)
+        self._ensure_symbol_selected(mt5_symbol)
         mt5_timeframe = _timeframe_value(self._module(), timeframe)
         rows = self._module().copy_rates_from_pos(mt5_symbol, mt5_timeframe, 0, count)
         if rows is None:
@@ -242,6 +248,25 @@ class MT5MarketDataAdapter:
         if canonical in self.settings.symbol_map:
             return self.settings.symbol_map[canonical]
         return canonical
+
+    def _ensure_symbol_selected(self, mt5_symbol: str) -> None:
+        mt5 = self._module()
+        info = mt5.symbol_info(mt5_symbol)
+        if info is None:
+            raise MT5UnavailableError(
+                f"MT5 symbol {mt5_symbol} is unavailable: {self._last_error_text()}"
+            )
+        if bool(_field(info, "visible", True)):
+            return
+        symbol_select = getattr(mt5, "symbol_select", None)
+        if not callable(symbol_select):
+            raise MT5UnavailableError(
+                f"MT5 symbol {mt5_symbol} is hidden and symbol_select is unavailable"
+            )
+        if not symbol_select(mt5_symbol, True):
+            raise MT5UnavailableError(
+                f"MT5 could not select {mt5_symbol}: {self._last_error_text()}"
+            )
 
     def _last_error_text(self) -> str:
         last_error = getattr(self._module(), "last_error", None)
@@ -313,13 +338,26 @@ def _timestamp_from_mt5_tick(tick: Any) -> datetime:
     return datetime.fromtimestamp(int(_field(tick, "time")), tz=UTC)
 
 
-def _field(value: Any, name: str) -> Any:
+_MISSING = object()
+
+
+def _field(value: Any, name: str, default: Any = _MISSING) -> Any:
     if isinstance(value, Mapping):
-        return value[name]
+        try:
+            return value[name]
+        except KeyError:
+            if default is not _MISSING:
+                return default
+            raise
     try:
         return getattr(value, name)
     except AttributeError:
-        return value[name]
+        try:
+            return value[name]
+        except (KeyError, IndexError, TypeError):
+            if default is not _MISSING:
+                return default
+            raise
 
 
 def _optional_float_field(value: Any, name: str) -> float | None:

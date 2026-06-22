@@ -37,6 +37,7 @@ STRATEGY_NAMES = (
     "kalman_trend",
     "quality_trend",
     "champion_ensemble",
+    "opportunity_probe",
     "mean_reversion",
     "regime_switch",
     "alpha_router",
@@ -2267,6 +2268,63 @@ class QualityTrendReading:
     expected_edge_bps: float
 
 
+@dataclass(frozen=True)
+class OpportunityProbeConfig:
+    symbol: str = "EURUSD"
+    fast_lookback: int = 3
+    medium_lookback: int = 8
+    slow_lookback: int = 20
+    min_score: float = 1.20
+    exit_score: float = 0.25
+    reverse_score: float = 0.75
+    min_fast_move_bps: float = 0.60
+    max_spread_bps: float = 12.0
+    volatility_penalty: float = 0.25
+    target_notional_usd: float = 2_000.0
+    max_target_notional_usd: float = 5_000.0
+    min_trade_notional_usd: float = 500.0
+    min_holding_period: int = 5
+    max_holding_period: int = 20
+
+    @property
+    def lookback(self) -> int:
+        return max(self.fast_lookback, self.medium_lookback, self.slow_lookback) + 1
+
+    def __post_init__(self) -> None:
+        _validate_symbol(self.symbol)
+        if self.fast_lookback < 1:
+            raise ValueError("fast_lookback must be positive")
+        if self.medium_lookback <= self.fast_lookback:
+            raise ValueError("medium_lookback must be greater than fast_lookback")
+        if self.slow_lookback <= self.medium_lookback:
+            raise ValueError("slow_lookback must be greater than medium_lookback")
+        _validate_positive_finite("min_score", self.min_score)
+        _validate_non_negative_finite("exit_score", self.exit_score)
+        _validate_positive_finite("reverse_score", self.reverse_score)
+        _validate_non_negative_finite("min_fast_move_bps", self.min_fast_move_bps)
+        _validate_positive_finite("max_spread_bps", self.max_spread_bps)
+        _validate_non_negative_finite("volatility_penalty", self.volatility_penalty)
+        _validate_positive_finite("target_notional_usd", self.target_notional_usd)
+        _validate_positive_finite("max_target_notional_usd", self.max_target_notional_usd)
+        _validate_non_negative_finite("min_trade_notional_usd", self.min_trade_notional_usd)
+        if self.min_holding_period < 0:
+            raise ValueError("min_holding_period cannot be negative")
+        if self.max_holding_period < 1:
+            raise ValueError("max_holding_period must be positive")
+        if self.min_holding_period > self.max_holding_period:
+            raise ValueError("min_holding_period cannot exceed max_holding_period")
+
+
+@dataclass(frozen=True)
+class OpportunityProbeReading:
+    fast_move_bps: float
+    medium_move_bps: float
+    slow_move_bps: float
+    realized_volatility_bps: float
+    spread_bps: float
+    score: float
+
+
 StrategyConfig = (
     MomentumConfig
     | MultiHorizonMomentumConfig
@@ -2287,11 +2345,170 @@ StrategyConfig = (
     | KalmanTrendStrategyConfig
     | QualityTrendConfig
     | ChampionEnsembleConfig
+    | OpportunityProbeConfig
     | AlphaRouterConfig
     | UsdPressureConfig
     | RelativeStrengthConfig
     | CrossRateReversionConfig
 )
+
+
+class OpportunityProbeStrategy:
+    def __init__(self, config: OpportunityProbeConfig | None = None) -> None:
+        self.config = config or OpportunityProbeConfig()
+
+    def read_probe(
+        self,
+        prices: Sequence[float],
+        *,
+        quote: QuoteSnapshot | None = None,
+    ) -> OpportunityProbeReading | None:
+        recent_prices = _recent_valid_prices(prices, self.config.lookback)
+        if recent_prices is None:
+            return None
+        fast_move = _window_move_bps(recent_prices, self.config.fast_lookback)
+        medium_move = _window_move_bps(recent_prices, self.config.medium_lookback)
+        slow_move = _window_move_bps(recent_prices, self.config.slow_lookback)
+        returns_bps = tuple(value * 10_000.0 for value in _log_returns(recent_prices))
+        realized_volatility = _population_stdev(returns_bps[-self.config.slow_lookback:])
+        spread_bps = 0.0
+        if quote is not None and quote.mid > 0:
+            spread_bps = (quote.ask - quote.bid) / quote.mid * 10_000.0
+        weighted_move = 0.55 * fast_move + 0.35 * medium_move + 0.10 * slow_move
+        denominator = max(
+            spread_bps + self.config.volatility_penalty * realized_volatility,
+            1e-9,
+        )
+        score = weighted_move / denominator
+        return OpportunityProbeReading(
+            fast_move_bps=fast_move,
+            medium_move_bps=medium_move,
+            slow_move_bps=slow_move,
+            realized_volatility_bps=realized_volatility,
+            spread_bps=spread_bps,
+            score=score,
+        )
+
+    def generate_decision(
+        self,
+        prices: Sequence[float],
+        *,
+        current_notional_usd: float = 0.0,
+        holding_period: int = 0,
+        quote: QuoteSnapshot | None = None,
+    ) -> StrategyDecision:
+        reading = self.read_probe(prices, quote=quote)
+        if reading is None:
+            return StrategyDecision(
+                action=StrategyAction.NO_ACTION,
+                symbol=self.config.symbol,
+                target_notional_usd=current_notional_usd,
+                reason="insufficient prices for opportunity probe",
+            )
+        diagnostics = (
+            ("score", reading.score),
+            ("fast_move_bps", reading.fast_move_bps),
+            ("medium_move_bps", reading.medium_move_bps),
+            ("slow_move_bps", reading.slow_move_bps),
+            ("spread_bps", reading.spread_bps),
+            ("realized_volatility_bps", reading.realized_volatility_bps),
+        )
+        current_direction = _sign(current_notional_usd)
+        score_direction = _sign(reading.score)
+        if current_direction != 0:
+            strong_opposite = (
+                score_direction != 0
+                and score_direction != current_direction
+                and abs(reading.score) >= self.config.reverse_score
+            )
+            if holding_period < self.config.min_holding_period and not strong_opposite:
+                return StrategyDecision(
+                    action=StrategyAction.HOLD,
+                    symbol=self.config.symbol,
+                    target_notional_usd=current_notional_usd,
+                    reason=(
+                        "opportunity probe minimum hold "
+                        f"{holding_period}/{self.config.min_holding_period} "
+                        f"score={reading.score:.2f}"
+                    ),
+                    diagnostics=diagnostics,
+                    primary_signal="opportunity_probe",
+                )
+            should_exit = (
+                holding_period >= self.config.max_holding_period
+                or score_direction == 0
+                or score_direction != current_direction
+                or abs(reading.score) <= self.config.exit_score
+            )
+            if should_exit:
+                return StrategyDecision(
+                    action=StrategyAction.EXIT,
+                    symbol=self.config.symbol,
+                    target_notional_usd=0.0,
+                    reason=(
+                        "opportunity probe exit "
+                        f"score={reading.score:.2f} holding={holding_period}"
+                    ),
+                    diagnostics=diagnostics,
+                    primary_signal="opportunity_probe",
+                )
+            return StrategyDecision(
+                action=StrategyAction.HOLD,
+                symbol=self.config.symbol,
+                target_notional_usd=current_notional_usd,
+                reason=f"opportunity probe holding score={reading.score:.2f}",
+                diagnostics=diagnostics,
+                primary_signal="opportunity_probe",
+            )
+        if reading.spread_bps > self.config.max_spread_bps:
+            return StrategyDecision(
+                action=StrategyAction.NO_ACTION,
+                symbol=self.config.symbol,
+                target_notional_usd=0.0,
+                reason=f"spread {reading.spread_bps:.2f} bps above probe cap",
+                diagnostics=diagnostics,
+                primary_signal="opportunity_probe",
+            )
+        if abs(reading.fast_move_bps) < self.config.min_fast_move_bps:
+            return StrategyDecision(
+                action=StrategyAction.NO_ACTION,
+                symbol=self.config.symbol,
+                target_notional_usd=0.0,
+                reason=f"fast move {reading.fast_move_bps:.2f} bps too small",
+                diagnostics=diagnostics,
+                primary_signal="opportunity_probe",
+            )
+        if abs(reading.score) < self.config.min_score or score_direction == 0:
+            return StrategyDecision(
+                action=StrategyAction.NO_ACTION,
+                symbol=self.config.symbol,
+                target_notional_usd=0.0,
+                reason=f"score {reading.score:.2f} below probe entry",
+                diagnostics=diagnostics,
+                primary_signal="opportunity_probe",
+            )
+        confidence = min(abs(reading.score) / self.config.min_score, 1.0)
+        notional = min(
+            self.config.target_notional_usd * confidence,
+            self.config.max_target_notional_usd,
+        )
+        if notional < self.config.min_trade_notional_usd:
+            return StrategyDecision(
+                action=StrategyAction.NO_ACTION,
+                symbol=self.config.symbol,
+                target_notional_usd=0.0,
+                reason=f"probe notional {notional:.0f} below minimum",
+                diagnostics=diagnostics,
+                primary_signal="opportunity_probe",
+            )
+        return StrategyDecision(
+            action=StrategyAction.ENTER,
+            symbol=self.config.symbol,
+            target_notional_usd=score_direction * notional,
+            reason=f"opportunity probe score={reading.score:.2f}",
+            diagnostics=diagnostics,
+            primary_signal="opportunity_probe",
+        )
 
 
 class SimpleMomentumStrategy:
@@ -10221,6 +10438,11 @@ def normalize_strategy_name(name: str) -> str:
         "champion_router": "champion_ensemble",
         "research_champion": "champion_ensemble",
         "ensemble": "champion_ensemble",
+        "opportunity": "opportunity_probe",
+        "opportunity_probe": "opportunity_probe",
+        "opportunityprobe": "opportunity_probe",
+        "probe": "opportunity_probe",
+        "scalp_probe": "opportunity_probe",
         "meanreversion": "mean_reversion",
         "mean_reversion": "mean_reversion",
         "reversion": "mean_reversion",
@@ -10280,6 +10502,7 @@ def build_strategy(
     kalman_trend: KalmanTrendStrategyConfig | None = None,
     quality_trend: QualityTrendConfig | None = None,
     champion_ensemble: ChampionEnsembleConfig | None = None,
+    opportunity_probe: OpportunityProbeConfig | None = None,
     regime_switch: RegimeConfig | None = None,
     alpha_router: AlphaRouterConfig | None = None,
     usd_pressure: UsdPressureConfig | None = None,
@@ -10371,6 +10594,10 @@ def build_strategy(
             fixing_reversal=fixing_reversal,
             macd_momentum=macd_momentum,
         )
+    if strategy_name == "opportunity_probe":
+        config = opportunity_probe or OpportunityProbeConfig()
+        config = config if symbol is None else replace(config, symbol=symbol)
+        return OpportunityProbeStrategy(config)
     if strategy_name == "mean_reversion":
         config = mean_reversion if symbol is None else replace(mean_reversion, symbol=symbol)
         return MeanReversionStrategy(config)
@@ -10470,6 +10697,16 @@ def _recent_valid_prices(prices: Sequence[float], lookback: int) -> list[float] 
 
 def _log_returns(prices: Sequence[float]) -> tuple[float, ...]:
     return tuple(log(current / previous) for previous, current in zip(prices, prices[1:]))
+
+
+def _window_move_bps(prices: Sequence[float], lookback: int) -> float:
+    if len(prices) <= lookback:
+        return 0.0
+    start = prices[-lookback - 1]
+    end = prices[-1]
+    if start <= 0 or end <= 0:
+        return 0.0
+    return log(end / start) * 10_000.0
 
 
 def _population_stdev(values: Sequence[float]) -> float:
@@ -11524,6 +11761,14 @@ def _signal_direction_sign(direction: SignalDirection) -> int:
     if direction == SignalDirection.LONG:
         return 1
     if direction == SignalDirection.SHORT:
+        return -1
+    return 0
+
+
+def _sign(value: float) -> int:
+    if value > EPSILON_NOTIONAL:
+        return 1
+    if value < -EPSILON_NOTIONAL:
         return -1
     return 0
 

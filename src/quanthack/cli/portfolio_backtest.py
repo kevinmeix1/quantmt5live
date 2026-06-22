@@ -4,6 +4,11 @@ import argparse
 from collections.abc import Mapping, Sequence
 from dataclasses import replace
 
+from quanthack.backtesting.allocation_profiles import (
+    ALLOCATION_PROFILE_DEFAULT,
+    ALLOCATION_PROFILE_NAMES,
+    allocation_policy_for_strategy,
+)
 from quanthack.backtesting.backtest import FillModel
 from quanthack.cli._competition import print_competition_view
 from quanthack.cli._format import money
@@ -13,6 +18,7 @@ from quanthack.backtesting.competition_score import (
     risk_samples_from_portfolio_equity,
 )
 from quanthack.core.config import load_config
+from quanthack.core.clock import FixedModeClock
 from quanthack.core.instruments import instrument_for
 from quanthack.market.market_data import load_price_history, load_quote_history
 from quanthack.backtesting.portfolio_allocator import write_allocation_report_csv
@@ -67,6 +73,23 @@ def build_parser() -> argparse.ArgumentParser:
             "a warmup period."
         ),
     )
+    parser.add_argument(
+        "--allocation-profile",
+        choices=ALLOCATION_PROFILE_NAMES,
+        default=ALLOCATION_PROFILE_DEFAULT,
+        help=(
+            "Optional allocation profile for research. 'directional_probe' "
+            "matches bounded one-sided live probe diagnostics."
+        ),
+    )
+    parser.add_argument(
+        "--force-qualify-mode",
+        action="store_true",
+        help=(
+            "Research-only: treat historical bars as QUALIFY even when they are "
+            "before the configured live open_at."
+        ),
+    )
     return parser
 
 
@@ -99,7 +122,12 @@ def run(args: argparse.Namespace) -> None:
             )
             for symbol in symbols
         },
-        clock=config.competition.to_clock(),
+        allocation_policy=allocation_policy_for_strategy(
+            strategy_name,
+            config,
+            profile=args.allocation_profile,
+        ),
+        clock=FixedModeClock() if args.force_qualify_mode else config.competition.to_clock(),
         fill_model=FillModel(slippage_bps=config.backtest.slippage_bps),
         periods_per_year=config.backtest.periods_per_year,
     )
@@ -136,6 +164,8 @@ def run(args: argparse.Namespace) -> None:
     print(f"  Symbols: {', '.join(result.symbols)}")
     print(f"  Price CSV: {price_csv}")
     print(f"  Quote CSV: {quote_csv}")
+    print(f"  Allocation profile: {args.allocation_profile}")
+    print(f"  Force qualify mode: {'yes' if args.force_qualify_mode else 'no'}")
     print(f"  Fills: {len(result.fills)}")
     if warmup_evaluation is not None:
         print(f"  Metrics start: {warmup_evaluation.evaluation_start}")

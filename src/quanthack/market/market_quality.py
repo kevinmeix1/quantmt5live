@@ -10,6 +10,7 @@ from quanthack.market.market_data import QuoteSnapshot
 class MarketQualityLimits:
     max_spread_bps: float = 10.0
     max_quote_age_seconds: float = 5.0
+    max_future_quote_skew_seconds: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -30,11 +31,14 @@ class MarketQualityChecker:
 
         quote_age_seconds = (as_of - quote.timestamp).total_seconds()
         if quote_age_seconds < 0:
-            return self._block(
-                quote=quote,
-                quote_age_seconds=quote_age_seconds,
-                reason="quote timestamp is after as_of time",
-            )
+            future_skew_seconds = abs(quote_age_seconds)
+            if future_skew_seconds > self.limits.max_future_quote_skew_seconds:
+                return self._block(
+                    quote=quote,
+                    quote_age_seconds=quote_age_seconds,
+                    reason="quote timestamp is after as_of time",
+                )
+            quote_age_seconds = 0.0
 
         if quote_age_seconds > self.limits.max_quote_age_seconds:
             return self._block(

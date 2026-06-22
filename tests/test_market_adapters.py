@@ -12,6 +12,7 @@ from quanthack.market.adapters import (
     MT5AccountAdapter,
     MT5ConnectionSettings,
     MT5MarketDataAdapter,
+    MT5UnavailableError,
     StaticAccountAdapter,
     parse_symbol_map,
 )
@@ -125,6 +126,24 @@ class MarketAdapterTest(TestCase):
         self.assertEqual(fake_mt5.login_kwargs["server"], "demo-server")
         self.assertEqual(fake_mt5.login_kwargs["timeout"], 45_000)
 
+    def test_mt5_adapter_selects_hidden_symbol_before_reading_ticks(self) -> None:
+        fake_mt5 = _FakeMT5()
+        fake_mt5.symbol_visible["XAUUSD"] = False
+        adapter = MT5MarketDataAdapter(mt5_module=fake_mt5)
+
+        adapter.get_latest_quote("XAUUSD")
+
+        self.assertEqual(fake_mt5.symbol_select_calls, [("XAUUSD", True)])
+        self.assertEqual(fake_mt5.last_tick_symbol, "XAUUSD")
+
+    def test_mt5_adapter_rejects_non_positive_ticks_cleanly(self) -> None:
+        fake_mt5 = _FakeMT5()
+        fake_mt5.tick_response = {"bid": 0.0, "ask": 0.0, "time_msc": 1_803_000_000_123}
+        adapter = MT5MarketDataAdapter(mt5_module=fake_mt5)
+
+        with self.assertRaisesRegex(MT5UnavailableError, "non-positive tick"):
+            adapter.get_latest_quote("XAUUSD")
+
     def test_mt5_adapter_rejects_unknown_timeframe(self) -> None:
         adapter = MT5MarketDataAdapter(mt5_module=_FakeMT5())
 
@@ -172,6 +191,13 @@ class _FakeMT5:
         self.login_kwargs: dict[str, object] = {}
         self.last_tick_symbol = ""
         self.account_info_response = {"equity": 999_000, "margin_level": 1_250}
+        self.symbol_visible: dict[str, bool] = {}
+        self.symbol_select_calls: list[tuple[str, bool]] = []
+        self.tick_response = {
+            "bid": 1.1000,
+            "ask": 1.1002,
+            "time_msc": 1_803_000_000_123,
+        }
 
     def initialize(self, *args, **kwargs) -> bool:
         self.initialize_called = True
@@ -189,13 +215,17 @@ class _FakeMT5:
     def last_error(self) -> tuple[int, str]:
         return (0, "ok")
 
+    def symbol_info(self, symbol: str) -> dict[str, object]:
+        return {"visible": self.symbol_visible.get(symbol, True), "trade_contract_size": 100_000}
+
+    def symbol_select(self, symbol: str, visible: bool) -> bool:
+        self.symbol_select_calls.append((symbol, visible))
+        self.symbol_visible[symbol] = visible
+        return True
+
     def symbol_info_tick(self, symbol: str) -> dict[str, float]:
         self.last_tick_symbol = symbol
-        return {
-            "bid": 1.1000,
-            "ask": 1.1002,
-            "time_msc": 1_803_000_000_123,
-        }
+        return self.tick_response
 
     def copy_rates_from_pos(
         self,

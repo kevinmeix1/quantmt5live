@@ -100,6 +100,9 @@ class FixedWarmupPortfolioWalkForwardTest(TestCase):
             folds_text = folds_path.read_text(encoding="utf-8")
 
         self.assertIn("strategy,symbols,folds", summary_text)
+        self.assertIn("promotion_status", summary_text)
+        self.assertIn("promotion_live_ready", summary_text)
+        self.assertIn("promotion_reason", summary_text)
         self.assertIn("positive_fold_fraction", summary_text)
         self.assertIn("active_positive_fold_fraction", summary_text)
         self.assertIn("non_negative_fold_fraction", summary_text)

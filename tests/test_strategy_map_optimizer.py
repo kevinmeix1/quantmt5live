@@ -7,6 +7,8 @@ from quanthack.backtesting.strategy_map_optimizer import (
     write_strategy_map_optimization_csv,
     write_symbol_strategy_scores_csv,
 )
+from quanthack.backtesting.allocation_profiles import allocation_policy_for_strategy
+from quanthack.core.clock import FixedModeClock
 from quanthack.core.config import load_config
 from quanthack.market.sample_data import generate_synthetic_market_data
 
@@ -64,6 +66,7 @@ class StrategyMapOptimizerTest(TestCase):
             score_text = score_path.read_text(encoding="utf-8")
 
         self.assertIn("rank,label,symbols,strategy_map", candidate_text)
+        self.assertIn("promotion_status,promotion_live_ready,promotion_reason", candidate_text)
         self.assertIn("rank,symbol,strategy,total_pnl_usd", score_text)
         self.assertIn("simple_momentum", score_text)
 
@@ -84,3 +87,36 @@ class StrategyMapOptimizerTest(TestCase):
                 strategy_names=(),
                 symbols=("EURUSD",),
             )
+
+    def test_optimizer_accepts_research_clock_and_allocation_policy(self) -> None:
+        config = load_config("configs/competition.toml")
+        data = generate_synthetic_market_data(
+            symbols=("EURUSD", "GBPUSD"),
+            periods=72,
+            interval_minutes=15,
+            seed=404,
+        )
+
+        result = optimize_strategy_map(
+            config=config,
+            prices=data.prices,
+            quotes=data.quotes,
+            strategy_names=("simple_momentum", "macd_momentum"),
+            symbols=("EURUSD", "GBPUSD"),
+            include_walk_forward=True,
+            train_size=24,
+            test_size=12,
+            step_size=12,
+            top_symbol_counts=(1, 2),
+            allocation_policy=allocation_policy_for_strategy(
+                "strategy_map",
+                config,
+                profile="directional_probe",
+            ),
+            clock=FixedModeClock(),
+        )
+
+        self.assertTrue(result.candidates)
+        self.assertTrue(
+            all(candidate.walk_forward is not None for candidate in result.candidates)
+        )

@@ -38,10 +38,21 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Map canonical to broker symbol, for example EURUSD=EURUSD.pro",
     )
+    parser.add_argument(
+        "--confirm-read-only-mt5",
+        action="store_true",
+        help="Required. This command reads MT5 data only and never sends orders.",
+    )
     return parser
 
 
 def run(args: argparse.Namespace) -> None:
+    if not args.confirm_read_only_mt5:
+        raise SystemExit(
+            "Refusing MT5 probe without --confirm-read-only-mt5. "
+            "This command is read-only, but the explicit flag keeps the workflow deliberate."
+        )
+
     load_env_file(args.env_file)
     config = load_config(args.config)
     settings = _settings_from_args(args)
@@ -73,15 +84,18 @@ def run(args: argparse.Namespace) -> None:
         print(f"  Margin level: {margin_text}")
 
         for symbol in symbols:
-            quote = adapter.get_latest_quote(symbol)
-            bars = adapter.get_recent_bars(symbol, timeframe=timeframe, count=args.bars)
+            try:
+                quote = adapter.get_latest_quote(symbol)
+                bars = adapter.get_recent_bars(symbol, timeframe=timeframe, count=args.bars)
+            except MT5UnavailableError as exc:
+                print(f"  {symbol}: unavailable - {exc}")
+                continue
             print(f"  {quote.symbol} quote: bid={quote.bid} ask={quote.ask} at {quote.timestamp.isoformat()}")
             print(f"  {quote.symbol} bars: {len(bars)} latest_close={bars[-1].close}")
     except MT5UnavailableError as exc:
         print("  Connection: unavailable")
         print(f"  Reason: {exc}")
-        print("  Mac note: native macOS Python often cannot install/use the official MetaTrader5 package.")
-        print("  Practical path: keep strategy research on Mac, then run this probe inside Windows/Parallels or the same MT5 environment that supports the Python package.")
+        _print_platform_hint()
     finally:
         adapter.close()
 
@@ -104,3 +118,18 @@ def _settings_from_args(args: argparse.Namespace) -> MT5ConnectionSettings:
         portable=args.mt5_portable or env_bool("MT5_PORTABLE", False),
         symbol_map=parse_symbol_map(tuple(args.mt5_symbol_map or ())),
     )
+
+
+def _print_platform_hint() -> None:
+    if platform.system() == "Windows":
+        print(
+            "  Windows note: keep MT5 open, logged into the target account, "
+            "and set MT5_TERMINAL_PATH in .env if auto-discovery fails."
+        )
+        print(
+            "  Symbol note: if a broker uses suffixes, pass --mt5-symbol-map "
+            "EURUSD=EURUSD.pro for each affected symbol."
+        )
+        return
+    print("  Mac note: native macOS Python often cannot install/use the official MetaTrader5 package.")
+    print("  Practical path: keep strategy research on Mac, then run this probe inside Windows/Parallels or the same MT5 environment that supports the Python package.")

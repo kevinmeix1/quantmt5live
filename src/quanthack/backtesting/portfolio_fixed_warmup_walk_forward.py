@@ -13,6 +13,8 @@ from quanthack.backtesting.competition_score import (
     RiskDisciplineReport,
 )
 from quanthack.backtesting.portfolio_backtest import PortfolioBacktestEngine
+from quanthack.backtesting.portfolio_allocator import AllocationPolicy
+from quanthack.core.clock import CompetitionClock, FixedModeClock
 from quanthack.backtesting.warmup import (
     WarmupPortfolioEvaluation,
     evaluate_portfolio_after_warmup,
@@ -268,6 +270,8 @@ def run_fixed_warmup_portfolio_walk_forward(
     strategy_name: str,
     symbols: tuple[str, ...],
     strategy_by_symbol: Mapping[str, str] | None = None,
+    allocation_policy: AllocationPolicy | None = None,
+    clock: CompetitionClock | FixedModeClock | None = None,
     train_size: int = 960,
     test_size: int = 192,
     step_size: int = 192,
@@ -324,7 +328,8 @@ def run_fixed_warmup_portfolio_walk_forward(
                 )
                 for symbol in symbols
             },
-            clock=config.competition.to_clock(),
+            allocation_policy=allocation_policy,
+            clock=clock or config.competition.to_clock(),
             fill_model=FillModel(slippage_bps=config.backtest.slippage_bps),
             periods_per_year=config.backtest.periods_per_year,
         )
@@ -362,6 +367,7 @@ def write_fixed_warmup_summary_csv(
 ) -> None:
     output_path = Path(path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
+    promotion = decide_fixed_warmup_promotion(result)
     with output_path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(
             handle,
@@ -369,6 +375,9 @@ def write_fixed_warmup_summary_csv(
                 "strategy",
                 "symbols",
                 "folds",
+                "promotion_status",
+                "promotion_live_ready",
+                "promotion_reason",
                 "positive_fold_fraction",
                 "active_fold_fraction",
                 "active_positive_fold_fraction",
@@ -391,6 +400,9 @@ def write_fixed_warmup_summary_csv(
                 "strategy": result.strategy_name,
                 "symbols": " ".join(result.symbols),
                 "folds": len(result.folds),
+                "promotion_status": promotion.status,
+                "promotion_live_ready": promotion.live_ready,
+                "promotion_reason": promotion.reason,
                 "positive_fold_fraction": result.positive_fold_fraction,
                 "active_fold_fraction": result.active_fold_fraction,
                 "active_positive_fold_fraction": (

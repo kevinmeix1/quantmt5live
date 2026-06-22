@@ -8,7 +8,7 @@ from quanthack.backtesting.backtest import (
     FillModel,
     write_equity_curve_csv,
 )
-from quanthack.core.clock import CompetitionClock, CompetitionMode
+from quanthack.core.clock import CompetitionClock, CompetitionMode, FixedModeClock
 from quanthack.core.config import (
     AppConfig,
     BacktestSettings,
@@ -341,6 +341,7 @@ __all__ = [
     "CompetitionClock",
     "CompetitionMetrics",
     "CompetitionMode",
+    "FixedModeClock",
     "CompetitionMonitor",
     "CompetitionMonitorReport",
     "CompetitionMonitorSnapshot",

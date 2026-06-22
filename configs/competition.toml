@@ -186,16 +186,16 @@ max_spread_bps = 10.0
 
 [strategy.macd_momentum]
 symbol = "EURUSD"
-fast_window = 6
-slow_window = 18
-signal_window = 5
-min_histogram_bps = 2.0
+fast_window = 8
+slow_window = 21
+signal_window = 8
+min_histogram_bps = 1.25
 exit_histogram_bps = 0.25
-min_macd_bps = 1.0
+min_macd_bps = 0.75
 min_histogram_slope_bps = 0.0
-min_trend_efficiency = 0.20
-forex_allowed_utc_hours = [10, 11, 12, 13, 14]
-metal_allowed_utc_hours = [10, 11, 12, 13, 14]
+min_trend_efficiency = 0.15
+forex_allowed_utc_hours = [6, 7, 8, 9, 10, 11, 12, 13, 14]
+metal_allowed_utc_hours = [6, 7, 8, 9, 10, 11, 12, 13, 14]
 crypto_allowed_utc_hours = []
 target_notional_usd = 800000
 position_sizing = "volatility"
@@ -204,7 +204,7 @@ volatility_floor = 0.00001
 max_target_notional_usd = 800000
 min_trade_notional_usd = 1000.0
 min_holding_period = 1
-max_holding_period = 12
+max_holding_period = 16
 slippage_bps = 1.0
 fee_bps = 0.0
 cost_buffer = 1.0
@@ -505,6 +505,23 @@ macd_momentum_weight = 0.0
 conflict_penalty = 0.70
 slippage_bps = 1.0
 fee_bps = 0.0
+
+[strategy.opportunity_probe]
+symbol = "EURUSD"
+fast_lookback = 3
+medium_lookback = 8
+slow_lookback = 20
+min_score = 1.20
+exit_score = 0.05
+reverse_score = 2.00
+min_fast_move_bps = 1.00
+max_spread_bps = 12.0
+volatility_penalty = 0.25
+target_notional_usd = 25000
+max_target_notional_usd = 50000
+min_trade_notional_usd = 1000
+min_holding_period = 15
+max_holding_period = 90
 
 [strategy.mean_reversion]
 symbol = "EURUSD"

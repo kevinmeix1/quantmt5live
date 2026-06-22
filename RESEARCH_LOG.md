@@ -111,3 +111,182 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   follow-up is a `[strategy_map]` config section so the recommended portfolio is
   fully config-driven (the `strategy-map-optimize` / `adaptive-strategy-select`
   tooling already explores this space).
+
+## 2026-06-22 live-watch aggressive recovery checks
+
+- Live throttle was changed from hard-blocking `small_only_until_recovery` to
+  allowing capped fresh/increased targets up to 25,000 USD notional while still
+  hard-blocking `cooldown_realized_drag`, `observe`, and
+  `keep_if_signal_aligned`.
+- Current live state after the change stayed flat: equity 999,181.58, day P/L
+  -818.42, zero open positions, zero margin, and live loop `no_order`.
+- `outputs/backtests/live_watch_macd_aggressive_consensus.csv` tested looser
+  MACD thresholds and broader hours over W480/W672/W960. Every candidate ended
+  consensus `REJECT`; extra trades hurt fold stability.
+- `outputs/backtests/live_watch_recovery_symbols_strategy_map_w960.csv` tested
+  EURUSD/GBPUSD-only recovery sleeves across the current strategy library. No
+  map promoted; most live-capable strategies produced no fills on the full data,
+  while breakout / MA / mean-reversion variants were negative or unstable.
+- Best standby remains the paper-only four-symbol MACD map
+  (`AUDUSD EURUSD USDCAD USDCHF`), but not live-ready by consensus. Keep the
+  small-only cap active so EURUSD/GBPUSD can fire if their existing strategies
+  generate a real signal, rather than forcing an unvalidated trade.
+
+## 2026-06-22 activity-gated basket scan
+
+- Fixed the portfolio universe scanner so zero-fill baskets are marked
+  `UNDERACTIVE` and receive a zero proxy score instead of ranking as perfect
+  no-drawdown candidates.
+- Re-ran activity-gated full-data basket checks on the current live sleeve,
+  a clean recovery sleeve, and a USD-focused sleeve. All six basket/strategy
+  rows were `UNDERACTIVE` with zero fills, so none should be promoted.
+- Rechecked champion ensemble squeeze-heavy variants (`squeeze_probe`,
+  `squeeze_lead`) after raw diagnostics showed a few favorable
+  asset-adaptive squeeze samples on GBPUSD/AUDUSD. The fixed-warmup optimizer
+  still returned `REJECT` for all candidates because none produced active
+  evaluation folds.
+
+## 2026-06-22 aggressive champion near-trigger check
+
+- Ran a full-data walk-forward champion ensemble optimization on the live
+  champion symbols (`EURGBP`, `GBPUSD`) with lower entry/strong-lead thresholds
+  and heavier squeeze/MACD mixes:
+  `outputs/backtests/live_watch_champion_aggressive_eurgbp_gbpusd_w960.csv`.
+- Result: every candidate produced zero trades and promotion `REJECT`; lowering
+  ensemble entry/lead scores does not help while the component-level Kalman and
+  asset-adaptive squeeze gates remain flat.
+- Live config was left unchanged. Current GBPUSD near-trigger state is useful
+  for monitoring, but not enough evidence to bypass the live strategy/no-change
+  diagnosis or the small-only recovery cap.
+
+## 2026-06-22 opportunity-probe and USDJPY inclusion check
+
+- Tried a broad `opportunity_probe` symbol-eligibility search over the live FX
+  sleeve; the search was stopped after exceeding the live-watch compute window,
+  then replaced with a cheaper full-data attribution pass.
+- `outputs/backtests/live_watch_opportunity_probe_attribution.csv` shows zero
+  fills across `AUDUSD`, `EURGBP`, `EURUSD`, `GBPUSD`, `USDCAD`, `USDCHF`, and
+  `USDJPY`, so re-enabling the probe is not supported by the extracted full
+  dataset.
+- USDJPY remains outside the live symbol list. It has the least-bad live
+  realized drag, but `outputs/backtests/live_watch_usdjpy_champion_attribution.csv`
+  and `outputs/backtests/live_watch_usdjpy_macd_attribution.csv` both show zero
+  fills, so adding it would add risk surface without a validated signal.
+
+## 2026-06-22 live-watch aggressive validation follow-up
+
+- Revalidated the only positive recovery scan row, `GBPUSD/ma_crossover`, with
+  a direct full-data portfolio backtest, fixed-warmup walk-forward, and current
+  live strategy diagnostic:
+  `outputs/backtests/gbpusd_ma_crossover_probe_*` and
+  `outputs/candidate_gbpusd_ma_live_strategy_diagnostics_latest.*`.
+- Result: direct full-data backtest had zero fills after shared-risk allocation,
+  fixed-warmup promotion was `REJECT` with zero active evaluation folds, and
+  live diagnostics requested zero exposure. Do not promote GBPUSD MA crossover.
+- Ran a broad live-six attribution pass across MA, mean reversion, breakout,
+  session breakout, squeeze, trend, fixing, Kalman, relative strength,
+  cross-rate, MACD, and champion ensemble:
+  `outputs/backtests/live_watch_broad_strategy_attribution.csv`.
+  Every row had zero fills/PnL under the current full-data shared-risk setup.
+- Re-ran the three nonzero volatility-squeeze screen candidates with full-data
+  walk-forward validation:
+  `outputs/backtests/live_watch_volatility_squeeze_live6_focused_wf.csv`.
+  All three produced zero trades and zero walk-forward fills, so the earlier
+  screen-only return should remain research-only, not live configuration.
+
+## 2026-06-22 directional-probe research clock correction
+
+- Added an explicit research-only `--force-qualify-mode` switch to portfolio
+  backtest and fixed-warmup walk-forward commands. Historical full-data probes
+  were otherwise evaluated before the configured live `open_at`, causing
+  RiskEngine `PRE_LIVE` blocks and misleading zero-fill research.
+- Re-ran the current live-watch candidates with both
+  `--allocation-profile directional_probe` and `--force-qualify-mode`.
+  The corrected tests now produce fills, so the research path can measure real
+  P/L instead of allocator/clock artifacts.
+- Results still do not justify a live promotion:
+  `live_watch_asset_squeeze_top3_directional_probe_forcequal_w960_*` generated
+  12 evaluation fills with 50.0% positive folds, 83.3% active folds, 66.7%
+  non-negative folds, 0.005% worst drawdown, and promotion `REJECT` because the
+  non-negative fold gate misses 70.0%. Champion GBPUSD/USDJPY was worse:
+  14 fills, 16.7% positive folds, 33.3% non-negative folds, and `REJECT`.
+- Full-period force-qualified directional-probe backtests also rejected broad
+  live activation: champion on `EURGBP EURUSD GBPUSD USDJPY` lost $240.91 over
+  90 fills, while MACD on `EURUSD GBPUSD USDJPY` lost $233.48 over 70 fills;
+  both hit single-instrument concentration penalties. Keep these research-only.
+
+## 2026-06-22 corrected optimizer pass-through check
+
+- Updated the standalone MACD momentum and champion ensemble optimizers so
+  research runs can pass the same `directional_probe` allocation profile and
+  forced qualify-mode clock used by the live research cycle. Added parser and
+  optimizer tests for the new switches.
+- Full-data MACD variants on `EURUSD USDCAD USDJPY` were all `REJECT`. The
+  current live MACD settings remained the least-bad row but still lost $60.72
+  over 47 fills and missed the 70.0% non-negative fold gate at 66.7%.
+- Full-data champion asset-heavy variants on `GBPUSD AUDUSD USDJPY` improved
+  over the current champion mix but still stayed below promotion quality. The
+  best asset-heavy/asset-only rows made $71.86 over 44 fills, with 83.3% active
+  folds and 66.7% non-negative folds, so they remain paper/watch candidates.
+- Direct `asset_adaptive_dual_squeeze` on `GBPUSD AUDUSD USDJPY` also stayed
+  `REJECT`: 12 evaluation fills, 50.0% positive folds, 66.7% non-negative
+  folds, and 0.005% worst drawdown. Do not lower the fold gate while live day
+  P/L is negative; wait for a genuine live strategy signal or another tested
+  candidate that clears robustness.
+
+## 2026-06-22 corrected strategy-map search
+
+- Added `--allocation-profile` and `--force-qualify-mode` support to the
+  strategy-map optimizer, matching the corrected research clock/sizing path
+  used by MACD, champion, universe scans, and fixed-warmup validation.
+- Re-ran a full-data directional-probe map scan across `AUDUSD EURGBP EURUSD
+  GBPUSD USDCAD USDCHF USDJPY` for MACD, champion, asset-adaptive squeeze,
+  Kalman, cross-rate, quality trend, MA crossover, mean reversion, and
+  volatility squeeze:
+  `outputs/backtests/live_watch_strategy_map_corrected_directional_probe.csv`.
+- The highest-return symbol mix made $696.17 over 78 fills with 0.024% max
+  drawdown, but remained `REJECT` because non-negative folds were 66.7% versus
+  the 70.0% promotion gate. The best robust row, `all_quality_trend`, made
+  $113.77 over 35 fills with 100.0% non-negative folds, but failed promotion
+  because average risk discipline was 93.3/100 versus the 95.0/100 gate.
+- Added continuous supervisor diagnostics for `all_quality_trend` and the
+  best-symbol mix. Current live diagnostics still request zero notional for
+  both candidates; quality trend is below its 2.0 bps MACD gate and the mixed
+  map is currently below squeeze/volatility thresholds. Keep both monitored,
+  but do not live-promote until they request exposure and pass robustness.
+
+## 2026-06-22 aggressive probe and squeeze/Kalman follow-up
+
+- Re-tested `opportunity_probe` with the corrected force-qualified research
+  clock on the live FX sleeve plus `USDJPY`. It remains unsuitable for live
+  recovery: full-data return was -1.000% over 2,962 fills, every symbol lost
+  money, fixed-warmup non-negative folds were 16.7%, and promotion was
+  `REJECT`.
+- Added corrected research clock/allocation pass-through for the volatility
+  squeeze optimizer and portfolio walk-forward, then tested focused squeeze
+  variants on `AUDUSD EURGBP EURUSD GBPUSD USDCAD`. The only positive row,
+  `strict_l24_w8_r0_50_b2_5_m2`, made $227.16 over 59 fills, but walk-forward
+  stability was only 16.7% and promotion remained `REJECT`.
+- Added corrected research clock/allocation pass-through for the Kalman trend
+  optimizer. A focused `EURGBP GBPUSD USDJPY` edge-threshold scan showed the
+  current 5.0 bps edge gate is the least-bad setting. Lowering the gate to 4.0,
+  3.0, or 2.5 bps increased trades and made losses worse, so do not loosen the
+  Kalman edge threshold to chase current GBPUSD pair pressure.
+
+## 2026-06-22 cross-rate follow-up
+
+- Ran a focused cross-rate signal screen on full 15-minute data for `EURGBP`,
+  `EURUSD`, `GBPUSD`, and `USDCAD`:
+  `outputs/backtests/live_watch_cross_rate_focused_h4_current.csv`.
+- The signal-only scan found an attractive `EURGBP` strict row with 7 active
+  samples, 85.7% hit rate, 1.90 bps average signed move, and 2.43 quality
+  score. This is useful as a watchlist signal, but it is not enough by itself
+  to promote live trading.
+- Portfolio validation rejected the idea. The strict triangle
+  `EURGBP/EURUSD/GBPUSD` cross-rate portfolio produced 64 fills, ended at
+  $999,699.80, returned -0.0300%, had -0.0566 Sharpe15, and reached only 33.3%
+  non-negative folds. `EURGBP` alone was slightly positive, but the supporting
+  legs lost enough that the portfolio remains `REJECT`.
+- Keep the `EURGBP` cross-rate watchlist active, but do not switch the live map
+  to `cross_rate_reversion` unless a future portfolio-level validation clears
+  robustness and risk gates.

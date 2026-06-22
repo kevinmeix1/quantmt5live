@@ -89,3 +89,16 @@ class CompetitionClock:
 def utc_now() -> datetime:
     return datetime.now(tz=UTC)
 
+
+@dataclass(frozen=True)
+class FixedModeClock:
+    mode: CompetitionMode = CompetitionMode.QUALIFY
+
+    def mode_at(
+        self,
+        now: datetime,
+        *,
+        finalist: bool = False,
+        sharpe_candidate: bool = False,
+    ) -> CompetitionMode:
+        return self.mode

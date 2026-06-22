@@ -17,7 +17,11 @@ from quanthack.market.adapters import (
     parse_symbol_map,
 )
 from quanthack.trading.competition_monitor import write_monitor_csv
-from quanthack.trading.live_dry_run import LiveDryRunEngine, LiveDryRunSettings
+from quanthack.trading.live_dry_run import (
+    LiveDryRunEngine,
+    LiveDryRunNoSuccessfulIterationsError,
+    LiveDryRunSettings,
+)
 from quanthack.trading.execution import DryRunExecutor
 from quanthack.core.instruments import instrument_for
 from quanthack.strategies.strategy import STRATEGY_NAMES, normalize_strategy_name
@@ -113,8 +117,12 @@ def run(args: argparse.Namespace) -> None:
             market_data=market_adapter,
             account_adapter=account_adapter,
             executor=DryRunExecutor(Path(journal_path)),
+            validate_quote_age_against_wall_clock=(adapter_name == "mt5"),
         )
-        result = engine.run()
+        try:
+            result = engine.run()
+        except LiveDryRunNoSuccessfulIterationsError as exc:
+            raise SystemExit(str(exc)) from exc
         write_monitor_csv(result.monitor_report.snapshots, monitor_output)
     finally:
         close = getattr(market_adapter, "close", None)

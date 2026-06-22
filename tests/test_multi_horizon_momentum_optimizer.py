@@ -101,6 +101,7 @@ class MultiHorizonMomentumOptimizerTest(TestCase):
         self.assertIn("allowed_utc_hours", text)
         self.assertIn("fast", text)
         self.assertIn("wf_active_positive_fold_fraction", text)
+        self.assertIn("promotion_status,promotion_live_ready,promotion_reason", text)
 
     def test_parameter_set_rejects_invalid_windows(self) -> None:
         with self.assertRaisesRegex(ValueError, "slow_lookback"):

@@ -44,7 +44,7 @@ and adds a **real MT5 order executor** (`Mt5LiveExecutor`) plus a gated
 ```powershell
 quanthack check-environment
 quanthack preflight
-python -m unittest discover -s tests   # expect OK (517 tests)
+python -m unittest discover -s tests   # expect OK (554 tests)
 ```
 
 ## 3. Pre-go-live validation sequence — DO THIS IN ORDER
@@ -103,12 +103,16 @@ or double-click `run_flatten.bat`. Keep this window handy during live trading.
 
 ```powershell
 quanthack live-trade --config configs\competition.toml --adapter mt5 ^
-  --poll-seconds 60 --iterations 100000 --max-order-lots 0.20 ^
-  --strategy-map EURUSD=macd_momentum --strategy-map XAUUSD=macd_momentum ^
-  --strategy-map GBPUSD=multi_horizon_momentum --strategy-map USDCHF=multi_horizon_momentum ^
-  --strategy-map USDCAD=macd_momentum --strategy-map AUDUSD=macd_momentum ^
-  --strategy-map EURGBP=volatility_squeeze --strategy-map EURCHF=volatility_squeeze ^
-  --strategy-map XAGUSD=macd_momentum --strategy-map USDJPY=quality_trend ^
+  --poll-seconds 60 --iterations 100000 --max-order-lots 0.10 ^
+  --max-live-positions 2 --reduce-only-daily-loss-pct 0.0012 ^
+  --reduce-only-rolling-sharpe -2.0 --live-metrics-csv outputs\live_metrics.csv ^
+  --sentiment-snapshot outputs\fx_sentiment_snapshot.json ^
+  --sentiment-conflict-threshold 1.25 ^
+  --symbol-state-snapshot outputs\live_deal_attribution_latest.json ^
+  --blocked-symbol-state cooldown_realized_drag ^
+  --strategy opportunity_probe ^
+  --symbol AUDUSD --symbol EURGBP --symbol EURUSD --symbol GBPUSD ^
+  --symbol USDCAD --symbol USDCHF --symbol USDJPY ^
   --i-understand-live-orders
 ```
 

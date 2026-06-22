@@ -26,6 +26,7 @@ from quanthack.strategies.strategy import (
     MeanReversionConfig,
     MomentumConfig,
     MultiHorizonMomentumConfig,
+    OpportunityProbeConfig,
     MovingAverageCrossoverConfig,
     QualityTrendConfig,
     RegimeConfig,
@@ -198,6 +199,7 @@ class AppConfig:
     kalman_trend: KalmanTrendStrategyConfig
     quality_trend: QualityTrendConfig
     champion_ensemble: ChampionEnsembleConfig
+    opportunity_probe: OpportunityProbeConfig
     mean_reversion: MeanReversionConfig
     regime_switch: RegimeConfig
     alpha_router: AlphaRouterConfig
@@ -266,6 +268,8 @@ class AppConfig:
             return self.quality_trend
         if strategy_name == "champion_ensemble":
             return self.champion_ensemble
+        if strategy_name == "opportunity_probe":
+            return self.opportunity_probe
         if strategy_name == "mean_reversion":
             return self.mean_reversion
         if strategy_name == "regime_switch":
@@ -332,6 +336,10 @@ class AppConfig:
                     self.champion_ensemble,
                     symbol,
                 ),
+                opportunity_probe=_with_symbol_and_spread(
+                    self.opportunity_probe,
+                    symbol,
+                ),
                 mean_reversion=_with_symbol_and_spread(self.mean_reversion, symbol),
                 regime_switch=_with_symbol_and_spread(self.regime_switch, symbol),
                 alpha_router=_with_symbol_and_spread(self.alpha_router, symbol),
@@ -363,6 +371,7 @@ class AppConfig:
             kalman_trend=self.kalman_trend,
             quality_trend=self.quality_trend,
             champion_ensemble=self.champion_ensemble,
+            opportunity_probe=self.opportunity_probe,
             mean_reversion=self.mean_reversion,
             regime_switch=self.regime_switch,
             alpha_router=self.alpha_router,
@@ -431,6 +440,9 @@ def load_config(path: str | Path = "configs/default.toml") -> AppConfig:
         quality_trend=QualityTrendConfig(**strategy.get("quality_trend", {})),
         champion_ensemble=ChampionEnsembleConfig(
             **strategy.get("champion_ensemble", {})
+        ),
+        opportunity_probe=OpportunityProbeConfig(
+            **strategy.get("opportunity_probe", {})
         ),
         mean_reversion=MeanReversionConfig(**strategy.get("mean_reversion", {})),
         regime_switch=RegimeConfig(**strategy.get("regime_switch", {})),

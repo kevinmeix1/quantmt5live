@@ -8,10 +8,14 @@ from quanthack.backtesting.portfolio_strategy_compare import (
     PortfolioStrategyComparisonRow,
     compare_portfolio_strategies,
 )
+from quanthack.backtesting.portfolio_allocator import AllocationPolicy
 from quanthack.backtesting.portfolio_walk_forward import (
+    PortfolioPromotionDecision,
     PortfolioWalkForwardSummary,
+    decide_portfolio_promotion,
     run_portfolio_walk_forward,
 )
+from quanthack.core.clock import CompetitionClock, FixedModeClock
 from quanthack.core.config import AppConfig
 from quanthack.market.market_data import PriceHistory, QuoteHistory
 
@@ -164,6 +168,12 @@ class VolatilitySqueezeOptimizationCandidate:
     walk_forward_summary: PortfolioWalkForwardSummary | None = None
 
     @property
+    def promotion_decision(self) -> PortfolioPromotionDecision | None:
+        if self.walk_forward_summary is None:
+            return None
+        return decide_portfolio_promotion(self.walk_forward_summary)
+
+    @property
     def rank_key(self) -> tuple[float, int, float, float, float, float]:
         metrics = self.comparison_row.competition_metrics
         if self.walk_forward_summary is not None:
@@ -212,6 +222,8 @@ def optimize_volatility_squeeze_parameters(
     walk_forward_test_size: int = 240,
     walk_forward_step_size: int = 240,
     walk_forward_max_baskets: int = 30,
+    allocation_policy: AllocationPolicy | None = None,
+    clock: CompetitionClock | FixedModeClock | None = None,
 ) -> VolatilitySqueezeOptimizationResult:
     if not parameter_sets:
         raise ValueError("volatility squeeze optimizer needs at least one parameter set")
@@ -226,6 +238,8 @@ def optimize_volatility_squeeze_parameters(
             quotes=quotes,
             strategy_names=("volatility_squeeze",),
             symbols=symbols,
+            allocation_policy=allocation_policy,
+            clock=clock,
         )
         if comparison.best is None:
             continue
@@ -244,6 +258,8 @@ def optimize_volatility_squeeze_parameters(
                 step_size=walk_forward_step_size,
                 min_test_fills=1,
                 min_stable_fold_fraction=0.50,
+                allocation_policy=allocation_policy,
+                clock=clock,
             )
             walk_forward_summary = walk_forward.summary
 
@@ -302,6 +318,9 @@ def write_volatility_squeeze_optimization_csv(
                 "walk_forward_median_test_sharpe_15m",
                 "walk_forward_worst_test_drawdown_pct",
                 "walk_forward_total_test_fills",
+                "promotion_status",
+                "promotion_live_ready",
+                "promotion_reason",
             ],
         )
         writer.writeheader()
@@ -310,6 +329,7 @@ def write_volatility_squeeze_optimization_csv(
             row = candidate.comparison_row
             metrics = row.competition_metrics
             summary = candidate.walk_forward_summary
+            promotion = candidate.promotion_decision
             writer.writerow(
                 {
                     "rank": rank,
@@ -360,6 +380,11 @@ def write_volatility_squeeze_optimization_csv(
                     "walk_forward_total_test_fills": (
                         "" if summary is None else summary.total_test_fills
                     ),
+                    "promotion_status": "" if promotion is None else promotion.status,
+                    "promotion_live_ready": (
+                        "" if promotion is None else promotion.live_ready
+                    ),
+                    "promotion_reason": "" if promotion is None else promotion.reason,
                 }
             )
 

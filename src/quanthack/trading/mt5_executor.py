@@ -67,6 +67,8 @@ class Mt5LiveExecutor:
     def current_portfolio(self) -> PortfolioSnapshot:
         mt5 = self.market_adapter._module()
         positions = mt5.positions_get()
+        if positions is None:
+            raise MT5OrderError(f"positions_get failed{_last_error_note(mt5)}")
         if not positions:
             return PortfolioSnapshot()
         by_symbol: dict[str, float] = {}
@@ -109,8 +111,9 @@ class Mt5LiveExecutor:
         delta_lots = target_lots - current_lots
 
         order_side = Side.BUY if delta_lots > 0 else Side.SELL
-        trade_lots = _round_lots_down(min(abs(delta_lots), self.max_order_lots), self.volume_step)
-        if trade_lots < self.min_volume - EPSILON_LOTS:
+        volume_step, min_volume = self._volume_constraints(request.symbol)
+        trade_lots = _round_lots_down(min(abs(delta_lots), self.max_order_lots), volume_step)
+        if trade_lots < min_volume - EPSILON_LOTS:
             return self._journal(account, request, decision, mode, portfolio,
                                   status="MT5_NO_CHANGE",
                                   note=f"delta {delta_lots:.4f} lots below min/step")
@@ -133,7 +136,9 @@ class Mt5LiveExecutor:
         Returns one result dict per position; also journals a summary line.
         """
         mt5 = self.market_adapter._module()
-        positions = mt5.positions_get() or ()
+        positions = mt5.positions_get()
+        if positions is None:
+            raise MT5OrderError(f"positions_get failed{_last_error_note(mt5)}")
         results: list[dict] = []
         for pos in positions:
             mt5_symbol = str(_attr(pos, "symbol"))
@@ -175,7 +180,7 @@ class Mt5LiveExecutor:
             "magic": self.magic,
             "comment": "quanthack-live",
             "type_time": getattr(mt5, "ORDER_TIME_GTC", 0),
-            "type_filling": getattr(mt5, "ORDER_FILLING_IOC", 1),
+            "type_filling": self._order_filling_mode(mt5, mt5_symbol),
         }
         if position_ticket is not None:
             req["position"] = position_ticket  # close-by-ticket when flattening
@@ -193,6 +198,29 @@ class Mt5LiveExecutor:
         }
 
     # --- helpers -------------------------------------------------------------
+    def _volume_constraints(self, symbol: str) -> tuple[float, float]:
+        instrument = instrument_for(symbol)
+        mt5 = self.market_adapter._module()
+        mt5_symbol = self.market_adapter._mt5_symbol(instrument.symbol)
+        info = mt5.symbol_info(mt5_symbol)
+        volume_step = float(_attr(info, "volume_step", default=self.volume_step))
+        min_volume = float(_attr(info, "volume_min", default=self.min_volume))
+        if volume_step <= 0 or min_volume <= 0:
+            raise MT5OrderError(f"invalid volume constraints for {mt5_symbol}")
+        return volume_step, min_volume
+
+    def _order_filling_mode(self, mt5: object, mt5_symbol: str) -> int:
+        info = mt5.symbol_info(mt5_symbol)
+        symbol_filling = int(_attr(info, "filling_mode", default=0) or 0)
+        # MT5 symbol filling flags are a bitmask: 1=FOK, 2=IOC. Prefer IOC
+        # when allowed, otherwise fall back to FOK, then RETURN for brokers
+        # that do not expose the flags through the Python bridge.
+        if symbol_filling & 2:
+            return int(getattr(mt5, "ORDER_FILLING_IOC", 1))
+        if symbol_filling & 1:
+            return int(getattr(mt5, "ORDER_FILLING_FOK", 0))
+        return int(getattr(mt5, "ORDER_FILLING_RETURN", 2))
+
     def _notional_per_lot(self, symbol: str) -> float:
         instrument = instrument_for(symbol)
         mt5 = self.market_adapter._module()
@@ -270,3 +298,10 @@ def _attr(obj, name, default="__raise__"):
     if default == "__raise__":
         raise MT5OrderError(f"missing field {name!r} on MT5 object")
     return default
+
+
+def _last_error_note(mt5: object) -> str:
+    last_error = getattr(mt5, "last_error", None)
+    if not callable(last_error):
+        return ""
+    return f": {last_error()}"

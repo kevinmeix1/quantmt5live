@@ -7,6 +7,8 @@ from quanthack.backtesting.kalman_trend_optimizer import (
     optimize_kalman_trend_parameters,
     write_kalman_trend_optimization_csv,
 )
+from quanthack.backtesting.allocation_profiles import allocation_policy_for_strategy
+from quanthack.core.clock import FixedModeClock
 from quanthack.core.config import load_config
 from quanthack.market.sample_data import generate_synthetic_market_data
 
@@ -68,3 +70,30 @@ class KalmanTrendOptimizerTest(TestCase):
     def test_parameter_set_rejects_invalid_lookback(self) -> None:
         with self.assertRaisesRegex(ValueError, "lookback"):
             KalmanTrendParameterSet("bad", 4, 0.1, 0.0, 1.0, 4, 8)
+
+    def test_optimizer_accepts_research_clock_and_allocation_policy(self) -> None:
+        config = load_config("configs/competition.toml")
+        data = generate_synthetic_market_data(
+            symbols=("EURUSD", "GBPUSD", "USDJPY"),
+            periods=96,
+            interval_minutes=15,
+            seed=103,
+        )
+
+        result = optimize_kalman_trend_parameters(
+            config=config,
+            prices=data.prices,
+            quotes=data.quotes,
+            symbols=("EURUSD", "GBPUSD", "USDJPY"),
+            parameter_sets=(
+                KalmanTrendParameterSet("probe", 20, 0.1, 0.0, 1.0, 4, 8),
+            ),
+            allocation_policy=allocation_policy_for_strategy(
+                "kalman_trend",
+                config,
+                profile="directional_probe",
+            ),
+            clock=FixedModeClock(),
+        )
+
+        self.assertEqual(len(result.candidates), 1)

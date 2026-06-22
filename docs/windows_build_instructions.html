@@ -33,7 +33,7 @@
   <div class="meta">
     Quant trading hackathon &middot; MetaTrader&nbsp;5 live execution (simulated funds, real matching)<br>
     Validated strategy recipe + competition-safe risk + resilient live loop, kill-switch &amp; auto-reconnect<br>
-    520 automated tests passing &middot; order logic verified with a fake MT5 module
+    554 automated tests passing &middot; order logic verified with a fake MT5 module
   </div>
 </section>
 <div class="page">
@@ -75,7 +75,7 @@ notepad .env</code></pre>
 <h3>Verify the install (no orders placed)</h3>
 <pre><code>quanthack check-environment
 quanthack preflight
-python -m unittest discover -s tests     REM expect: OK (520 tests)</code></pre>
+python -m unittest discover -s tests     REM expect: OK (554 tests)</code></pre>
 
 <h2>4. Pre-go-live validation — DO THIS IN ORDER</h2>
 <ol>
@@ -95,12 +95,16 @@ Only then raise the cap.</li>
 
 <h2>5. The live command</h2>
 <pre><code>quanthack live-trade --config configs\competition.toml --adapter mt5 ^
-  --poll-seconds 60 --iterations 100000 --max-order-lots 0.20 ^
-  --strategy-map EURUSD=macd_momentum --strategy-map XAUUSD=macd_momentum ^
-  --strategy-map GBPUSD=multi_horizon_momentum --strategy-map USDCHF=multi_horizon_momentum ^
-  --strategy-map USDCAD=macd_momentum --strategy-map AUDUSD=macd_momentum ^
-  --strategy-map EURGBP=volatility_squeeze --strategy-map EURCHF=volatility_squeeze ^
-  --strategy-map XAGUSD=macd_momentum --strategy-map USDJPY=quality_trend ^
+  --poll-seconds 60 --iterations 100000 --max-order-lots 0.10 ^
+  --max-live-positions 2 --reduce-only-daily-loss-pct 0.0012 ^
+  --reduce-only-rolling-sharpe -2.0 --live-metrics-csv outputs\live_metrics.csv ^
+  --sentiment-snapshot outputs\fx_sentiment_snapshot.json ^
+  --sentiment-conflict-threshold 1.25 ^
+  --symbol-state-snapshot outputs\live_deal_attribution_latest.json ^
+  --blocked-symbol-state cooldown_realized_drag ^
+  --strategy opportunity_probe ^
+  --symbol AUDUSD --symbol EURGBP --symbol EURUSD --symbol GBPUSD ^
+  --symbol USDCAD --symbol USDCHF --symbol USDJPY ^
   --i-understand-live-orders</code></pre>
 <p>Without <code>--i-understand-live-orders</code> it runs in <strong>shadow</strong> mode. Disable Windows sleep
 so the laptop stays awake the whole round.</p>

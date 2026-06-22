@@ -35,6 +35,8 @@ from quanthack.strategies.strategy import (
     MomentumConfig,
     MultiHorizonMomentumConfig,
     MultiHorizonMomentumStrategy,
+    OpportunityProbeConfig,
+    OpportunityProbeStrategy,
     MovingAverageCrossoverConfig,
     MovingAverageCrossoverStrategy,
     QualityTrendConfig,
@@ -80,6 +82,95 @@ def _prices_from_log_returns(log_returns: list[float]) -> list[float]:
         price *= exp(log_return)
         prices.append(price)
     return prices
+
+
+class OpportunityProbeStrategyTest(TestCase):
+    def test_enters_on_bounded_momentum_opportunity(self) -> None:
+        prices = _prices_from_log_returns([0.0001] * 21)
+        strategy = OpportunityProbeStrategy(
+            OpportunityProbeConfig(
+                symbol="USDCHF",
+                target_notional_usd=2_000,
+                max_target_notional_usd=5_000,
+            )
+        )
+
+        decision = strategy.generate_decision(
+            prices,
+            quote=quote(bid=0.80790, ask=0.80810),
+        )
+
+        self.assertEqual(decision.action, StrategyAction.ENTER)
+        self.assertEqual(decision.symbol, "USDCHF")
+        self.assertGreater(decision.target_notional_usd, 0)
+        self.assertEqual(decision.primary_signal, "opportunity_probe")
+
+    def test_blocks_wide_spread_entry(self) -> None:
+        prices = _prices_from_log_returns([0.0001] * 21)
+        strategy = OpportunityProbeStrategy(
+            OpportunityProbeConfig(symbol="USDCHF", max_spread_bps=2.0)
+        )
+
+        decision = strategy.generate_decision(
+            prices,
+            quote=quote(bid=0.80700, ask=0.80900),
+        )
+
+        self.assertEqual(decision.action, StrategyAction.NO_ACTION)
+        self.assertIn("spread", decision.reason)
+
+    def test_exits_when_probe_score_fades(self) -> None:
+        prices = _prices_from_log_returns([0.0] * 21)
+        strategy = OpportunityProbeStrategy(OpportunityProbeConfig(symbol="USDCHF"))
+
+        decision = strategy.generate_decision(
+            prices,
+            current_notional_usd=2_000,
+            holding_period=6,
+            quote=quote(bid=0.80790, ask=0.80810),
+        )
+
+        self.assertEqual(decision.action, StrategyAction.EXIT)
+        self.assertEqual(decision.target_notional_usd, 0.0)
+
+    def test_holds_through_weak_early_noise(self) -> None:
+        prices = _prices_from_log_returns([-0.00001] * 21)
+        strategy = OpportunityProbeStrategy(
+            OpportunityProbeConfig(
+                symbol="USDCHF",
+                min_holding_period=5,
+                reverse_score=1.20,
+            )
+        )
+
+        decision = strategy.generate_decision(
+            prices,
+            current_notional_usd=2_000,
+            holding_period=2,
+            quote=quote(bid=0.80790, ask=0.80810),
+        )
+
+        self.assertEqual(decision.action, StrategyAction.HOLD)
+        self.assertIn("minimum hold", decision.reason)
+
+    def test_exits_early_on_strong_opposite_probe(self) -> None:
+        prices = _prices_from_log_returns([-0.0002] * 21)
+        strategy = OpportunityProbeStrategy(
+            OpportunityProbeConfig(
+                symbol="USDCHF",
+                min_holding_period=5,
+                reverse_score=1.20,
+            )
+        )
+
+        decision = strategy.generate_decision(
+            prices,
+            current_notional_usd=2_000,
+            holding_period=2,
+            quote=quote(bid=0.80790, ask=0.80810),
+        )
+
+        self.assertEqual(decision.action, StrategyAction.EXIT)
 
 
 def _fixed_decision(

@@ -20,6 +20,7 @@ from quanthack.strategies.strategy import (
     KalmanTrendStrategy,
     MeanReversionStrategy,
     MovingAverageCrossoverStrategy,
+    OpportunityProbeStrategy,
     QualityTrendStrategy,
     RegimeSwitchingStrategy,
     RelativeStrengthStrategy,
@@ -311,6 +312,10 @@ class ConfigTest(TestCase):
         self.assertIsInstance(champion_strategy, ChampionEnsembleStrategy)
         self.assertEqual(config.strategy_symbol("champion_ensemble"), "EURUSD")
 
+        opportunity_strategy = config.build_strategy("opportunity")
+        self.assertIsInstance(opportunity_strategy, OpportunityProbeStrategy)
+        self.assertEqual(config.strategy_symbol("opportunity_probe"), "EURUSD")
+
         regime_strategy = config.build_strategy("regime")
         self.assertIsInstance(regime_strategy, RegimeSwitchingStrategy)
         self.assertEqual(config.strategy_symbol("regime_switch"), "EURUSD")
@@ -422,6 +427,11 @@ class ConfigTest(TestCase):
         self.assertIsInstance(champion_strategy, ChampionEnsembleStrategy)
         self.assertEqual(champion_strategy.config.symbol, "BTCUSD")
         self.assertEqual(champion_strategy.config.max_spread_bps, 60.0)
+
+        opportunity_strategy = config.build_strategy("opportunity_probe", symbol="BTCUSD")
+        self.assertIsInstance(opportunity_strategy, OpportunityProbeStrategy)
+        self.assertEqual(opportunity_strategy.config.symbol, "BTCUSD")
+        self.assertEqual(opportunity_strategy.config.max_spread_bps, 60.0)
 
         usd_strategy = config.build_strategy("usd_pressure_router", symbol="BTCUSD")
         self.assertIsInstance(usd_strategy, UsdPressureRouterStrategy)

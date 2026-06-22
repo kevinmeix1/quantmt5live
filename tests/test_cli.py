@@ -492,6 +492,7 @@ class CliTest(TestCase):
 
         self.assertIn("Volatility Squeeze Optimization", output)
         self.assertIn("fast", csv_text)
+        self.assertIn("promotion_status", csv_text)
 
     def test_dual_squeeze_optimizer_cli_writes_csv(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -1165,6 +1166,7 @@ class CliTest(TestCase):
         self.assertIn("Largest positive fold contribution", output)
         self.assertIn("Promotion:", output)
         self.assertIn("strategy,symbols,folds", summary_text)
+        self.assertIn("promotion_status", summary_text)
         self.assertIn("evaluation_fills", folds_text)
 
     def test_validate_market_data_competition_symbols_flags_missing_crypto(self) -> None:
@@ -1612,6 +1614,12 @@ class CliTest(TestCase):
 
         self.assertIn("Refusing MT5 capture", str(context.exception))
 
+    def test_mt5_probe_requires_explicit_read_only_confirmation(self) -> None:
+        with self.assertRaises(SystemExit) as context:
+            _capture(mt5_probe.main, ["--symbol", "EURUSD"])
+
+        self.assertIn("Refusing MT5 probe", str(context.exception))
+
     def test_manual_ticket_prints_mt5_volume_without_sending_orders(self) -> None:
         output = _capture(
             manual_ticket.main,
@@ -1639,7 +1647,13 @@ class CliTest(TestCase):
 
             output = _capture(
                 mt5_probe.main,
-                ["--env-file", str(env_path), "--symbol", "EURUSD"],
+                [
+                    "--env-file",
+                    str(env_path),
+                    "--symbol",
+                    "EURUSD",
+                    "--confirm-read-only-mt5",
+                ],
             )
 
         self.assertIn("MT5 Probe", output)

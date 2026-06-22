@@ -55,6 +55,22 @@ class MarketQualityCheckerTest(TestCase):
         self.assertFalse(decision.ok)
         self.assertIn("after as_of", decision.reason)
 
+    def test_bounded_future_quote_skew_can_pass_for_broker_clock_offset(self) -> None:
+        quote = QuoteSnapshot(
+            timestamp=NOW + timedelta(hours=1),
+            symbol="EURUSD",
+            bid=1.10095,
+            ask=1.10105,
+        )
+        checker = MarketQualityChecker(
+            MarketQualityLimits(max_future_quote_skew_seconds=7_200)
+        )
+
+        decision = checker.evaluate(quote=quote, as_of=NOW)
+
+        self.assertTrue(decision.ok)
+        self.assertEqual(decision.quote_age_seconds, 0.0)
+
     def test_naive_as_of_is_rejected(self) -> None:
         quote = QuoteSnapshot(timestamp=NOW, symbol="EURUSD", bid=1.10095, ask=1.10105)
 

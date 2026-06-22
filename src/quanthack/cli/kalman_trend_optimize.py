@@ -3,6 +3,11 @@ from __future__ import annotations
 import argparse
 from collections.abc import Sequence
 
+from quanthack.backtesting.allocation_profiles import (
+    ALLOCATION_PROFILE_DEFAULT,
+    ALLOCATION_PROFILE_NAMES,
+    allocation_policy_for_strategy,
+)
 from quanthack.backtesting.kalman_trend_optimizer import (
     DEFAULT_KALMAN_TREND_PARAMETER_SETS,
     KalmanTrendParameterSet,
@@ -10,6 +15,7 @@ from quanthack.backtesting.kalman_trend_optimizer import (
     write_kalman_trend_optimization_csv,
 )
 from quanthack.cli._format import money
+from quanthack.core.clock import FixedModeClock
 from quanthack.core.config import load_config
 from quanthack.market.market_data import load_price_history, load_quote_history
 
@@ -36,6 +42,17 @@ def build_parser() -> argparse.ArgumentParser:
         "--output",
         default="outputs/backtests/kalman_trend_optimization.csv",
     )
+    parser.add_argument(
+        "--allocation-profile",
+        choices=ALLOCATION_PROFILE_NAMES,
+        default=ALLOCATION_PROFILE_DEFAULT,
+        help="Optional research allocation policy profile for portfolio sizing.",
+    )
+    parser.add_argument(
+        "--force-qualify-mode",
+        action="store_true",
+        help="Use a fixed QUALIFY research clock instead of competition schedule gating.",
+    )
     return parser
 
 
@@ -54,6 +71,12 @@ def run(args: argparse.Namespace) -> None:
         quotes=load_quote_history(quote_csv),
         symbols=tuple(args.symbol) if args.symbol else None,
         parameter_sets=parameter_sets,
+        allocation_policy=allocation_policy_for_strategy(
+            "kalman_trend",
+            config,
+            profile=args.allocation_profile,
+        ),
+        clock=FixedModeClock() if args.force_qualify_mode else None,
     )
     write_kalman_trend_optimization_csv(result, args.output)
 
@@ -61,6 +84,8 @@ def run(args: argparse.Namespace) -> None:
     print(f"  Symbols: {', '.join(result.symbols)}")
     print(f"  Price CSV: {price_csv}")
     print(f"  Quote CSV: {quote_csv}")
+    print(f"  Allocation profile: {args.allocation_profile}")
+    print(f"  Force qualify mode: {'yes' if args.force_qualify_mode else 'no'}")
     print(f"  Output CSV: {args.output}")
     print("Ranked candidates")
     for rank, candidate in enumerate(result.candidates, start=1):

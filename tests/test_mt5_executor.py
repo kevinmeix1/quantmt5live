@@ -9,7 +9,7 @@ from unittest import TestCase
 from quanthack.core.clock import UTC, CompetitionMode
 from quanthack.market.market_data import QuoteSnapshot
 from quanthack.trading.execution import read_journal
-from quanthack.trading.mt5_executor import Mt5LiveExecutor
+from quanthack.trading.mt5_executor import MT5OrderError, Mt5LiveExecutor
 from quanthack.trading.risk import (
     AccountSnapshot,
     Position,
@@ -29,17 +29,25 @@ class _FakeMT5:
     TRADE_ACTION_DEAL = 1
     TRADE_RETCODE_DONE = 10009
     ORDER_TIME_GTC = 0
+    ORDER_FILLING_FOK = 0
     ORDER_FILLING_IOC = 1
+    ORDER_FILLING_RETURN = 2
 
-    def __init__(self, positions=()):
+    def __init__(self, positions=(), symbol_info=None):
         self.sent: list[dict] = []
         self._positions = positions
+        self._symbol_info = symbol_info or SimpleNamespace(
+            trade_contract_size=100_000.0,
+            volume_min=0.01,
+            volume_step=0.01,
+            filling_mode=3,
+        )
 
     def positions_get(self, *a, **k):
         return self._positions
 
     def symbol_info(self, symbol):
-        return SimpleNamespace(trade_contract_size=100_000.0)
+        return self._symbol_info
 
     def symbol_info_tick(self, symbol):
         return SimpleNamespace(bid=1.0999, ask=1.1001)
@@ -47,6 +55,9 @@ class _FakeMT5:
     def order_send(self, request):
         self.sent.append(request)
         return SimpleNamespace(retcode=self.TRADE_RETCODE_DONE, comment="done", order=1)
+
+    def last_error(self):
+        return (1, "fake error")
 
 
 class _FakeAdapter:
@@ -98,6 +109,7 @@ class Mt5LiveExecutorTest(TestCase):
             self.assertEqual(order["type"], _FakeMT5.ORDER_TYPE_BUY)
             # 50_000 / (100_000 * 1.10) = 0.4545 -> rounded down to 0.45 lots
             self.assertAlmostEqual(order["volume"], 0.45, places=2)
+            self.assertEqual(order["type_filling"], _FakeMT5.ORDER_FILLING_IOC)
 
     def test_reconciles_against_existing_position(self) -> None:
         # Already long ~0.45 lots EURUSD; same 50k target => no new order.
@@ -132,6 +144,43 @@ class Mt5LiveExecutorTest(TestCase):
             ex.submit(account=acc, request=req, decision=dec, mode=CompetitionMode.QUALIFY)
             self.assertAlmostEqual(mt5.sent[0]["volume"], 0.10, places=2)
 
+    def test_broker_volume_step_rounds_order_size(self) -> None:
+        info = SimpleNamespace(
+            trade_contract_size=100_000.0,
+            volume_min=0.10,
+            volume_step=0.10,
+            filling_mode=3,
+        )
+        mt5 = _FakeMT5(symbol_info=info)
+        with TemporaryDirectory() as d:
+            ex = Mt5LiveExecutor(journal_path=Path(d) / "j.jsonl",
+                                 market_adapter=_FakeAdapter(mt5), live=True)
+            acc, req, dec = _approved(50_000.0)
+            ex.submit(account=acc, request=req, decision=dec, mode=CompetitionMode.QUALIFY)
+        self.assertAlmostEqual(mt5.sent[0]["volume"], 0.40, places=2)
+
+    def test_symbol_filling_mode_uses_fok_when_ioc_is_not_allowed(self) -> None:
+        info = SimpleNamespace(
+            trade_contract_size=100_000.0,
+            volume_min=0.01,
+            volume_step=0.01,
+            filling_mode=1,
+        )
+        mt5 = _FakeMT5(symbol_info=info)
+        with TemporaryDirectory() as d:
+            ex = Mt5LiveExecutor(journal_path=Path(d) / "j.jsonl",
+                                 market_adapter=_FakeAdapter(mt5), live=True)
+            acc, req, dec = _approved(50_000.0)
+            ex.submit(account=acc, request=req, decision=dec, mode=CompetitionMode.QUALIFY)
+        self.assertEqual(mt5.sent[0]["type_filling"], _FakeMT5.ORDER_FILLING_FOK)
+
+    def test_position_read_error_does_not_look_flat(self) -> None:
+        mt5 = _FakeMT5(positions=None)
+        ex = Mt5LiveExecutor(journal_path=Path("/tmp/unused.jsonl"),
+                             market_adapter=_FakeAdapter(mt5), live=False)
+        with self.assertRaisesRegex(MT5OrderError, "positions_get failed"):
+            ex.current_portfolio()
+
     def test_flatten_all_closes_each_position_live(self) -> None:
         pos = (
             SimpleNamespace(symbol="EURUSD", volume=0.45, type=_FakeMT5.ORDER_TYPE_BUY, ticket=11),
@@ -158,6 +207,14 @@ class Mt5LiveExecutorTest(TestCase):
             results = ex.flatten_all()
         self.assertEqual(mt5.sent, [])
         self.assertTrue(results[0]["shadow"])
+
+    def test_flatten_all_raises_when_positions_cannot_be_read(self) -> None:
+        mt5 = _FakeMT5(positions=None)
+        with TemporaryDirectory() as d:
+            ex = Mt5LiveExecutor(journal_path=Path(d) / "j.jsonl",
+                                 market_adapter=_FakeAdapter(mt5), live=True)
+            with self.assertRaisesRegex(MT5OrderError, "positions_get failed"):
+                ex.flatten_all()
 
     def test_current_portfolio_reads_live_positions(self) -> None:
         pos = (SimpleNamespace(symbol="EURUSD", volume=1.0, type=_FakeMT5.ORDER_TYPE_SELL),)

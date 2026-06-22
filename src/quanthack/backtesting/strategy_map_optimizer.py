@@ -16,10 +16,14 @@ from quanthack.backtesting.portfolio_backtest import (
     PortfolioBacktestEngine,
     PortfolioBacktestResult,
 )
+from quanthack.backtesting.portfolio_allocator import AllocationPolicy
 from quanthack.backtesting.portfolio_fixed_warmup_walk_forward import (
+    FixedWarmupPromotionDecision,
     FixedWarmupPortfolioWalkForwardResult,
+    decide_fixed_warmup_promotion,
     run_fixed_warmup_portfolio_walk_forward,
 )
+from quanthack.core.clock import CompetitionClock, FixedModeClock
 from quanthack.core.config import AppConfig
 from quanthack.core.instruments import instrument_for
 from quanthack.market.market_data import PriceHistory, QuoteHistory
@@ -68,6 +72,12 @@ class StrategyMapCandidate:
         return " ".join(
             f"{symbol}={strategy}" for symbol, strategy in self.strategy_by_symbol
         )
+
+    @property
+    def promotion_decision(self) -> FixedWarmupPromotionDecision | None:
+        if self.walk_forward is None:
+            return None
+        return decide_fixed_warmup_promotion(self.walk_forward)
 
     @property
     def rank_key(self) -> tuple[float, ...]:
@@ -120,6 +130,8 @@ def optimize_strategy_map(
     step_size: int = 192,
     min_positive_pnl_usd: float = 0.0,
     top_symbol_counts: tuple[int, ...] = (3, 4, 5, 6),
+    allocation_policy: AllocationPolicy | None = None,
+    clock: CompetitionClock | FixedModeClock | None = None,
 ) -> StrategyMapOptimizationResult:
     selected_symbols = _selected_symbols(prices=prices, quotes=quotes, symbols=symbols)
     normalized_strategies = _normalize_unique_strategy_names(strategy_names)
@@ -134,6 +146,8 @@ def optimize_strategy_map(
             strategy_by_symbol={
                 symbol: strategy_name for symbol in selected_symbols
             },
+            allocation_policy=allocation_policy,
+            clock=clock,
         )
         for strategy_name in normalized_strategies
     }
@@ -168,6 +182,8 @@ def optimize_strategy_map(
                 prices=prices,
                 quotes=quotes,
                 strategy_by_symbol=dict(strategy_map),
+                allocation_policy=allocation_policy,
+                clock=clock,
             )
         result = evaluation.result
         competition_metrics = evaluation.competition_metrics
@@ -183,6 +199,8 @@ def optimize_strategy_map(
                 train_size=train_size,
                 test_size=test_size,
                 step_size=step_size,
+                allocation_policy=allocation_policy,
+                clock=clock,
             )
             if include_walk_forward
             else None
@@ -247,12 +265,16 @@ def write_strategy_map_optimization_csv(
                 "wf_median_active_test_return_pct",
                 "wf_worst_test_drawdown_pct",
                 "wf_total_evaluation_fills",
+                "promotion_status",
+                "promotion_live_ready",
+                "promotion_reason",
             ],
         )
         writer.writeheader()
         for rank, candidate in enumerate(result.candidates, start=1):
             metrics = candidate.competition_metrics
             walk_forward = candidate.walk_forward
+            promotion = candidate.promotion_decision
             writer.writerow(
                 {
                     "rank": rank,
@@ -301,6 +323,11 @@ def write_strategy_map_optimization_csv(
                     "wf_total_evaluation_fills": (
                         "" if walk_forward is None else walk_forward.total_evaluation_fills
                     ),
+                    "promotion_status": "" if promotion is None else promotion.status,
+                    "promotion_live_ready": (
+                        "" if promotion is None else promotion.live_ready
+                    ),
+                    "promotion_reason": "" if promotion is None else promotion.reason,
                 }
             )
 
@@ -379,12 +406,16 @@ def _evaluate_strategy_map(
     prices: PriceHistory,
     quotes: QuoteHistory,
     strategy_by_symbol: dict[str, str],
+    allocation_policy: AllocationPolicy | None = None,
+    clock: CompetitionClock | FixedModeClock | None = None,
 ) -> _StrategyMapEvaluation:
     result = _run_strategy_map(
         config=config,
         prices=prices,
         quotes=quotes,
         strategy_by_symbol=strategy_by_symbol,
+        allocation_policy=allocation_policy,
+        clock=clock,
     )
     competition_metrics = build_competition_metrics(
         equity_points=result.equity_curve,
@@ -406,6 +437,8 @@ def _run_strategy_map(
     prices: PriceHistory,
     quotes: QuoteHistory,
     strategy_by_symbol: dict[str, str],
+    allocation_policy: AllocationPolicy | None = None,
+    clock: CompetitionClock | FixedModeClock | None = None,
 ) -> PortfolioBacktestResult:
     selected_symbols = tuple(strategy_by_symbol)
     engine = PortfolioBacktestEngine(
@@ -422,7 +455,8 @@ def _run_strategy_map(
             )
             for symbol in selected_symbols
         },
-        clock=config.competition.to_clock(),
+        allocation_policy=allocation_policy,
+        clock=clock or config.competition.to_clock(),
         fill_model=FillModel(slippage_bps=config.backtest.slippage_bps),
         periods_per_year=config.backtest.periods_per_year,
     )

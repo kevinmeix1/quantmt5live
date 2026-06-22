@@ -7,6 +7,8 @@ from quanthack.backtesting.volatility_squeeze_optimizer import (
     optimize_volatility_squeeze_parameters,
     write_volatility_squeeze_optimization_csv,
 )
+from quanthack.backtesting.allocation_profiles import allocation_policy_for_strategy
+from quanthack.core.clock import FixedModeClock
 from quanthack.core.config import load_config
 from quanthack.market.sample_data import generate_synthetic_market_data
 
@@ -87,6 +89,7 @@ class VolatilitySqueezeOptimizerTest(TestCase):
 
         self.assertIn("rank,label,symbols,lookback,squeeze_window", csv_text)
         self.assertIn("baseline", csv_text)
+        self.assertIn("promotion_status,promotion_live_ready,promotion_reason", csv_text)
 
     def test_optimizer_can_attach_walk_forward_summary(self) -> None:
         config = load_config("configs/default.toml")
@@ -117,6 +120,47 @@ class VolatilitySqueezeOptimizerTest(TestCase):
             walk_forward_test_size=6,
             walk_forward_step_size=6,
             walk_forward_max_baskets=2,
+        )
+
+        self.assertEqual(len(result.candidates), 1)
+        self.assertIsNotNone(result.candidates[0].walk_forward_summary)
+        self.assertIsNotNone(result.candidates[0].promotion_decision)
+
+    def test_optimizer_accepts_research_clock_and_allocation_policy(self) -> None:
+        config = load_config("configs/competition.toml")
+        data = generate_synthetic_market_data(
+            symbols=("EURUSD", "GBPUSD", "USDJPY"),
+            periods=42,
+            interval_minutes=15,
+            seed=64,
+        )
+
+        result = optimize_volatility_squeeze_parameters(
+            config=config,
+            prices=data.prices,
+            quotes=data.quotes,
+            symbols=("EURUSD", "GBPUSD", "USDJPY"),
+            parameter_sets=(
+                VolatilitySqueezeParameterSet(
+                    label="probe",
+                    lookback=8,
+                    squeeze_window=2,
+                    max_squeeze_ratio=0.90,
+                    breakout_buffer_bps=0.5,
+                    band_stdev_multiplier=1.5,
+                ),
+            ),
+            include_walk_forward=True,
+            walk_forward_train_size=12,
+            walk_forward_test_size=6,
+            walk_forward_step_size=6,
+            walk_forward_max_baskets=2,
+            allocation_policy=allocation_policy_for_strategy(
+                "volatility_squeeze",
+                config,
+                profile="directional_probe",
+            ),
+            clock=FixedModeClock(),
         )
 
         self.assertEqual(len(result.candidates), 1)

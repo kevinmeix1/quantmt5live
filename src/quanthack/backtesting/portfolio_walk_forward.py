@@ -13,6 +13,8 @@ from quanthack.backtesting.portfolio_universe_scan import (
     UniverseBasket,
     scan_portfolio_universes,
 )
+from quanthack.backtesting.portfolio_allocator import AllocationPolicy
+from quanthack.core.clock import CompetitionClock, FixedModeClock
 from quanthack.core.config import AppConfig
 from quanthack.core.instruments import enabled_symbols
 from quanthack.market.market_data import PriceHistory, QuoteHistory
@@ -158,6 +160,8 @@ def run_portfolio_walk_forward(
     min_stable_fold_fraction: float = 0.50,
     max_test_drawdown_pct: float = 0.05,
     min_risk_discipline_score: int = 80,
+    allocation_policy: AllocationPolicy | None = None,
+    clock: CompetitionClock | FixedModeClock | None = None,
 ) -> PortfolioWalkForwardResult:
     _validate_inputs(
         min_symbols=min_symbols,
@@ -212,6 +216,8 @@ def run_portfolio_walk_forward(
             min_symbols=min_symbols,
             max_symbols=max_symbols,
             max_baskets=max_baskets,
+            allocation_policy=allocation_policy,
+            clock=clock,
         )
         if train_scan.best is None:
             raise ValueError("portfolio walk-forward train scan returned no candidates")
@@ -225,6 +231,8 @@ def run_portfolio_walk_forward(
             min_symbols=min_symbols,
             max_symbols=max_symbols,
             max_baskets=max_baskets,
+            allocation_policy=allocation_policy,
+            clock=clock,
         )
         if test_scan.best is None:
             raise ValueError("portfolio walk-forward test scan returned no candidates")

@@ -3,6 +3,11 @@ from __future__ import annotations
 import argparse
 from collections.abc import Sequence
 
+from quanthack.backtesting.allocation_profiles import (
+    ALLOCATION_PROFILE_DEFAULT,
+    ALLOCATION_PROFILE_NAMES,
+    allocation_policy_for_strategy,
+)
 from quanthack.backtesting.volatility_squeeze_optimizer import (
     DEFAULT_VOLATILITY_SQUEEZE_PARAMETER_SETS,
     VolatilitySqueezeParameterSet,
@@ -10,6 +15,7 @@ from quanthack.backtesting.volatility_squeeze_optimizer import (
     write_volatility_squeeze_optimization_csv,
 )
 from quanthack.cli._format import money
+from quanthack.core.clock import FixedModeClock
 from quanthack.core.config import load_config
 from quanthack.market.market_data import load_price_history, load_quote_history
 
@@ -47,6 +53,17 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--test-size", type=int, default=240)
     parser.add_argument("--step-size", type=int, default=240)
     parser.add_argument("--max-baskets", type=int, default=30)
+    parser.add_argument(
+        "--allocation-profile",
+        choices=ALLOCATION_PROFILE_NAMES,
+        default=ALLOCATION_PROFILE_DEFAULT,
+        help="Optional research allocation policy profile for portfolio sizing.",
+    )
+    parser.add_argument(
+        "--force-qualify-mode",
+        action="store_true",
+        help="Use a fixed QUALIFY research clock instead of competition schedule gating.",
+    )
     return parser
 
 
@@ -70,6 +87,12 @@ def run(args: argparse.Namespace) -> None:
         walk_forward_test_size=args.test_size,
         walk_forward_step_size=args.step_size,
         walk_forward_max_baskets=args.max_baskets,
+        allocation_policy=allocation_policy_for_strategy(
+            "volatility_squeeze",
+            config,
+            profile=args.allocation_profile,
+        ),
+        clock=FixedModeClock() if args.force_qualify_mode else None,
     )
     write_volatility_squeeze_optimization_csv(result, args.output)
 
@@ -78,6 +101,8 @@ def run(args: argparse.Namespace) -> None:
     print(f"  Price CSV: {price_csv}")
     print(f"  Quote CSV: {quote_csv}")
     print(f"  Walk-forward: {'yes' if args.walk_forward else 'no'}")
+    print(f"  Allocation profile: {args.allocation_profile}")
+    print(f"  Force qualify mode: {'yes' if args.force_qualify_mode else 'no'}")
     print(f"  Output CSV: {args.output}")
     print("Ranked candidates")
     for rank, candidate in enumerate(result.candidates, start=1):

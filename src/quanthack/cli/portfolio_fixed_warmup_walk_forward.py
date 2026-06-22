@@ -3,6 +3,11 @@ from __future__ import annotations
 import argparse
 from collections.abc import Sequence
 
+from quanthack.backtesting.allocation_profiles import (
+    ALLOCATION_PROFILE_DEFAULT,
+    ALLOCATION_PROFILE_NAMES,
+    allocation_policy_for_strategy,
+)
 from quanthack.backtesting.portfolio_fixed_warmup_walk_forward import (
     decide_fixed_warmup_promotion,
     run_fixed_warmup_portfolio_walk_forward,
@@ -10,6 +15,7 @@ from quanthack.backtesting.portfolio_fixed_warmup_walk_forward import (
     write_fixed_warmup_summary_csv,
 )
 from quanthack.core.config import load_config
+from quanthack.core.clock import FixedModeClock
 from quanthack.core.instruments import instrument_for
 from quanthack.market.market_data import load_price_history, load_quote_history
 from quanthack.strategies.strategy import STRATEGY_NAMES
@@ -37,6 +43,23 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--train-size", type=int, default=960)
     parser.add_argument("--test-size", type=int, default=192)
     parser.add_argument("--step-size", type=int, default=192)
+    parser.add_argument(
+        "--allocation-profile",
+        choices=ALLOCATION_PROFILE_NAMES,
+        default=ALLOCATION_PROFILE_DEFAULT,
+        help=(
+            "Optional allocation profile for research. 'directional_probe' "
+            "matches bounded one-sided live probe diagnostics."
+        ),
+    )
+    parser.add_argument(
+        "--force-qualify-mode",
+        action="store_true",
+        help=(
+            "Research-only: treat historical bars as QUALIFY even when they are "
+            "before the configured live open_at."
+        ),
+    )
     parser.add_argument(
         "--summary-output",
         default="outputs/backtests/fixed_warmup_walk_forward_summary.csv",
@@ -67,6 +90,12 @@ def run(args: argparse.Namespace) -> None:
         strategy_name=strategy_name,
         symbols=symbols,
         strategy_by_symbol=strategy_by_symbol,
+        allocation_policy=allocation_policy_for_strategy(
+            strategy_name,
+            config,
+            profile=args.allocation_profile,
+        ),
+        clock=FixedModeClock() if args.force_qualify_mode else None,
         train_size=args.train_size,
         test_size=args.test_size,
         step_size=args.step_size,
@@ -80,6 +109,8 @@ def run(args: argparse.Namespace) -> None:
     print(f"  Symbols: {', '.join(result.symbols)}")
     print(f"  Price CSV: {price_csv}")
     print(f"  Quote CSV: {quote_csv}")
+    print(f"  Allocation profile: {args.allocation_profile}")
+    print(f"  Force qualify mode: {'yes' if args.force_qualify_mode else 'no'}")
     print(f"  Folds: {len(result.folds)}")
     print(f"  Positive fold fraction: {result.positive_fold_fraction:.1%}")
     print(f"  Active fold fraction: {result.active_fold_fraction:.1%}")

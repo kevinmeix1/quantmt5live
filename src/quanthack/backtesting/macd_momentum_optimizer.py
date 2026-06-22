@@ -5,13 +5,17 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 
 from quanthack.backtesting.portfolio_fixed_warmup_walk_forward import (
+    FixedWarmupPromotionDecision,
     FixedWarmupPortfolioWalkForwardResult,
+    decide_fixed_warmup_promotion,
     run_fixed_warmup_portfolio_walk_forward,
 )
 from quanthack.backtesting.portfolio_strategy_compare import (
     PortfolioStrategyComparisonRow,
     compare_portfolio_strategies,
 )
+from quanthack.backtesting.portfolio_allocator import AllocationPolicy
+from quanthack.core.clock import CompetitionClock, FixedModeClock
 from quanthack.core.config import AppConfig
 from quanthack.market.market_data import PriceHistory, QuoteHistory
 
@@ -82,6 +86,12 @@ class MacdMomentumOptimizationCandidate:
     walk_forward: FixedWarmupPortfolioWalkForwardResult | None = None
 
     @property
+    def promotion_decision(self) -> FixedWarmupPromotionDecision | None:
+        if self.walk_forward is None:
+            return None
+        return decide_fixed_warmup_promotion(self.walk_forward)
+
+    @property
     def rank_key(self) -> tuple[float, ...]:
         metrics = self.comparison_row.competition_metrics
         if self.walk_forward is not None:
@@ -132,6 +142,8 @@ def optimize_macd_momentum_parameters(
     train_size: int = 960,
     test_size: int = 192,
     step_size: int = 192,
+    allocation_policy: AllocationPolicy | None = None,
+    clock: CompetitionClock | FixedModeClock | None = None,
 ) -> MacdMomentumOptimizationResult:
     if not parameter_sets:
         raise ValueError("MACD momentum optimizer needs at least one parameter set")
@@ -146,6 +158,8 @@ def optimize_macd_momentum_parameters(
             quotes=quotes,
             strategy_names=("macd_momentum",),
             symbols=symbols,
+            allocation_policy=allocation_policy,
+            clock=clock,
         )
         if comparison.best is None:
             continue
@@ -160,6 +174,8 @@ def optimize_macd_momentum_parameters(
                 train_size=train_size,
                 test_size=test_size,
                 step_size=step_size,
+                allocation_policy=allocation_policy,
+                clock=clock,
             )
             if include_walk_forward
             else None
@@ -220,6 +236,9 @@ def write_macd_momentum_optimization_csv(
                 "wf_median_active_test_return_pct",
                 "wf_worst_test_drawdown_pct",
                 "wf_total_evaluation_fills",
+                "promotion_status",
+                "promotion_live_ready",
+                "promotion_reason",
             ],
         )
         writer.writeheader()
@@ -228,6 +247,7 @@ def write_macd_momentum_optimization_csv(
             row = candidate.comparison_row
             metrics = row.competition_metrics
             walk_forward = candidate.walk_forward
+            promotion = candidate.promotion_decision
             writer.writerow(
                 {
                     "rank": rank,
@@ -285,6 +305,11 @@ def write_macd_momentum_optimization_csv(
                     "wf_total_evaluation_fills": (
                         "" if walk_forward is None else walk_forward.total_evaluation_fills
                     ),
+                    "promotion_status": "" if promotion is None else promotion.status,
+                    "promotion_live_ready": (
+                        "" if promotion is None else promotion.live_ready
+                    ),
+                    "promotion_reason": "" if promotion is None else promotion.reason,
                 }
             )
 

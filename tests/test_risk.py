@@ -36,6 +36,20 @@ class AccountSnapshotTest(TestCase):
 
 
 class RiskEngineTest(TestCase):
+    def test_pre_live_mode_blocks_new_orders(self) -> None:
+        engine = RiskEngine()
+
+        decision = engine.evaluate(
+            account=AccountSnapshot(equity=1_000_000, margin_level_pct=2_000),
+            portfolio=PortfolioSnapshot(),
+            request=make_request(),
+            mode=CompetitionMode.PRE_LIVE,
+        )
+
+        self.assertFalse(decision.approved)
+        self.assertEqual(decision.state, RiskState.NORMAL)
+        self.assertIn("not live", decision.reason)
+
     def test_normal_request_is_approved(self) -> None:
         engine = RiskEngine()
 

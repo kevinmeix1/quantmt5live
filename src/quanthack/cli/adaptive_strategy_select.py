@@ -83,7 +83,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help=(
             "Only allow a candidate when training return minus drawdown penalty "
-            "is at least this decimal return value, for example 0.0001 for 0.01%."
+            "is at least this decimal return value, for example 0.0001 for 0.01%%."
         ),
     )
     parser.add_argument(
@@ -92,7 +92,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=0.0,
         help=(
             "Subtract this decimal return amount per training-window fill when "
-            "ranking candidates, for example 0.000002 for a 0.0002% per-fill "
+            "ranking candidates, for example 0.000002 for a 0.0002%% per-fill "
             "churn penalty."
         ),
     )

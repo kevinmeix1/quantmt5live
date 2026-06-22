@@ -8,6 +8,8 @@ from quanthack.backtesting.portfolio_strategy_compare import (
     PortfolioStrategyComparisonRow,
     compare_portfolio_strategies,
 )
+from quanthack.backtesting.portfolio_allocator import AllocationPolicy
+from quanthack.core.clock import CompetitionClock, FixedModeClock
 from quanthack.core.config import AppConfig
 from quanthack.market.market_data import PriceHistory, QuoteHistory
 
@@ -127,6 +129,8 @@ def optimize_kalman_trend_parameters(
     parameter_sets: tuple[
         KalmanTrendParameterSet, ...
     ] = DEFAULT_KALMAN_TREND_PARAMETER_SETS,
+    allocation_policy: AllocationPolicy | None = None,
+    clock: CompetitionClock | FixedModeClock | None = None,
 ) -> KalmanTrendOptimizationResult:
     if not parameter_sets:
         raise ValueError("Kalman trend optimizer needs at least one parameter set")
@@ -141,6 +145,8 @@ def optimize_kalman_trend_parameters(
             quotes=quotes,
             strategy_names=("kalman_trend",),
             symbols=symbols,
+            allocation_policy=allocation_policy,
+            clock=clock,
         )
         if comparison.best is None:
             continue

@@ -191,6 +191,9 @@ class RiskEngine:
         request: TradeRequest,
         mode: CompetitionMode,
     ) -> RiskDecision:
+        if mode == CompetitionMode.PRE_LIVE:
+            return self._block("competition is not live yet")
+
         if self.state == RiskState.FROZEN:
             return self._block("risk engine is frozen")
 
@@ -263,4 +266,3 @@ class RiskEngine:
             adjusted_notional_usd=0.0,
             state=self.state,
         )
-

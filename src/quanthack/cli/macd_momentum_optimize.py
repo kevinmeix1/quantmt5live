@@ -3,6 +3,11 @@ from __future__ import annotations
 import argparse
 from collections.abc import Sequence
 
+from quanthack.backtesting.allocation_profiles import (
+    ALLOCATION_PROFILE_DEFAULT,
+    ALLOCATION_PROFILE_NAMES,
+    allocation_policy_for_strategy,
+)
 from quanthack.backtesting.macd_momentum_optimizer import (
     DEFAULT_MACD_MOMENTUM_PARAMETER_SETS,
     MacdMomentumParameterSet,
@@ -10,6 +15,7 @@ from quanthack.backtesting.macd_momentum_optimizer import (
     write_macd_momentum_optimization_csv,
 )
 from quanthack.cli._format import money
+from quanthack.core.clock import FixedModeClock
 from quanthack.core.config import load_config
 from quanthack.market.market_data import load_price_history, load_quote_history
 
@@ -38,6 +44,17 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--test-size", type=int, default=192)
     parser.add_argument("--step-size", type=int, default=192)
     parser.add_argument(
+        "--allocation-profile",
+        choices=ALLOCATION_PROFILE_NAMES,
+        default=ALLOCATION_PROFILE_DEFAULT,
+        help="Optional research allocation policy profile for portfolio sizing.",
+    )
+    parser.add_argument(
+        "--force-qualify-mode",
+        action="store_true",
+        help="Use a fixed QUALIFY research clock instead of competition schedule gating.",
+    )
+    parser.add_argument(
         "--output",
         default="outputs/backtests/macd_momentum_optimization.csv",
     )
@@ -63,6 +80,12 @@ def run(args: argparse.Namespace) -> None:
         train_size=args.train_size,
         test_size=args.test_size,
         step_size=args.step_size,
+        allocation_policy=allocation_policy_for_strategy(
+            "macd_momentum",
+            config,
+            profile=args.allocation_profile,
+        ),
+        clock=FixedModeClock() if args.force_qualify_mode else None,
     )
     write_macd_momentum_optimization_csv(result, args.output)
 
@@ -71,12 +94,15 @@ def run(args: argparse.Namespace) -> None:
     print(f"  Price CSV: {price_csv}")
     print(f"  Quote CSV: {quote_csv}")
     print(f"  Walk-forward: {'yes' if args.include_walk_forward else 'no'}")
+    print(f"  Allocation profile: {args.allocation_profile}")
+    print(f"  Force qualify mode: {'yes' if args.force_qualify_mode else 'no'}")
     print(f"  Output CSV: {args.output}")
     print("Ranked candidates")
     for rank, candidate in enumerate(result.candidates, start=1):
         params = candidate.parameters
         metrics = candidate.comparison_row.competition_metrics
         wf = candidate.walk_forward
+        promotion = candidate.promotion_decision
         wf_text = (
             ""
             if wf is None
@@ -87,6 +113,11 @@ def run(args: argparse.Namespace) -> None:
                 f"wf_nonneg={wf.non_negative_fold_fraction:.1%}, "
                 f"wf_active_med={wf.median_active_test_return_pct:.3%}"
             )
+        )
+        promotion_text = (
+            ""
+            if promotion is None
+            else f", promotion={promotion.status}"
         )
         print(
             f"  {rank}. {params.label}: "
@@ -106,6 +137,7 @@ def run(args: argparse.Namespace) -> None:
             f"final={money(metrics.final_equity)}, "
             f"trades={metrics.trade_count}"
             f"{wf_text}"
+            f"{promotion_text}"
         )
 
 

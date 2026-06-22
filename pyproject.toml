@@ -7,7 +7,9 @@ name = "quanthack"
 version = "0.1.0"
 description = "Slow, risk-first starter project for a quantitative trading hackathon."
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+  "tzdata; platform_system == 'Windows'",
+]
 
 [project.optional-dependencies]
 data = [

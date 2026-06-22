@@ -11,8 +11,10 @@ from quanthack.backtesting.competition_score import (
     RiskDisciplineReport,
     official_composite_score,
 )
+from quanthack.backtesting.portfolio_allocator import AllocationPolicy
 from quanthack.backtesting.portfolio_backtest import PortfolioBacktestResult
 from quanthack.backtesting.portfolio_strategy_compare import compare_portfolio_strategies
+from quanthack.core.clock import CompetitionClock, FixedModeClock
 from quanthack.core.config import AppConfig
 from quanthack.core.instruments import AssetClass, enabled_symbols, instrument_for
 from quanthack.market.market_data import PriceHistory, QuoteHistory
@@ -22,6 +24,7 @@ from quanthack.strategies.strategy import STRATEGY_NAMES, normalize_strategy_nam
 DEFAULT_MIN_SYMBOLS = 3
 DEFAULT_MAX_SYMBOLS = 5
 DEFAULT_MAX_BASKETS = 25
+DEFAULT_MIN_FILLS = 1
 
 
 @dataclass(frozen=True)
@@ -70,10 +73,12 @@ class PortfolioUniverseScanRow:
     drawdown_rank: float = 0.0
     sharpe_rank: float = 0.0
     proxy_score: float = 0.0
+    activity_status: str = "ACTIVE"
 
     @property
-    def rank_key(self) -> tuple[float, int, float, float, float, int]:
+    def rank_key(self) -> tuple[int, float, int, float, float, float, int]:
         return (
+            int(self.activity_status == "ACTIVE"),
             self.proxy_score,
             self.risk_discipline.score,
             self.competition_metrics.return_pct,
@@ -165,6 +170,9 @@ def scan_portfolio_universes(
     min_symbols: int = DEFAULT_MIN_SYMBOLS,
     max_symbols: int = DEFAULT_MAX_SYMBOLS,
     max_baskets: int = DEFAULT_MAX_BASKETS,
+    min_fills: int = DEFAULT_MIN_FILLS,
+    allocation_policy: AllocationPolicy | None = None,
+    clock: CompetitionClock | FixedModeClock | None = None,
 ) -> PortfolioUniverseScan:
     if min_symbols < 1:
         raise ValueError("min_symbols must be at least 1")
@@ -172,6 +180,8 @@ def scan_portfolio_universes(
         raise ValueError("max_symbols must be at least min_symbols")
     if max_baskets < 1:
         raise ValueError("max_baskets must be at least 1")
+    if min_fills < 0:
+        raise ValueError("min_fills cannot be negative")
 
     available_symbols = _available_supported_symbols(prices, quotes)
     selected_strategies = _normalize_unique_strategy_names(strategy_names)
@@ -191,6 +201,8 @@ def scan_portfolio_universes(
             quotes=quotes,
             strategy_names=selected_strategies,
             symbols=basket.symbols,
+            allocation_policy=allocation_policy,
+            clock=clock,
         )
         for comparison_row in comparison.rows:
             rows.append(
@@ -203,7 +215,7 @@ def scan_portfolio_universes(
                 )
             )
 
-    ranked = _attach_proxy_scores(tuple(rows))
+    ranked = _attach_proxy_scores(tuple(rows), min_fills=min_fills)
     ranked = tuple(sorted(ranked, key=lambda row: row.rank_key, reverse=True))
     return PortfolioUniverseScan(
         available_symbols=available_symbols,
@@ -229,6 +241,7 @@ def write_portfolio_universe_scan_csv(
                 "symbols",
                 "asset_mix",
                 "proxy_score",
+                "activity_status",
                 "return_rank",
                 "drawdown_rank",
                 "sharpe_rank",
@@ -261,6 +274,7 @@ def write_portfolio_universe_scan_csv(
                     "symbols": " ".join(row.basket.symbols),
                     "asset_mix": row.asset_mix,
                     "proxy_score": row.proxy_score,
+                    "activity_status": row.activity_status,
                     "return_rank": row.return_rank,
                     "drawdown_rank": row.drawdown_rank,
                     "sharpe_rank": row.sharpe_rank,
@@ -433,6 +447,8 @@ def _normalize_unique_strategy_names(strategy_names: tuple[str, ...]) -> tuple[s
 
 def _attach_proxy_scores(
     rows: tuple[PortfolioUniverseScanRow, ...],
+    *,
+    min_fills: int,
 ) -> tuple[PortfolioUniverseScanRow, ...]:
     return_ranks = _percentile_scores(
         [row.competition_metrics.return_pct for row in rows],
@@ -455,6 +471,8 @@ def _attach_proxy_scores(
         sharpe_ranks,
         strict=True,
     ):
+        fill_count = len(row.result.fills)
+        activity_status = "ACTIVE" if fill_count >= min_fills else "UNDERACTIVE"
         proxy_score = official_composite_score(
             return_rank=return_rank,
             drawdown_rank=drawdown_rank,
@@ -462,6 +480,8 @@ def _attach_proxy_scores(
             risk_discipline_score=row.risk_discipline.score,
             sharpe_rank_cap=row.competition_metrics.sharpe_rank_cap,
         )
+        if activity_status != "ACTIVE":
+            proxy_score = 0.0
         ranked_rows.append(
             replace(
                 row,
@@ -469,6 +489,7 @@ def _attach_proxy_scores(
                 drawdown_rank=drawdown_rank,
                 sharpe_rank=sharpe_rank,
                 proxy_score=proxy_score,
+                activity_status=activity_status,
             )
         )
     return tuple(ranked_rows)
