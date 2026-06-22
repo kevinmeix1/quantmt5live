@@ -447,3 +447,20 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   champion ensemble asset-adaptive-dual-squeeze signals on GBPUSD, AUDUSD, and
   USDJPY. Current live diagnostics are still flat/no approved risk, so keep
   these as watchlist evidence only.
+
+## 2026-06-22 USDCHF/USDCAD afternoon probe rejection
+
+- Refreshed live sentiment, deal attribution, pair analysis, and diagnostics.
+  The account remained flat with no blocked symbols, no small-only symbols, and
+  no fresh live-risk candidates. USDCHF and USDCAD had the strongest pair
+  scores, but the promoted MACD sleeve was correctly session-gated at 15:00
+  UTC.
+- Tested the tempting USDCHF/USDCAD afternoon basket under directional-probe
+  allocation. `quality_trend` was only mildly positive (+0.004%, 10 fills) and
+  scored 20/100 risk discipline; `trend_pullback` lost 0.051% over 36 fills
+  with 0/100 risk discipline; `volatility_squeeze` lost 0.016% over 17 fills
+  with 30/100 risk discipline.
+- Fixed-warmup validation of the only positive row,
+  `outputs/backtests/live_watch_usdchf_usdcad_quality_w960_summary.csv`,
+  was `REJECT` with zero active test folds. Do not loosen the live MACD
+  session gate or promote this afternoon USDCHF/USDCAD sleeve.

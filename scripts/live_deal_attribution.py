@@ -59,7 +59,12 @@ def main() -> None:
     finally:
         mt5.shutdown()
 
-    _write(snapshot)
+    _write(
+        snapshot,
+        output_json=Path(args.output_json),
+        output_text=Path(args.output_text),
+        history_jsonl=Path(args.history_jsonl),
+    )
     print(
         json.dumps(
             {
@@ -175,6 +180,9 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--since-hours", type=float, default=12.0)
     parser.add_argument("--since-utc", default=None, help="Optional ISO UTC start timestamp.")
     parser.add_argument("--symbol", action="append", default=list(SYMBOLS))
+    parser.add_argument("--output-json", default=str(LATEST_JSON))
+    parser.add_argument("--output-text", default=str(LATEST_TEXT))
+    parser.add_argument("--history-jsonl", default=str(HISTORY_JSONL))
     return parser.parse_args()
 
 
@@ -340,10 +348,17 @@ def _round_row(row: dict) -> None:
         row[key] = round(float(row[key]), 6)
 
 
-def _write(snapshot: dict) -> None:
-    LATEST_JSON.parent.mkdir(parents=True, exist_ok=True)
-    LATEST_JSON.write_text(json.dumps(snapshot, indent=2, sort_keys=True), encoding="utf-8")
-    with HISTORY_JSONL.open("a", encoding="utf-8") as handle:
+def _write(
+    snapshot: dict,
+    *,
+    output_json: Path = LATEST_JSON,
+    output_text: Path = LATEST_TEXT,
+    history_jsonl: Path = HISTORY_JSONL,
+) -> None:
+    output_json.parent.mkdir(parents=True, exist_ok=True)
+    output_json.write_text(json.dumps(snapshot, indent=2, sort_keys=True), encoding="utf-8")
+    history_jsonl.parent.mkdir(parents=True, exist_ok=True)
+    with history_jsonl.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(snapshot, sort_keys=True) + "\n")
     lines = [f"{snapshot['timestamp_utc']} since={snapshot['since_utc']}", ""]
     for symbol, item in snapshot["symbols"].items():
@@ -359,7 +374,8 @@ def _write(snapshot: dict) -> None:
             f"float={item['floating_pnl']:.2f} open={item['open_direction']} "
             f"lots={item['open_lots']:.2f}{clear_text}"
         )
-    LATEST_TEXT.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    output_text.parent.mkdir(parents=True, exist_ok=True)
+    output_text.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":

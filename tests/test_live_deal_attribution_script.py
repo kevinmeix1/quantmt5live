@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from unittest import TestCase
 
 
@@ -103,3 +105,41 @@ class LiveDealAttributionStateTest(TestCase):
 
         self.assertIsNone(clear_utc)
         self.assertIsNone(state_after_clear)
+
+    def test_write_supports_custom_output_paths(self) -> None:
+        snapshot = {
+            "timestamp_utc": "2026-06-22T06:00:00+00:00",
+            "since_utc": "2026-06-21T18:00:00+00:00",
+            "symbols": {
+                "EURUSD": {
+                    "state": "working",
+                    "net_pnl": 12.34,
+                    "closed_deals": 2,
+                    "win_rate": 1.0,
+                    "floating_pnl": 0.0,
+                    "open_direction": "FLAT",
+                    "open_lots": 0.0,
+                }
+            },
+        }
+
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            output_json = root / "custom" / "attrib.json"
+            output_text = root / "custom" / "attrib.txt"
+            history_jsonl = root / "history" / "attrib.jsonl"
+
+            live_deal_attribution._write(
+                snapshot,
+                output_json=output_json,
+                output_text=output_text,
+                history_jsonl=history_jsonl,
+            )
+
+            written = json.loads(output_json.read_text(encoding="utf-8"))
+            text = output_text.read_text(encoding="utf-8")
+            history = history_jsonl.read_text(encoding="utf-8")
+
+        self.assertEqual(written["symbols"]["EURUSD"]["net_pnl"], 12.34)
+        self.assertIn("EURUSD: state=working net=12.34", text)
+        self.assertIn('"timestamp_utc": "2026-06-22T06:00:00+00:00"', history)

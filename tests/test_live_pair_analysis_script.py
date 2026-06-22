@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from unittest import TestCase
 
 
@@ -78,3 +80,46 @@ class LivePairAnalysisActionTest(TestCase):
         )
 
         self.assertEqual(action, "watch_exit_or_reduce")
+
+    def test_write_supports_custom_output_paths(self) -> None:
+        snapshot = {
+            "timestamp_utc": "2026-06-22T06:00:00+00:00",
+            "account": {
+                "equity": 999999.0,
+                "day_pnl": -1.0,
+                "positions_count": 0,
+            },
+            "pairs": {
+                "EURUSD": {
+                    "action": "wait",
+                    "combined_score": 0.25,
+                    "technical_score": 0.10,
+                    "headline_sentiment_score": 0.50,
+                    "deal_state": "working",
+                    "realized_net_pnl": 1.23,
+                    "spread_bps": 0.12,
+                    "position": {"direction": "FLAT", "profit": 0.0},
+                }
+            },
+        }
+
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            output_json = root / "custom" / "pair.json"
+            output_text = root / "custom" / "pair.txt"
+            history_jsonl = root / "history" / "pair.jsonl"
+
+            live_pair_analysis._write(
+                snapshot,
+                output_json=output_json,
+                output_text=output_text,
+                history_jsonl=history_jsonl,
+            )
+
+            written = json.loads(output_json.read_text(encoding="utf-8"))
+            text = output_text.read_text(encoding="utf-8")
+            history = history_jsonl.read_text(encoding="utf-8")
+
+        self.assertEqual(written["pairs"]["EURUSD"]["action"], "wait")
+        self.assertIn("EURUSD: action=wait score=0.25", text)
+        self.assertIn('"timestamp_utc": "2026-06-22T06:00:00+00:00"', history)

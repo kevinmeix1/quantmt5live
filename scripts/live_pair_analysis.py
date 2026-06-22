@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import json
 import os
 from datetime import datetime, timezone
@@ -31,7 +32,8 @@ SMALL_ONLY_FRESH_RISK_STATES = {
 
 
 def main() -> None:
-    if not mt5.initialize(path=TERMINAL, timeout=180_000):
+    args = _parse_args()
+    if not mt5.initialize(path=args.terminal, timeout=180_000):
         raise SystemExit(f"initialize failed: {mt5.last_error()}")
     try:
         account = mt5.account_info()
@@ -61,7 +63,12 @@ def main() -> None:
             "pairs": analyses,
             "currency_strength_m5_1h_bps": _currency_strength(),
         }
-        _write(snapshot)
+        _write(
+            snapshot,
+            output_json=Path(args.output_json),
+            output_text=Path(args.output_text),
+            history_jsonl=Path(args.history_jsonl),
+        )
         print(
             json.dumps(
                 {
@@ -78,6 +85,15 @@ def main() -> None:
         )
     finally:
         mt5.shutdown()
+
+
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Summarize live MT5 pair state.")
+    parser.add_argument("--terminal", default=TERMINAL)
+    parser.add_argument("--output-json", default=str(LATEST))
+    parser.add_argument("--output-text", default=str(TEXT))
+    parser.add_argument("--history-jsonl", default=str(HISTORY))
+    return parser.parse_args()
 
 
 def _analyze_pairs(*, positions, sentiment: dict, attribution: dict) -> dict[str, dict]:
@@ -275,10 +291,17 @@ def _read_attribution() -> dict:
         return {}
 
 
-def _write(snapshot: dict) -> None:
-    LATEST.parent.mkdir(parents=True, exist_ok=True)
-    LATEST.write_text(json.dumps(snapshot, indent=2, sort_keys=True), encoding="utf-8")
-    with HISTORY.open("a", encoding="utf-8") as handle:
+def _write(
+    snapshot: dict,
+    *,
+    output_json: Path = LATEST,
+    output_text: Path = TEXT,
+    history_jsonl: Path = HISTORY,
+) -> None:
+    output_json.parent.mkdir(parents=True, exist_ok=True)
+    output_json.write_text(json.dumps(snapshot, indent=2, sort_keys=True), encoding="utf-8")
+    history_jsonl.parent.mkdir(parents=True, exist_ok=True)
+    with history_jsonl.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(snapshot, sort_keys=True) + "\n")
     lines = [
         f"{snapshot['timestamp_utc']} equity={snapshot['account']['equity']:.2f} "
@@ -297,7 +320,8 @@ def _write(snapshot: dict) -> None:
             f"spread={item['spread_bps']:.2f}bps pos={item['position']['direction']} "
             f"pnl={item['position']['profit']:.2f}"
         )
-    TEXT.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    output_text.parent.mkdir(parents=True, exist_ok=True)
+    output_text.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":
