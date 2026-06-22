@@ -306,3 +306,38 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   non-negative folds. Broader/default/fast rows were worse. Keep
   `multi_horizon_momentum` research-only until a future variant clears
   portfolio-level return and fold robustness.
+
+## 2026-06-22 guarded-live restart and aggression check
+
+- Restarted the guarded live stack for the 7-day watch: MT5 terminal,
+  `live_guard.ps1`, `live_supervisor.ps1`, and one `live-trade` command tree.
+  The live command keeps the sentiment conflict brake, symbol-state cooldown
+  throttle, max 0.10 lots, max 2 live positions, daily-loss reduce-only, and
+  rolling-Sharpe reduce-only controls.
+- MT5 initially had terminal-level Algo/Auto Trading disabled while account
+  trading/expert flags were enabled. Toggled the terminal once and verified
+  `terminal_trade_allowed=true`, `account_trade_allowed=true`,
+  `account_trade_expert=true`, and `tradeapi_disabled=false`.
+- Tested the tempting `USDCAD=opportunity_probe` live candidate because shadow
+  diagnostics produced one short `USDCAD` intent. Full-data validation rejected
+  it: the mixed directional-probe map ended at $998,827.86, returned -0.117%,
+  produced 665 fills, lost $1,208.63 on USDCAD, and scored 0/100 risk
+  discipline due repeated 100% single-symbol concentration. Do not live-promote
+  this probe despite single-tick shadow approval.
+- Tested MACD hour widening/lower thresholds to chase 15:00 UTC signals:
+  `outputs/backtests/live_watch_macd_hours_full.csv`. All variants remained
+  `REJECT`; the best 10-19 lower-threshold row still lost $113.03 and failed
+  the 70% non-negative fold gate. Do not widen MACD hours just to force trades.
+- Re-ran a broad full-data strategy-map search on live symbols:
+  `outputs/backtests/live_watch_strategy_map_broad_full.csv`. Promoted
+  alternatives exist (`top_4_best_symbol_strategies`, `best_per_symbol_all`,
+  `top_5_best_symbol_strategies`), each with 100/100 risk discipline and
+  100.0% active-positive/non-negative folds, but none beat the exact current
+  live map on full-data return.
+- Validated the exact current live map with fixed-warmup walk-forward:
+  `outputs/backtests/live_current_map_full_wf_summary.csv`. It passed
+  `PROMOTE` with 6/6 positive folds, 100.0% active folds, 100.0%
+  active-positive folds, 100.0% non-negative folds, median test return 0.123%,
+  worst drawdown 0.406%, 54 evaluation fills, and 100/100 average risk
+  discipline. Keep the guarded live map unchanged unless a future candidate
+  beats this robustness profile.
