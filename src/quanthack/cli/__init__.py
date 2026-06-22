@@ -164,6 +164,10 @@ COMMANDS: dict[str, tuple[str, str]] = {
         "quanthack.cli.session_momentum_optimize",
         "Optimize session-filtered momentum parameters with portfolio backtests.",
     ),
+    "opportunity-probe-optimize": (
+        "quanthack.cli.opportunity_probe_optimize",
+        "Optimize opportunity-probe parameters with portfolio backtests.",
+    ),
     "champion-ensemble-optimize": (
         "quanthack.cli.champion_ensemble_optimize",
         "Optimize champion-ensemble weights with portfolio backtests.",

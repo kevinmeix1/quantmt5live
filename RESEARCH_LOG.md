@@ -770,3 +770,22 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   yet. More active candidates are currently buying fills by accepting a losing
   fold distribution. Keep `volatility_squeeze` as a low-drawdown watchlist item,
   but do not promote the liquid variant or any router/relative/session strategy.
+
+## 2026-06-22 opportunity-probe optimizer pass
+
+- Added a repeatable `opportunity-probe-optimize` research CLI so the active
+  probe sleeve can be tuned against the same portfolio comparison and
+  fixed-warmup promotion gates used by the rest of the strategy stack.
+- Ran the optimizer on the imported full 15-minute pricer data for the live-six
+  universe (`AUDUSD`, `EURGBP`, `EURUSD`, `GBPUSD`, `USDCAD`, `USDCHF`) with
+  W480 fixed-warmup, `directional_probe` allocation, and forced QUALIFY mode.
+- Result: all opportunity-probe variants remained `REJECT`.
+  - Best stricter candidate
+    `strict_4_12_32_s2_25_f1_75_v0_40_hold24_96`: return -0.344%, worst
+    drawdown 0.414%, 1,414 trades, 33.3% positive folds, 33.3% active-positive
+    folds, 33.3% non-negative folds, and negative median active return.
+  - Current competition probe parameters were worse: return -0.792%, worst
+    drawdown 0.831%, 2,520 trades, and only 11.1% positive/non-negative folds.
+- Decision: keep `opportunity_probe` out of the guarded live map. The optimizer
+  is useful for future tuning, but today's full-data evidence says the probe is
+  still paying for fill count with a bad fold distribution.

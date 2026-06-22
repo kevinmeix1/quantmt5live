@@ -235,6 +235,14 @@ from quanthack.backtesting.champion_ensemble_optimizer import (
     optimize_champion_ensemble_parameters,
     write_champion_ensemble_optimization_csv,
 )
+from quanthack.backtesting.opportunity_probe_optimizer import (
+    DEFAULT_OPPORTUNITY_PROBE_PARAMETER_SETS,
+    OpportunityProbeOptimizationCandidate,
+    OpportunityProbeOptimizationResult,
+    OpportunityProbeParameterSet,
+    optimize_opportunity_probe_parameters,
+    write_opportunity_probe_optimization_csv,
+)
 from quanthack.core.status import ProjectStatus, build_status
 from quanthack.strategies.strategy import (
     AlphaRouterConfig,
@@ -533,6 +541,7 @@ __all__ = [
     "optimize_dual_squeeze_parameters",
     "optimize_fixing_reversal_parameters",
     "optimize_kalman_trend_parameters",
+    "optimize_opportunity_probe_parameters",
     "optimize_router_weights",
     "optimize_relative_strength_parameters",
     "optimize_symbol_eligibility",

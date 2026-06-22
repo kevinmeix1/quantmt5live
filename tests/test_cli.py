@@ -24,6 +24,7 @@ from quanthack.cli import (
     ml_alpha_report,
     mt5_capture,
     mt5_probe,
+    opportunity_probe_optimize,
     portfolio_attribution_report,
     portfolio_backtest,
     portfolio_compare,
@@ -520,6 +521,27 @@ class CliTest(TestCase):
         self.assertIn("Dual Squeeze Optimization", output)
         self.assertIn("fast", csv_text)
         self.assertIn("confirmation_lookback", csv_text)
+
+    def test_opportunity_probe_optimizer_cli_writes_csv(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            output_path = Path(tmpdir) / "opportunity_probe_opt.csv"
+
+            output = _capture(
+                opportunity_probe_optimize.main,
+                [
+                    "--symbol",
+                    "EURUSD",
+                    "--candidate",
+                    "fast,3,8,20,1.0,0.1,2.0,0.5,0.25,2,12",
+                    "--output",
+                    str(output_path),
+                ],
+            )
+            csv_text = output_path.read_text(encoding="utf-8")
+
+        self.assertIn("Opportunity Probe Optimization", output)
+        self.assertIn("fast", csv_text)
+        self.assertIn("promotion_status", csv_text)
 
     def test_session_momentum_optimizer_cli_writes_csv(self) -> None:
         with TemporaryDirectory() as tmpdir:

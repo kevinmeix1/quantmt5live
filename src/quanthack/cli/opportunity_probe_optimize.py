@@ -1,0 +1,187 @@
+from __future__ import annotations
+
+import argparse
+from collections.abc import Sequence
+
+from quanthack.backtesting.allocation_profiles import (
+    ALLOCATION_PROFILE_DEFAULT,
+    ALLOCATION_PROFILE_NAMES,
+    allocation_policy_for_strategy,
+)
+from quanthack.backtesting.opportunity_probe_optimizer import (
+    DEFAULT_OPPORTUNITY_PROBE_PARAMETER_SETS,
+    OpportunityProbeParameterSet,
+    optimize_opportunity_probe_parameters,
+    write_opportunity_probe_optimization_csv,
+)
+from quanthack.cli._format import money
+from quanthack.core.clock import FixedModeClock
+from quanthack.core.config import load_config
+from quanthack.market.market_data import load_price_history, load_quote_history
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="Optimize opportunity-probe parameters with portfolio backtests."
+    )
+    parser.add_argument("--config", default="configs/default.toml")
+    parser.add_argument("--symbol", action="append", default=None)
+    parser.add_argument("--price-csv", default=None)
+    parser.add_argument("--quote-csv", default=None)
+    parser.add_argument(
+        "--candidate",
+        action="append",
+        default=None,
+        help=(
+            "Candidate as label,fast_lookback,medium_lookback,slow_lookback,"
+            "min_score,exit_score,reverse_score,min_fast_move_bps,"
+            "volatility_penalty,min_holding_period,max_holding_period"
+            "[,max_spread_bps]."
+        ),
+    )
+    parser.add_argument("--include-walk-forward", action="store_true")
+    parser.add_argument("--train-size", type=int, default=960)
+    parser.add_argument("--test-size", type=int, default=192)
+    parser.add_argument("--step-size", type=int, default=192)
+    parser.add_argument(
+        "--allocation-profile",
+        choices=ALLOCATION_PROFILE_NAMES,
+        default=ALLOCATION_PROFILE_DEFAULT,
+        help="Optional research allocation policy profile for portfolio sizing.",
+    )
+    parser.add_argument(
+        "--force-qualify-mode",
+        action="store_true",
+        help="Use a fixed QUALIFY research clock instead of competition schedule gating.",
+    )
+    parser.add_argument(
+        "--output",
+        default="outputs/backtests/opportunity_probe_optimization.csv",
+    )
+    return parser
+
+
+def run(args: argparse.Namespace) -> None:
+    config = load_config(args.config)
+    price_csv = args.price_csv or config.backtest.price_csv
+    quote_csv = args.quote_csv or config.backtest.quote_csv
+    parameter_sets = (
+        tuple(_parse_candidate(value) for value in args.candidate)
+        if args.candidate
+        else DEFAULT_OPPORTUNITY_PROBE_PARAMETER_SETS
+    )
+    result = optimize_opportunity_probe_parameters(
+        config=config,
+        prices=load_price_history(price_csv),
+        quotes=load_quote_history(quote_csv),
+        symbols=tuple(args.symbol) if args.symbol else None,
+        parameter_sets=parameter_sets,
+        include_walk_forward=args.include_walk_forward,
+        train_size=args.train_size,
+        test_size=args.test_size,
+        step_size=args.step_size,
+        allocation_policy=allocation_policy_for_strategy(
+            "opportunity_probe",
+            config,
+            profile=args.allocation_profile,
+        ),
+        clock=FixedModeClock() if args.force_qualify_mode else None,
+    )
+    write_opportunity_probe_optimization_csv(result, args.output)
+
+    print("Opportunity Probe Optimization")
+    print(f"  Symbols: {', '.join(result.symbols)}")
+    print(f"  Price CSV: {price_csv}")
+    print(f"  Quote CSV: {quote_csv}")
+    print(f"  Walk-forward: {'yes' if args.include_walk_forward else 'no'}")
+    print(f"  Allocation profile: {args.allocation_profile}")
+    print(f"  Force qualify mode: {'yes' if args.force_qualify_mode else 'no'}")
+    print(f"  Output CSV: {args.output}")
+    print("Ranked candidates")
+    for rank, candidate in enumerate(result.candidates, start=1):
+        params = candidate.parameters
+        metrics = candidate.comparison_row.competition_metrics
+        wf = candidate.walk_forward
+        promotion = candidate.promotion_decision
+        wf_text = (
+            ""
+            if wf is None
+            else (
+                f", wf_pos={wf.positive_fold_fraction:.1%}, "
+                f"wf_active={wf.active_fold_fraction:.1%}, "
+                f"wf_active_pos={wf.active_positive_fold_fraction:.1%}, "
+                f"wf_nonneg={wf.non_negative_fold_fraction:.1%}, "
+                f"wf_active_med={wf.median_active_test_return_pct:.3%}"
+            )
+        )
+        promotion_text = (
+            ""
+            if promotion is None
+            else f", promotion={promotion.status}"
+        )
+        print(
+            f"  {rank}. {params.label}: "
+            f"looks={params.fast_lookback}/{params.medium_lookback}/"
+            f"{params.slow_lookback}, "
+            f"score={params.min_score:.2f}, "
+            f"exit={params.exit_score:.2f}, "
+            f"reverse={params.reverse_score:.2f}, "
+            f"fast_move={params.min_fast_move_bps:.2f}, "
+            f"vol_penalty={params.volatility_penalty:.2f}, "
+            f"hold={params.min_holding_period}-{params.max_holding_period}, "
+            f"spread={params.max_spread_bps:.2f}, "
+            f"proxy={candidate.comparison_row.proxy_score:.1f}, "
+            f"return={metrics.return_pct:.3%}, "
+            f"drawdown={metrics.max_drawdown_pct:.3%}, "
+            f"sharpe15={metrics.sharpe_15m:.3f}, "
+            f"final={money(metrics.final_equity)}, "
+            f"trades={metrics.trade_count}"
+            f"{wf_text}"
+            f"{promotion_text}"
+        )
+
+
+def main(argv: Sequence[str] | None = None) -> None:
+    run(build_parser().parse_args(argv))
+
+
+def _parse_candidate(raw: str) -> OpportunityProbeParameterSet:
+    parts = [part.strip() for part in raw.split(",")]
+    if len(parts) not in {11, 12}:
+        raise argparse.ArgumentTypeError(
+            "candidate must be label,fast_lookback,medium_lookback,slow_lookback,"
+            "min_score,exit_score,reverse_score,min_fast_move_bps,"
+            "volatility_penalty,min_holding_period,max_holding_period"
+            "[,max_spread_bps]"
+        )
+    (
+        label,
+        fast_lookback,
+        medium_lookback,
+        slow_lookback,
+        min_score,
+        exit_score,
+        reverse_score,
+        min_fast_move_bps,
+        volatility_penalty,
+        min_holding_period,
+        max_holding_period,
+    ) = parts[:11]
+    max_spread_bps = float(parts[11]) if len(parts) == 12 else 12.0
+    try:
+        return OpportunityProbeParameterSet(
+            label=label,
+            fast_lookback=int(fast_lookback),
+            medium_lookback=int(medium_lookback),
+            slow_lookback=int(slow_lookback),
+            min_score=float(min_score),
+            exit_score=float(exit_score),
+            reverse_score=float(reverse_score),
+            min_fast_move_bps=float(min_fast_move_bps),
+            volatility_penalty=float(volatility_penalty),
+            min_holding_period=int(min_holding_period),
+            max_holding_period=int(max_holding_period),
+            max_spread_bps=max_spread_bps,
+        )
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(str(exc)) from exc

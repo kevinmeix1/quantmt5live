@@ -13,6 +13,7 @@ from quanthack.cli import (
     kalman_trend_optimize,
     macd_momentum_optimize,
     multi_horizon_momentum_optimize,
+    opportunity_probe_optimize,
     portfolio_backtest,
     portfolio_fixed_warmup_walk_forward,
     portfolio_universe_scan,
@@ -115,6 +116,13 @@ class AllocationProfilesTest(TestCase):
                 "--force-qualify-mode",
             ]
         )
+        opportunity_args = opportunity_probe_optimize.build_parser().parse_args(
+            [
+                "--allocation-profile",
+                ALLOCATION_PROFILE_DIRECTIONAL_PROBE,
+                "--force-qualify-mode",
+            ]
+        )
 
         self.assertEqual(
             backtest_args.allocation_profile,
@@ -150,6 +158,10 @@ class AllocationProfilesTest(TestCase):
         )
         self.assertEqual(
             kalman_args.allocation_profile,
+            ALLOCATION_PROFILE_DIRECTIONAL_PROBE,
+        )
+        self.assertEqual(
+            opportunity_args.allocation_profile,
             ALLOCATION_PROFILE_DIRECTIONAL_PROBE,
         )
         self.assertTrue(backtest_args.force_qualify_mode)
