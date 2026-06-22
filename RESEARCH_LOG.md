@@ -465,6 +465,22 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   was `REJECT` with zero active test folds. Do not loosen the live MACD
   session gate or promote this afternoon USDCHF/USDCAD sleeve.
 
+## 2026-06-22 EURGBP/GBPUSD opportunity-probe rejection
+
+- Tested the latest actionable `candidate_all_opportunity_probe` basket from the
+  live diagnostics. The live snapshot requested short EURGBP and long GBPUSD
+  exposure under `opportunity_probe`, with allocation status `WARN`.
+- Full-data backtests:
+  `outputs/backtests/live_watch_opportunity_probe_eurgbp_gbpusd_directional_*`
+  and
+  `outputs/backtests/live_watch_opportunity_probe_eurgbp_gbpusd_default_*`.
+  Both allocation profiles produced the same result: 813 fills, final equity
+  $997,647.02, return -0.235%, Sharpe -1.387, max drawdown 0.273%, and risk
+  discipline 0/100.
+- Symbol attribution was negative on both legs: EURGBP about -$1,136.66 and
+  GBPUSD about -$1,216.31. Keep this basket out of live promotion despite the
+  current actionable diagnostic.
+
 ## 2026-06-22 exact opportunity-probe intent rejection
 
 - Rechecked the latest all-symbol `opportunity_probe` diagnostic. It requested
