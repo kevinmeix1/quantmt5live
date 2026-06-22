@@ -34,6 +34,7 @@ DEFAULT_CANDIDATE_DIAGNOSTICS_JSONS = (
     "outputs/candidate_all_multi_horizon_live_strategy_diagnostics_latest.json",
     "outputs/candidate_eurgbp_cross_rate_live_strategy_diagnostics_latest.json",
     "outputs/candidate_all_quality_trend_live_strategy_diagnostics_latest.json",
+    "outputs/candidate_sentiment_no_jpy_live_strategy_diagnostics_latest.json",
     "outputs/candidate_best_symbol_mix_live_strategy_diagnostics_latest.json",
     "outputs/candidate_promoted_best_per_symbol_live_strategy_diagnostics_latest.json",
     "outputs/candidate_expanded_best_per_symbol_live_strategy_diagnostics_latest.json",
@@ -41,6 +42,7 @@ DEFAULT_CANDIDATE_DIAGNOSTICS_JSONS = (
     "outputs/live_strategy_diagnostics_directional_probe_latest.json",
 )
 DEFAULT_OPTIMIZER_SCAN_CSVS = (
+    "outputs/backtests/live_watch_sentiment_pressure_maps_w480_summary.csv",
     "outputs/backtests/live_watch_late_usd_macd_w480.csv",
     "outputs/backtests/live_watch_late_usd_multi_horizon_w480.csv",
     "outputs/backtests/live_watch_late_usd_quality_w480.csv",

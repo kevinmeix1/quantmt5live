@@ -1087,3 +1087,23 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   paper-only watch item, but do not extend live strategy hours or add USDJPY.
   The validated late-session activity is either too sparse or negative
   expectancy after costs.
+
+## 2026-06-22 sentiment-pressure compact map pass
+
+- With live sentiment still USD-positive and AUD/GBP-negative, tested a compact
+  pressure universe on AUDUSD, GBPUSD, USDCAD, USDCHF, and USDJPY using
+  `champion_ensemble`, `macd_momentum`, `asset_adaptive_dual_squeeze`,
+  `volatility_squeeze`, and `quality_trend`.
+- Results with W480 fixed warmup, directional-probe allocation, and forced
+  QUALIFY mode:
+  - `sentiment_no_jpy_mix`: +0.043% full-sample return, 65 trades, 62.5%
+    active-positive folds, 66.7% non-negative folds, `REJECT`.
+  - `best_per_symbol_all`: +0.038% return, 69 trades, 62.5%
+    active-positive folds, 66.7% non-negative folds, `REJECT`.
+  - `all_quality_trend`: +0.016% return, 24 trades, 75.0% active-positive
+    folds, 88.9% non-negative folds, `PAPER_ONLY` because total positive and
+    active-positive fold rates missed the live promotion gate.
+  - The more active `sentiment_macd_core` and `sentiment_current_plus_jpy`
+    variants lost money and fell to 33.3%-44.4% non-negative folds.
+- Decision: do not promote the compact sentiment map. Add it to read-only live
+  diagnostics and optimizer rollups so it can be watched if conditions improve.
