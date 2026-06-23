@@ -183,6 +183,78 @@ class LiveStatusSummaryScriptTest(TestCase):
         self.assertEqual(top["symbols"], ["AUDUSD", "EURUSD"])
         self.assertEqual(top["top_match"]["promotion_status"], "REJECT")
 
+    def test_candidate_optimizer_evidence_prefers_requested_exact_scan(self) -> None:
+        evidence = live_status_summary._candidate_optimizer_evidence(
+            {
+                "top_candidates": [
+                    {
+                        "label": "candidate_all_opportunity_probe",
+                        "actionable_symbols": ["AUDUSD", "EURUSD"],
+                        "requested_symbols": [
+                            "AUDUSD",
+                            "EURUSD",
+                            "GBPUSD",
+                            "USDCAD",
+                        ],
+                        "top_symbol": {
+                            "symbol": "AUDUSD",
+                            "strategy": "opportunity_probe",
+                        },
+                    }
+                ]
+            },
+            {
+                "top_candidates": [
+                    {
+                        "source_path": (
+                            "outputs/backtests/"
+                            "live_watch_opportunity_probe_audusd_eurusd_w480.csv"
+                        ),
+                        "source_label": (
+                            "live_watch_opportunity_probe_audusd_eurusd_w480"
+                        ),
+                        "label": "aud_eur_score5",
+                        "symbols": "AUDUSD EURUSD",
+                        "promotion_status": "REJECT",
+                        "promotion_live_ready": "False",
+                        "wf_non_negative_fold_fraction": "0.3889",
+                        "wf_active_positive_fold_fraction": "0.3889",
+                        "wf_total_evaluation_fills": "92",
+                    },
+                    {
+                        "source_path": (
+                            "outputs/backtests/"
+                            "live_watch_opportunity_probe_aud_eur_gbp_cad_current_w960.csv"
+                        ),
+                        "source_label": (
+                            "live_watch_opportunity_probe_aud_eur_gbp_cad_current_w960"
+                        ),
+                        "label": "ultra_strict",
+                        "symbols": "AUDUSD EURUSD GBPUSD USDCAD",
+                        "promotion_status": "REJECT",
+                        "promotion_live_ready": "False",
+                        "wf_non_negative_fold_fraction": "0.3333",
+                        "wf_active_positive_fold_fraction": "0.3333",
+                        "wf_total_evaluation_fills": "298",
+                    },
+                ]
+            },
+        )
+
+        top = evidence["top_candidates"][0]
+        self.assertEqual(
+            top["symbols"],
+            ["AUDUSD", "EURUSD", "GBPUSD", "USDCAD"],
+        )
+        self.assertEqual(
+            top["top_match"]["source_label"],
+            "live_watch_opportunity_probe_aud_eur_gbp_cad_current_w960",
+        )
+        self.assertEqual(
+            top["top_match"]["symbols"],
+            ["AUDUSD", "EURUSD", "GBPUSD", "USDCAD"],
+        )
+
     def test_candidate_optimizer_evidence_skips_inactive_top_symbol(self) -> None:
         evidence = live_status_summary._candidate_optimizer_evidence(
             {

@@ -2308,3 +2308,18 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   gets attached to this fresh evidence.
 - Decision: do not add GBPUSD multi-horizon to the live map yet. It remains a
   watch candidate, not a high-conviction margin candidate.
+
+## 2026-06-23 AUD/EUR/GBP/CAD opportunity-probe pressure check
+
+- Latest candidate diagnostics showed `opportunity_probe` requesting long
+  `AUDUSD` and long `EURUSD`, with long `GBPUSD` and short `USDCAD` blocked
+  behind the two-position cap.
+- Ran the exact active-plus-blocked sleeve on full downloaded 15-minute data:
+  `outputs/backtests/live_watch_opportunity_probe_aud_eur_gbp_cad_current_w960.csv`.
+- Every candidate rejected. The least-bad `ultra_strict` variant lost 0.146%
+  with 586 trades, Sharpe -0.031, and only 33.3% positive/non-negative folds.
+  The live-current line lost 0.548% with 1,710 trades and 16.7%
+  positive/non-negative folds.
+- Added the scan to the live optimizer rollup.
+- Decision: keep the two-position cap and do not promote/expand
+  opportunity-probe for this pressure set.

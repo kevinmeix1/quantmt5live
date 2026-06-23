@@ -145,6 +145,7 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_opportunity_probe_audusd_eurgbp_current_w960.csv",
     "outputs/backtests/live_watch_opportunity_probe_aud_eurgbp_cad_chf_current_w960.csv",
     "outputs/backtests/live_watch_opportunity_probe_aud_gbp_cad_jpy_current_w960.csv",
+    "outputs/backtests/live_watch_opportunity_probe_aud_eur_gbp_cad_current_w960.csv",
     "outputs/backtests/live_watch_opportunity_probe_eurgbp_gbp_cad_jpy_current_w960.csv",
     "outputs/backtests/live_watch_opportunity_probe_audusd_eurusd_w480.csv",
     "outputs/backtests/live_watch_opportunity_probe_audusd_eurusd_strict_w960.csv",
@@ -961,14 +962,23 @@ def _candidate_optimizer_evidence(
         if not isinstance(candidate, dict):
             continue
         strategy = _candidate_evidence_strategy(candidate)
-        symbols = _candidate_evidence_symbols(candidate)
-        if not strategy or not symbols:
+        symbol_sets = _candidate_evidence_symbol_sets(candidate)
+        if not strategy or not symbol_sets:
             continue
-        matches = _matching_optimizer_scan_rows(
-            strategy=strategy,
-            symbols=symbols,
-            scans=scans,
-        )
+        symbols: list[str] = []
+        matches: list[dict[str, Any]] = []
+        for candidate_symbols in symbol_sets:
+            candidate_matches = _matching_optimizer_scan_rows(
+                strategy=strategy,
+                symbols=candidate_symbols,
+                scans=scans,
+            )
+            if not candidate_matches:
+                continue
+            symbols = candidate_symbols
+            matches = candidate_matches
+            if any(match.get("exact_symbols") for match in candidate_matches):
+                break
         if not matches:
             continue
         evidence_pool = [
@@ -989,6 +999,7 @@ def _candidate_optimizer_evidence(
                     "source_path": top_match.get("source_path", ""),
                     "source_label": top_match.get("source_label", ""),
                     "label": top_match.get("label", ""),
+                    "symbols": _split_symbol_text(top_match.get("symbols", "")),
                     "promotion_status": top_match.get("promotion_status", ""),
                     "promotion_live_ready": _boolish(
                         top_match.get("promotion_live_ready")
@@ -1254,15 +1265,20 @@ def _candidate_evidence_strategy(candidate: dict[str, Any]) -> str:
     return ""
 
 
-def _candidate_evidence_symbols(candidate: dict[str, Any]) -> list[str]:
-    for key in ("actionable_symbols", "requested_symbols"):
+def _candidate_evidence_symbol_sets(candidate: dict[str, Any]) -> list[list[str]]:
+    symbol_sets: list[list[str]] = []
+    seen: set[tuple[str, ...]] = set()
+    for key in ("requested_symbols", "actionable_symbols"):
         symbols = [
             str(symbol).strip().upper()
             for symbol in candidate.get(key, [])
             if str(symbol).strip()
         ]
         if symbols:
-            return sorted(set(symbols))
+            normalized = tuple(sorted(set(symbols)))
+            if normalized not in seen:
+                seen.add(normalized)
+                symbol_sets.append(list(normalized))
     top_symbol = candidate.get("top_symbol", {})
     if isinstance(top_symbol, dict):
         symbol = str(top_symbol.get("symbol", "")).strip().upper()
@@ -1279,8 +1295,10 @@ def _candidate_evidence_symbols(candidate: dict[str, Any]) -> list[str]:
                 or abs(allocation_change) > 0.0
             )
         ):
-            return [symbol]
-    return []
+            normalized = (symbol,)
+            if normalized not in seen:
+                symbol_sets.append([symbol])
+    return symbol_sets
 
 
 def _matching_optimizer_scan_rows(
@@ -1798,12 +1816,19 @@ def _summary_text(summary: dict[str, Any]) -> str:
     if candidate_evidence.get("candidate_count", 0) > 0:
         top = candidate_evidence.get("top_candidates", [{}])[0]
         match = top.get("top_match", {})
+        candidate_symbol_text = " ".join(top.get("symbols", []))
+        match_symbol_text = " ".join(match.get("symbols", []))
+        scan_symbol_note = (
+            f" scan_symbols={match_symbol_text}"
+            if match_symbol_text and match_symbol_text != candidate_symbol_text
+            else ""
+        )
         lines.append(
             "candidate_evidence "
             f"candidates={candidate_evidence.get('candidate_count', 0)} "
             f"top={top.get('candidate_label', '')} "
             f"strategy={top.get('strategy', '')} "
-            f"symbols={' '.join(top.get('symbols', []))} "
+            f"symbols={candidate_symbol_text}{scan_symbol_note} "
             f"evidence={top.get('evidence_status', '')} "
             f"source={Path(match.get('source_path', '')).name if match.get('source_path') else 'n/a'} "
             f"status={match.get('promotion_status', '')} "
