@@ -2457,3 +2457,19 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   variants are close and worth monitoring, but they do not clear the live
   readiness gate and would be a weaker change than the already-promoted MACD
   config.
+
+## 2026-06-23 late USD session MACD check
+
+- At 21 UTC, fresh sentiment was USD-supportive, but production diagnostics were
+  flat because EURGBP/USDJPY were session gated and the four MACD symbols were
+  either stale-quote gated or inside the MACD dead zone.
+- Tested whether the promoted MACD sleeve should trade the late USD session on
+  `AUDUSD EURUSD USDCAD USDCHF`:
+  `outputs/backtests/live_watch_macd_late_usd_session_live4_w960.csv`.
+- No candidate promoted. Extending the promoted MACD hours to include 20-22 UTC
+  made +2.253% with 88 trades and low drawdown, but stayed `PAPER_ONLY` because
+  active-positive folds were 66.7%. Late-only variants had only 6 trades and
+  were rejected despite positive total return.
+- Added the scan to the live optimizer rollup.
+- Decision: do not extend live MACD trading into the late USD session yet. The
+  result is close enough to keep watching, but it is not live-ready evidence.
