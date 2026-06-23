@@ -2174,3 +2174,23 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not promote these high-turnover sleeves. They create activity,
   but the full-data evidence shows negative expectancy and risk-discipline
   damage, so forcing them live would reduce survival odds.
+
+## 2026-06-23 EURGBP/EURUSD opportunity-probe pressure check
+
+- Refreshed live supervision after the pair heuristic moved back to `wait` on
+  all pairs. Production diagnostics still requested zero notional, but the
+  read-only `opportunity_probe` sleeve lit up long `EURGBP` and long `EURUSD`;
+  `USDCHF` also fired short but was behind the two-position diagnostic cap.
+- Validated the exact current sleeve on full downloaded 15-minute data:
+  `outputs/backtests/live_watch_opportunity_probe_eurgbp_eurusd_current_w960.csv`.
+  All candidates rejected. The least-bad very-strict variant still lost 0.060%
+  with 238 trades, Sharpe -0.030, and only 16.7% positive/non-negative folds.
+  The live-current baseline lost 0.263% with 838 trades and 0.0% positive folds.
+- Also tested the cap-expanded version including the blocked `USDCHF` signal:
+  `outputs/backtests/live_watch_opportunity_probe_eurgbp_eurusd_usdchf_current_w960.csv`.
+  All candidates rejected; the live-current baseline lost 0.394% with 1,247
+  trades, and even the very-strict line lost 0.099%.
+- Added both scans to the live optimizer rollup so the status summary attaches
+  fresh evidence to this current candidate.
+- Decision: do not restart live with opportunity-probe or loosen the
+  two-position cap for this pressure set.
