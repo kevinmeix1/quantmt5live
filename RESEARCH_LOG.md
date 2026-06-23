@@ -1546,3 +1546,19 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not promote. The current AUDUSD/USDJPY opportunity burst is
   another unstable probe pattern, so keep it research-only and do not force
   manual or live-map exposure.
+
+## 2026-06-23 EURUSD/GBPUSD opportunity-probe rejection
+
+- Fresh research-only `candidate_all_opportunity_probe` diagnostics requested
+  directional-probe short allocations on `EURUSD` and `GBPUSD`, while the
+  guarded live strategy map remained flat.
+- Ran a focused full-data W480 / 96-bar optimizer on `EURUSD` and `GBPUSD`
+  with current, stricter score, tighter spread, volatility-penalty, and
+  holding-period variants.
+- Every tested row was rejected. The top-ranked `eur_gbp_score4` produced 192
+  trades, -0.039% return, 0.089% drawdown, 33.3% positive folds, 33.3%
+  active-positive folds, and 33.3% non-negative folds. The live-like current
+  probe was worse: 849 trades, -0.271% return, and 16.7% non-negative folds.
+- Decision: do not promote. The EURUSD/GBPUSD pressure signal is active but
+  historically unstable, so keep it research-only and leave live routing
+  unchanged.
