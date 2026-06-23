@@ -1592,3 +1592,23 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Added `alpha_router` to the default live research-cycle signal diagnostics so
   the supervisor can surface more trade-frequency candidates for validation
   without changing live routing or bypassing live risk controls.
+
+## 2026-06-23 router/session-breakout candidate rejection
+
+- The expanded live research cycle surfaced router-level session-breakout
+  candidates on `USDCHF`, `GBPUSD`, and `EURUSD`, which looked useful for
+  increasing trade frequency while the guarded live map was flat.
+- Re-tested the exact candidate subset with full-data W480 / 96-bar
+  fixed-warmup validation under directional-probe allocation and forced
+  QUALIFY clock.
+- `alpha_router` rejected sharply: 958 evaluation fills, 5.6% positive folds,
+  5.6% active-positive folds, 5.6% non-negative folds, -0.021% median active
+  return, and 58.3/100 average risk discipline.
+- Standalone `session_breakout` was less bad but still rejected: 173 fills,
+  33.3% positive folds, 33.3% active-positive folds, 33.3% non-negative
+  folds, -0.003% median active return, and 87.8/100 average risk discipline.
+- Added the broad alpha-router scan and the exact router/session candidate
+  scans to the live status optimizer rollup so aggressive candidates are
+  matched to their full-data rejection evidence before anyone promotes them.
+- Decision: keep router/session-breakout in discovery only. Do not route live
+  risk to these sleeves until a fresh scan clears the existing promotion gates.
