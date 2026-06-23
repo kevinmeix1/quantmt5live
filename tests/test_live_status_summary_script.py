@@ -225,6 +225,74 @@ class LiveStatusSummaryScriptTest(TestCase):
 
         self.assertEqual(evidence, {})
 
+    def test_candidate_optimizer_evidence_preserves_diagnostic_order(self) -> None:
+        evidence = live_status_summary._candidate_optimizer_evidence(
+            {
+                "top_candidates": [
+                    {
+                        "label": "candidate_all_opportunity_probe",
+                        "actionable_symbols": ["AUDUSD", "EURGBP"],
+                        "top_symbol": {
+                            "symbol": "AUDUSD",
+                            "strategy": "opportunity_probe",
+                        },
+                    },
+                    {
+                        "label": "candidate_all_multi_horizon",
+                        "actionable_symbols": ["USDCHF"],
+                        "top_symbol": {
+                            "symbol": "USDCHF",
+                            "strategy": "multi_horizon_momentum",
+                        },
+                    },
+                ]
+            },
+            {
+                "top_candidates": [
+                    {
+                        "source_path": (
+                            "outputs/backtests/"
+                            "live_watch_late_usd_multi_horizon_w480.csv"
+                        ),
+                        "source_label": "live_watch_late_usd_multi_horizon_w480",
+                        "label": "multi_horizon_momentum",
+                        "symbols": "USDCHF",
+                        "promotion_status": "REJECT",
+                        "promotion_live_ready": "False",
+                        "wf_non_negative_fold_fraction": "0.1111",
+                        "wf_active_positive_fold_fraction": "0.1111",
+                        "wf_total_evaluation_fills": "76",
+                    },
+                    {
+                        "source_path": (
+                            "outputs/backtests/"
+                            "live_watch_opportunity_probe_audusd_eurgbp_current_w960.csv"
+                        ),
+                        "source_label": (
+                            "live_watch_opportunity_probe_audusd_eurgbp_current_w960"
+                        ),
+                        "label": "current_live",
+                        "symbols": "AUDUSD EURGBP",
+                        "promotion_status": "PAPER_ONLY",
+                        "promotion_live_ready": "False",
+                        "wf_non_negative_fold_fraction": "0.2000",
+                        "wf_active_positive_fold_fraction": "0.2000",
+                        "wf_total_evaluation_fills": "144",
+                    },
+                ]
+            },
+        )
+
+        self.assertEqual(evidence["candidate_count"], 2)
+        self.assertEqual(
+            evidence["top_candidates"][0]["candidate_label"],
+            "candidate_all_opportunity_probe",
+        )
+        self.assertEqual(
+            evidence["top_candidates"][0]["evidence_status"],
+            "PAPER_ONLY_SCAN",
+        )
+
     def test_fixed_warmup_summary_rows_are_normalized_for_evidence(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

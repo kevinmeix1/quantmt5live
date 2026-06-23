@@ -2276,3 +2276,19 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: keep quality-trend on watch but do not promote it broadly until
   active-fold coverage improves; do not promote the current opportunity-probe
   pressure set.
+
+## 2026-06-23 champion asset-squeeze AUD/GBP/EURGBP refresh
+
+- Tested a higher-turnover champion-ensemble asset-squeeze refresh on full
+  downloaded 15-minute data for `AUDUSD`, `GBPUSD`, and `EURGBP`:
+  `outputs/backtests/live_watch_champion_asset_squeeze_aud_gbp_eurgbp_w960.csv`.
+- The best current mix made +0.321% with 18 trades, 0.286% max drawdown, and
+  Sharpe 0.016, but stayed `PAPER_ONLY`: only 16.7% of folds were positive and
+  the largest positive fold contributed 100.0% of positive walk-forward return.
+  The asset-heavy and asset-only variants had zero live evaluation fills or were
+  rejected.
+- Added the scan to the live optimizer rollup and fixed candidate evidence
+  ordering so summary evidence follows the live diagnostic order before ranking
+  by scan severity.
+- Decision: do not promote this champion refresh yet. It is useful watchlist
+  evidence, but still too concentrated for live expansion.

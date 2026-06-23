@@ -125,6 +125,7 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_champion_eurusd_gbpusd_active_w960.csv",
     "outputs/backtests/live_watch_champion_asset_signal_w672.csv",
     "outputs/backtests/live_watch_champion_asset_signal_w960.csv",
+    "outputs/backtests/live_watch_champion_asset_squeeze_aud_gbp_eurgbp_w960.csv",
     "outputs/backtests/live_watch_eurusd_macd_evening_focus_w480.csv",
     "outputs/backtests/live_watch_quality_trend_size_opt_live6_w480.csv",
     "outputs/backtests/live_watch_quality_trend_opt_live6_w480.csv",
@@ -955,7 +956,7 @@ def _candidate_optimizer_evidence(
     if not diagnostics or not scans:
         return {}
     evidence_rows: list[dict[str, Any]] = []
-    for candidate in diagnostics.get("top_candidates", []):
+    for order, candidate in enumerate(diagnostics.get("top_candidates", [])):
         if not isinstance(candidate, dict):
             continue
         strategy = _candidate_evidence_strategy(candidate)
@@ -977,6 +978,7 @@ def _candidate_optimizer_evidence(
         top_match = sorted(evidence_pool, key=_optimizer_evidence_rank_key)[0]
         evidence_rows.append(
             {
+                "diagnostic_order": order,
                 "candidate_label": candidate.get("label", ""),
                 "strategy": strategy,
                 "symbols": symbols,
@@ -1370,7 +1372,7 @@ def _research_optimizer_match_rank_key(
 
 def _candidate_optimizer_evidence_rank_key(
     row: dict[str, Any],
-) -> tuple[int, str]:
+) -> tuple[int, int, str]:
     status_rank = {
         "REJECTED_BY_SCAN": 0,
         "PAPER_ONLY_SCAN": 1,
@@ -1378,6 +1380,7 @@ def _candidate_optimizer_evidence_rank_key(
         "SUPPORTED_BY_SCAN": 3,
     }
     return (
+        int(_float_or_zero(row.get("diagnostic_order"))),
         status_rank.get(row.get("evidence_status", ""), 4),
         row.get("candidate_label", ""),
     )
