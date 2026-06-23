@@ -2151,3 +2151,26 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   trades.
 - Added the W960 scan to the live optimizer rollup.
 - Decision: do not promote the EURUSD/GBPUSD opportunity-probe sleeve.
+
+## 2026-06-23 aggressive alpha-router/session-breakout check
+
+- Refreshed the live stack under explicit pressure to increase trade count.
+  MT5, `live_supervisor.ps1`, `live_guard.ps1`, and `quanthack.exe live-trade`
+  were all still running with the sentiment brake, symbol-state cooldown
+  throttle, two-position cap, and daily-loss reduce-only brake intact.
+- Full-data research diagnostics surfaced higher-frequency candidates:
+  alpha-router/session-breakout on `USDCHF`, `GBPUSD`, and `EURUSD`, plus
+  USDJPY mean reversion. Current live diagnostics for these sleeves requested
+  zero notional; session-breakout was blocked by missing breakout/volatility
+  edge, and USDJPY mean reversion did not clear estimated costs.
+- Ran force-qualified directional-probe portfolio backtests on the full
+  downloaded 15-minute data:
+  - `outputs/backtests/live_watch_alpha_router_candidate_*`: 1,457 fills,
+    -0.736% return, Sharpe -3.150, and concentration penalties.
+  - `outputs/backtests/live_watch_session_breakout_candidate_*`: 215 fills,
+    -0.095% return, Sharpe -0.467, and concentration penalties.
+  - `outputs/backtests/live_watch_usdjpy_mean_reversion_candidate_*`: 570 fills,
+    -0.139% return, Sharpe -1.339, and concentration penalties.
+- Decision: do not promote these high-turnover sleeves. They create activity,
+  but the full-data evidence shows negative expectancy and risk-discipline
+  damage, so forcing them live would reduce survival odds.
