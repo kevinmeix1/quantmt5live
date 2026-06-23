@@ -21,6 +21,7 @@ $GuardLog = Join-Path $Root "outputs\live_guard.log"
 $Python = Join-Path $Root ".venv\Scripts\python.exe"
 $Quanthack = Join-Path $Root ".venv\Scripts\quanthack.exe"
 $LiveArgs = "live-trade --config configs\competition.toml --adapter mt5 --poll-seconds 60 --iterations 100000 --max-order-lots $MaxOrderLots --max-live-positions 2 --reduce-only-daily-loss-pct 0.0012 --reduce-only-rolling-sharpe -2.0 --live-metrics-csv outputs\live_metrics.csv --sentiment-snapshot outputs\fx_sentiment_snapshot.json --sentiment-conflict-threshold 1.25 --symbol-state-snapshot outputs\live_deal_attribution_latest.json --blocked-symbol-state cooldown_realized_drag --blocked-symbol-state observe --blocked-symbol-state keep_if_signal_aligned --small-only-symbol-state small_only_until_recovery --small-only-max-notional-usd 25000 --strategy champion_ensemble --strategy-map AUDUSD=macd_momentum --strategy-map EURGBP=champion_ensemble --strategy-map EURUSD=macd_momentum --strategy-map GBPUSD=champion_ensemble --strategy-map USDCAD=macd_momentum --strategy-map USDCHF=macd_momentum --strategy-map USDJPY=quality_trend --symbol AUDUSD --symbol EURGBP --symbol EURUSD --symbol GBPUSD --symbol USDCAD --symbol USDCHF --symbol USDJPY --i-understand-live-orders"
+$script:LiveProcessEnumerationFailed = $false
 
 function Write-GuardLog($Message) {
   New-Item -ItemType Directory -Force -Path (Split-Path -Parent $GuardLog) | Out-Null
@@ -29,14 +30,25 @@ function Write-GuardLog($Message) {
 }
 
 function Get-LiveProcess {
-  Get-CimInstance Win32_Process | Where-Object {
-    $_.CommandLine -like "*live-trade*--i-understand-live-orders*" -and
-    $_.CommandLine -notlike "*Get-CimInstance*"
+  $script:LiveProcessEnumerationFailed = $false
+  try {
+    Get-CimInstance Win32_Process -ErrorAction Stop | Where-Object {
+      $_.CommandLine -like "*live-trade*--i-understand-live-orders*" -and
+      $_.CommandLine -notlike "*Get-CimInstance*"
+    }
+  } catch {
+    $script:LiveProcessEnumerationFailed = $true
+    Write-GuardLog "live process enumeration failed; refusing to infer no live process: $($_.Exception.Message)"
+    @()
   }
 }
 
 function Stop-LiveProcess($Reason) {
   $procs = @(Get-LiveProcess)
+  if ($script:LiveProcessEnumerationFailed) {
+    Write-GuardLog "skip stopping live process reason=$Reason because process enumeration failed"
+    return
+  }
   if ($procs.Count -eq 0) {
     return
   }
@@ -48,7 +60,12 @@ function Stop-LiveProcess($Reason) {
 }
 
 function Start-LiveProcess {
-  if (Get-LiveProcess) {
+  $procs = @(Get-LiveProcess)
+  if ($script:LiveProcessEnumerationFailed) {
+    Write-GuardLog "skip starting live process because process enumeration failed"
+    return
+  }
+  if ($procs.Count -gt 0) {
     return
   }
   $stamp = Get-Date -Format "yyyyMMdd_HHmmss"
