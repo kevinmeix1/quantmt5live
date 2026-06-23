@@ -59,6 +59,7 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_macd_fast_refine4_w480.csv",
     "outputs/backtests/live_watch_macd_fast_refine4_w672.csv",
     "outputs/backtests/live_watch_macd_fast_refine4_w960.csv",
+    "outputs/backtests/live_watch_macd_aggressive_bounded_w960.csv",
     "outputs/backtests/live_watch_macd_symbol_audusd_w480.csv",
     "outputs/backtests/live_watch_macd_symbol_eurusd_w480.csv",
     "outputs/backtests/live_watch_macd_symbol_usdcad_w480.csv",

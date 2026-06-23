@@ -1899,3 +1899,22 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Added the strict pair scan to the live status optimizer rollup.
 - Decision: do not promote `opportunity_probe` for `EURUSD`/`GBPUSD`; the
   stricter filters reduce churn but still do not produce reliable fold quality.
+
+## 2026-06-23 bounded aggressive MACD threshold check
+
+- User requested a more aggressive posture, so tested a bounded lower-threshold
+  MACD family on the four live MACD symbols (`AUDUSD`, `EURUSD`, `USDCAD`, and
+  `USDCHF`) rather than loosening live thresholds blindly.
+- Output:
+  `outputs/backtests/live_watch_macd_aggressive_bounded_w960.csv`.
+- All candidates rejected on W960 fixed-warmup validation. The most active
+  `micro_5_15_h040_m020_eff05_hold10_s000` generated 238 trades and 83.3%
+  positive/non-negative folds, but lost 0.053% full-sample and failed the risk
+  discipline gate at 45.0/100. The cleaner `fast_7_20_h075_m050_eff10_hold12_s005`
+  made 115 trades and gained 0.035%, but only reached 66.7% non-negative folds,
+  below the 70.0% promotion gate. Lowering the same setup to a 0.50 histogram
+  threshold made 117 trades, gained 0.033%, and failed the same fold gate.
+- Added the scan to the live status optimizer rollup.
+- Decision: keep the live MACD thresholds unchanged. The bounded aggressive
+  variants increase churn, but they do not yet show enough full-window risk
+  discipline or fold stability to justify changing live trading.
