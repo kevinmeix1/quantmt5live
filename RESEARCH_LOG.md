@@ -1773,3 +1773,29 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Added the pressure refinement scan to the status rollup.
 - Decision: quality-trend remains useful as a low-drawdown sleeve, but this
   refinement is too inactive to solve the live flat/no-approved-risk state.
+
+## 2026-06-23 multi-horizon pressure refinement
+
+- Refreshed the live snapshot after the user requested more aggressive trading.
+  The account remained flat with equity 999,181.58, day P/L -818.42, no open
+  positions, and no approved live strategy risk. Heuristic pressure showed
+  possible tiny probes on `AUDUSD`, `EURGBP`, `EURUSD`, `USDCAD`, and `USDJPY`,
+  but the guarded live strategies stayed flat because MACD histograms, quality
+  gates, and champion-ensemble sessions did not confirm entries.
+- Tested a more active multi-horizon basket on the full 15-minute data:
+  `AUDUSD`, `EURGBP`, `EURUSD`, `USDCAD`, and `USDJPY`.
+- Output: `outputs/backtests/live_watch_multi_horizon_pressure_refine_w480.csv`.
+- All candidates rejected. The highest-ranked `pressure_5_20_wide` produced
+  1,264 trades, but lost 0.411% full-sample with 0.411% drawdown, only 27.8%
+  positive folds, and only 27.8% non-negative folds. The most aggressive
+  `pressure_4_16_wide` produced 1,714 trades but lost 0.821% and had only 5.6%
+  positive/non-negative folds.
+- Existing live MACD settings remain the better evidence-backed active sleeve:
+  the current `8/21/8` four-symbol MACD candidate is already promoted in the
+  W960 scan with 74 trades, 2.759% full-sample return, 0.406% drawdown, 83.3%
+  positive/active folds, 100% active-positive folds, and 100% non-negative
+  folds.
+- Added the multi-horizon pressure scan to the live status optimizer rollup.
+- Decision: do not loosen live multi-horizon thresholds or force manual trades.
+  The test achieved more trades by adding churn and negative fold quality, not
+  by adding reliable opportunity.
