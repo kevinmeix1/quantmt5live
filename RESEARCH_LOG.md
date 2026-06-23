@@ -2349,3 +2349,29 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   opportunity-probe/champion trades. Keep the live process enabled and let the
   existing approved MACD/quality/ensemble gates fire when the market leaves the
   current chop regime.
+
+## 2026-06-23 EUR/GBP/CHF probe and session-sleeve checks
+
+- Latest read-only `opportunity_probe` diagnostics requested long `EURUSD`, long
+  `GBPUSD`, and a blocked short `USDCHF`. Sentiment conflicted with the GBP and
+  CHF legs, so the exact basket was tested before considering any live exposure:
+  `outputs/backtests/live_watch_opportunity_probe_eur_gbp_chf_active_pressure_w960.csv`.
+  Every variant rejected. The strict line lost 0.182% with 733 trades and only
+  16.7% non-negative folds; looser variants traded up to 1,577 fills and lost
+  more.
+- Tested fixed-warmup W960 session sleeves from the research-cycle diagnostics:
+  `outputs/backtests/live_watch_session_breakout_top_signal_w960_summary.csv`,
+  `outputs/backtests/live_watch_alpha_router_top_session_w960_summary.csv`, and
+  `outputs/backtests/live_watch_usdjpy_mean_reversion_signal_w960_summary.csv`.
+  Session-breakout was active but unstable (50.0% non-negative folds, average
+  risk discipline 71.7/100). Alpha-router and USDJPY mean-reversion had 0.0%
+  non-negative folds.
+- Tested all-seven quality-trend size/hour repair:
+  `outputs/backtests/live_watch_quality_trend_live7_size_repair_w960.csv`.
+  The best micro quality-trend line made a small profit and kept 100.0%
+  non-negative active folds, but remained sparse and missed the average risk
+  discipline gate at 93.3/100 versus 95.0/100.
+- Added these scans to the live summary inputs.
+- Decision: no live-map promotion from this batch. The live engine remains
+  enabled for approved production MACD/quality/ensemble signals, but the current
+  aggressive probe/session ideas should stay blocked from fresh live risk.
