@@ -1396,3 +1396,30 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not promote. EURGBP cross-rate remains useful watchlist context,
   but prior portfolio-level validation still rejects switching EURGBP from
   `champion_ensemble` to `cross_rate_reversion`.
+
+## 2026-06-23 USDJPY quality pre-open rejection
+
+- Tested whether the promoted USDJPY `quality_trend` leg should start earlier
+  or use a smaller/more relaxed pre-open variant before the 10-14 UTC session.
+- Ran full-data W480 / 96-bar optimization with forced QUALIFY clock on USDJPY
+  candidates covering current 10-14 UTC, 9-14 UTC, 8-14 UTC, relaxed MACD
+  thresholds, a 100k micro-notional variant, and a stricter 10-14 UTC variant.
+- Every candidate produced zero fills in the fixed-warmup evaluation and was
+  rejected with `strategy produced no active fixed-warmup evaluation folds`.
+- Decision: do not promote. The current live command can keep the guarded
+  USDJPY `quality_trend` slot, but there is no evidence to widen hours or force
+  earlier USDJPY trades.
+
+## 2026-06-23 four-pair fast MACD refinement
+
+- Re-ran a compact full-data W480 / 96-bar MACD search on the current MACD live
+  pressure symbols: `AUDUSD`, `EURUSD`, `USDCAD`, and `USDCHF`.
+- The best family was still fast 6/18/5 with 0.75-1.25 bps histogram gates and
+  6-14 UTC hours. It generated 82 trades, +2.082% full-sample return, 0.412%
+  drawdown, 61.1% total positive folds, 84.6% active-positive folds, and 88.9%
+  non-negative folds.
+- The candidate remains `PAPER_ONLY` because total positive folds are still
+  below the 67.0% live-promotion gate. Shorter holds and a 5/16 faster variant
+  increased churn but weakened fold stability.
+- Decision: do not promote. Keep the live MACD parameters unchanged; track
+  fast 6/18 as near-promotion research only.
