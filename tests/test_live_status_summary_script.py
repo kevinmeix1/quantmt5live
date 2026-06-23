@@ -323,6 +323,71 @@ class LiveStatusSummaryScriptTest(TestCase):
         self.assertEqual(top["symbol"], "AUDUSD")
         self.assertEqual(top["top_match"]["wf_total_evaluation_fills"], 40)
 
+    def test_watchlist_evidence_reports_mixed_cross_rate_windows(self) -> None:
+        evidence = live_status_summary._watchlist_optimizer_evidence(
+            {
+                "candidate_count": 1,
+                "top_candidates": [
+                    {
+                        "symbol": "EURGBP",
+                        "candidate_strategy": "cross_rate_reversion",
+                        "live_strategy": "champion_ensemble",
+                        "live_gate": "strategy_mismatch",
+                    },
+                    {
+                        "symbol": "EURGBP",
+                        "candidate_strategy": "cross_rate_reversion",
+                        "live_strategy": "champion_ensemble",
+                        "live_gate": "strategy_mismatch",
+                    }
+                ],
+            },
+            {
+                "top_candidates": [
+                    {
+                        "source_path": (
+                            "outputs/backtests/"
+                            "live_watch_candidate_eurgbp_cross_rate_w480_summary.csv"
+                        ),
+                        "source_label": (
+                            "live_watch_candidate_eurgbp_cross_rate_w480_summary"
+                        ),
+                        "label": "cross_w480",
+                        "symbols": "AUDUSD EURGBP EURUSD GBPUSD USDCAD USDCHF",
+                        "promotion_status": "PAPER_ONLY",
+                        "promotion_live_ready": "False",
+                        "wf_positive_fold_fraction": "0.5556",
+                        "wf_non_negative_fold_fraction": "0.7778",
+                        "wf_active_positive_fold_fraction": "0.7143",
+                        "wf_total_evaluation_fills": "74",
+                    },
+                    {
+                        "source_path": (
+                            "outputs/backtests/"
+                            "live_watch_candidate_eurgbp_cross_rate_w960_summary.csv"
+                        ),
+                        "source_label": (
+                            "live_watch_candidate_eurgbp_cross_rate_w960_summary"
+                        ),
+                        "label": "cross_w960",
+                        "symbols": "AUDUSD EURGBP EURUSD GBPUSD USDCAD USDCHF",
+                        "promotion_status": "PROMOTE",
+                        "promotion_live_ready": "True",
+                        "wf_positive_fold_fraction": "0.8333",
+                        "wf_non_negative_fold_fraction": "1.0",
+                        "wf_active_positive_fold_fraction": "1.0",
+                        "wf_total_evaluation_fills": "48",
+                    },
+                ]
+            },
+        )
+
+        self.assertEqual(evidence["candidate_count"], 1)
+        top = evidence["top_candidates"][0]
+        self.assertEqual(top["evidence_status"], "MIXED_SCAN_EVIDENCE")
+        self.assertEqual(top["symbol"], "EURGBP")
+        self.assertEqual(top["top_match"]["promotion_status"], "PAPER_ONLY")
+
     def test_reads_and_writes_summary_files(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

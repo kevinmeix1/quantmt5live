@@ -1653,3 +1653,25 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   summary.
 - Decision: do not lower live MACD thresholds yet. Keep the fast-MACD family
   under watch, but require a total-positive-fold improvement before promoting.
+
+## 2026-06-23 EURGBP cross-rate watchlist evidence
+
+- The live watchlist continued to surface `EURGBP` cross-rate reversion as a
+  high-quality strategy-mismatch candidate while the live map kept `EURGBP` on
+  `champion_ensemble`.
+- Existing fixed-warmup evidence is promising but mixed. The six-symbol
+  `EURGBP=cross_rate_reversion` hybrid is `PAPER_ONLY` on W480 and W672
+  (55.6% and 62.5% positive folds), then `PROMOTE` on W960 (83.3% positive
+  folds, 100.0% active-positive folds, 100.0% non-negative folds). The exact
+  live-seven `eurgbp_cross_jpy_quality` map remains `PAPER_ONLY` across
+  W480/W672/W960 with minimum total positive folds only 44.4%.
+- A fresh exact live-seven W480 refresh rejected more clearly: 18 folds,
+  167 evaluation fills, 33.3% positive folds, 33.3% active-positive folds,
+  33.3% non-negative folds, -0.003% median active return, 0.028% worst
+  drawdown, and 72.2/100 average risk discipline.
+- Added the cross-rate candidate window summaries to the optimizer rollup and
+  added watchlist optimizer evidence so the status summary can distinguish
+  promising mixed-window research from a live-ready routing change.
+- Decision: keep `EURGBP` on the current live map for now. Reconsider only if
+  the exact live-seven cross-rate map clears the total positive-fold gate on
+  the shorter windows, not just W960.
