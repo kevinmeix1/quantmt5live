@@ -1693,3 +1693,28 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   to full-data promotion evidence in the status summary.
 - Decision: keep the squeeze signals in discovery only. They are not live-ready
   until risk discipline and total positive folds improve.
+
+## 2026-06-23 aggressive pressure refresh
+
+- Refreshed live sentiment and per-pair analysis after the MT5 loop showed a
+  flat account. Heuristic pressure pointed short on `AUDUSD`, `EURUSD`,
+  `GBPUSD`, and `USDJPY`, but the guarded live strategies stayed flat because
+  MACD/quality/champion thresholds and session gates did not confirm entries.
+- Tested more active MACD candidates on the full 15-minute dataset for
+  `AUDUSD`, `EURUSD`, `USDCAD`, and `USDCHF`
+  (`outputs/backtests/live_watch_macd_aggressive_refine_w480.csv`).
+  The greedy `6/18/5` MACD with `0.10` histogram and `0.25` MACD thresholds
+  lifted fills to 94, but remained `PAPER_ONLY`: 55.6% positive folds, 76.9%
+  active-positive folds, 83.3% non-negative folds, and 0.557% worst fold
+  drawdown. The fastest `5/16/5` variant was rejected.
+- Tested opportunity-probe on the current pressure set `AUDUSD`, `EURUSD`,
+  `GBPUSD`, and `USDJPY`
+  (`outputs/backtests/live_watch_opportunity_probe_current_pressure_w480.csv`).
+  Every candidate rejected; the current greedy probe produced 1,731 fills but
+  only 16.7% positive/non-negative folds, while the best-ranked stricter probe
+  still had only 33.3% positive/non-negative folds.
+- Added both fresh scans to the status summary optimizer rollup so future live
+  checks keep seeing that these high-churn routes are not promotion evidence.
+- Decision: do not loosen live thresholds or switch live symbols to
+  opportunity-probe. Keep searching for higher-conviction active candidates,
+  but reject churn that only increases trade count while degrading fold quality.
