@@ -1718,3 +1718,21 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not loosen live thresholds or switch live symbols to
   opportunity-probe. Keep searching for higher-conviction active candidates,
   but reject churn that only increases trade count while degrading fold quality.
+
+## 2026-06-23 live-seven MACD expansion check
+
+- With the live account still flat, tested whether the near-promoted MACD family
+  improves when expanded from the four-symbol USD basket to the full seven live
+  FX symbols: `AUDUSD`, `EURGBP`, `EURUSD`, `GBPUSD`, `USDCAD`, `USDCHF`,
+  and `USDJPY`.
+- Output: `outputs/backtests/live_watch_macd_live7_expansion_w480.csv`.
+- Best candidate was `near_6_18_h100_m050_s005`: 106 trades, 2.038% full-sample
+  return, 0.527% max drawdown, 55.6% positive folds, 71.4% active-positive
+  folds, 77.8% non-negative folds, and `PAPER_ONLY`.
+- A lower-threshold active variant reached 148 trades but still stayed
+  `PAPER_ONLY` with weaker full-sample return and larger drawdown. The current
+  `8/21/8` all-seven MACD variant rejected with only 66.7% non-negative folds.
+- Added the live-seven MACD expansion scan to the status summary rollup.
+- Decision: do not expand live MACD to all seven symbols yet. The extra symbols
+  increase trade count but do not improve enough fold stability to justify live
+  promotion.
