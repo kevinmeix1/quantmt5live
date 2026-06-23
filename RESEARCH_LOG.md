@@ -1918,3 +1918,38 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: keep the live MACD thresholds unchanged. The bounded aggressive
   variants increase churn, but they do not yet show enough full-window risk
   discipline or fold stability to justify changing live trading.
+
+## 2026-06-23 negative-pressure live expansion checks
+
+- Refreshed live sentiment and diagnostics. The local sentiment snapshot and
+  outside macro scan both pointed to USD-supportive/risk-off pressure: `AUDUSD`,
+  `EURUSD`, and `GBPUSD` were negative, while `USDCAD` and `USDCHF` were
+  supportive. Live default strategy gates still requested no risk; the read-only
+  all-symbol `opportunity_probe` wanted short `EURUSD` and `GBPUSD`, but that
+  exact pair had already failed strict validation.
+- Tested more active `champion_ensemble`, `multi_horizon_momentum`, and
+  `quality_trend` alternatives on `EURUSD`/`GBPUSD`.
+- Outputs:
+  - `outputs/backtests/live_watch_champion_eurusd_gbpusd_active_w960.csv`
+  - `outputs/backtests/live_watch_multi_horizon_eurusd_gbpusd_pressure_w960.csv`
+  - `outputs/backtests/live_watch_quality_eurusd_gbpusd_pressure_w960.csv`
+- All rejected. The active champion variants lost 0.022%-0.033% with only 16.7%
+  positive/non-negative folds. Multi-horizon produced 391-636 trades but lost
+  0.191%-0.369%, also with only 16.7% positive/non-negative folds.
+  Quality-trend was cleaner but too inactive for a live change: the best version
+  made 12 trades, gained 0.012%, and had 100% active-positive/non-negative
+  folds, but only 33.3% active folds.
+- Tested whether adding `GBPUSD` to the MACD pressure sleeve could increase
+  activity:
+  - `outputs/backtests/live_watch_macd_negative_pressure_trio_w960.csv`
+  - `outputs/backtests/live_watch_macd_negative_pressure_plus_usd_offsets_w960.csv`
+- The `AUDUSD`/`EURUSD`/`GBPUSD` MACD trio was the best near-miss: live-current
+  MACD made 122 trades, gained 0.020%, and had 83.3% positive folds with 100%
+  active-positive/non-negative folds. It still failed live promotion because
+  average risk discipline was only 45.0/100, likely from one-sided net
+  concentration. Adding `USDCAD`/`USDCHF` as USD offsets did not repair the
+  edge; all five-symbol variants lost money and had only 33.3% positive folds.
+- Added these scans to the live status optimizer rollup.
+- Decision: do not change the live map or loosen brakes. Keep the trio MACD
+  idea on watch as an aggressive near-miss, but do not promote it while the
+  competition risk-discipline score is this poor.
