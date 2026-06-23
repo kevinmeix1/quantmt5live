@@ -52,6 +52,8 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_macd_near_promotion_refine_w480.csv",
     "outputs/backtests/live_watch_macd_pressure5_refine_w480.csv",
     "outputs/backtests/live_watch_macd_fast_refine4_w480.csv",
+    "outputs/backtests/live_watch_macd_fast_refine4_w672.csv",
+    "outputs/backtests/live_watch_macd_fast_refine4_w960.csv",
     "outputs/backtests/live_watch_usdjpy_quality_preopen_w480.csv",
     "outputs/backtests/live_watch_usdcad_macd_intraday_w480.csv",
     "outputs/backtests/live_watch_eurgbp_cross_jpy_quality_w480.csv",

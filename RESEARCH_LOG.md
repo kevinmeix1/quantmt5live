@@ -1464,3 +1464,20 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   folds. The strict positive-return rows reached only 33.3% non-negative folds.
 - Decision: do not promote. The current live-looking opportunity probe remains
   too unstable out of sample to justify a manual or live-map trade.
+
+## 2026-06-23 fast MACD wider-window stability check
+
+- The nearest near-promotion candidate remained the fast MACD family on
+  `AUDUSD`, `EURUSD`, `USDCAD`, and `USDCHF`, so it was stress-tested beyond
+  the original W480 / 96-bar window.
+- W672 / 144-bar validation promoted the fast 6/18 family: 80.0% positive
+  folds, 100.0% active-positive folds, and 100.0% non-negative folds.
+- W960 / 192-bar validation was more selective: current live MACD promoted
+  with 83.3% positive folds, 100.0% active-positive folds, and 100.0%
+  non-negative folds, while fast 6/18 fell back to `PAPER_ONLY` at 66.7%
+  positive folds. `fast_7_20_s005` promoted but produced fewer fills than the
+  current live MACD row.
+- Decision: do not lower live MACD thresholds. The current live MACD settings
+  are more robust across the wider windows, and the faster variants remain
+  research-only because W480 and W960 do not both clear the total positive-fold
+  gate.
