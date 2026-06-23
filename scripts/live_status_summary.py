@@ -145,6 +145,7 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_opportunity_probe_audusd_usdjpy_strict_w960.csv",
     "outputs/backtests/live_watch_opportunity_probe_eurusd_gbpusd_w480.csv",
     "outputs/backtests/live_watch_opportunity_probe_eurusd_gbpusd_strict_w480.csv",
+    "outputs/backtests/live_watch_opportunity_probe_eurusd_gbpusd_strict_w960.csv",
     "outputs/backtests/live_watch_opportunity_probe_eurusd_usdjpy_strict_w960.csv",
 )
 OPTIMIZER_SCAN_STALE_MINUTES = 6 * 60

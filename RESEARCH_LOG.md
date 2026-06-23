@@ -2134,3 +2134,20 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: keep the two-position cap. This is exactly the kind of higher
   turnover path that looks responsive in live diagnostics but has bad
   full-data survival characteristics.
+
+## 2026-06-23 EURUSD/GBPUSD opportunity-probe W960 check
+
+- Refreshed live supervision again. The live process, supervisor, guard, and
+  MT5 terminal were still running; account state remained flat at `999181.58`
+  equity, `-818.42` day P/L, zero positions, zero margin, and no live stderr.
+- Production diagnostics remained flat. The status summary pointed at the
+  current read-only `opportunity_probe` pressure around `EURUSD`/`GBPUSD`, but
+  the attached evidence was only a W480 rejection.
+- Ran the full W960 validation:
+  `outputs/backtests/live_watch_opportunity_probe_eurusd_gbpusd_strict_w960.csv`.
+  All variants rejected. The best high-score filter lost 0.040% with 242 trades
+  and 40.0% positive/non-negative folds; the very-strict line lost 0.029% with
+  only 20.0% positive/non-negative folds; live-current lost 0.375% with 1,222
+  trades.
+- Added the W960 scan to the live optimizer rollup.
+- Decision: do not promote the EURUSD/GBPUSD opportunity-probe sleeve.
