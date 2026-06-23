@@ -209,6 +209,10 @@ def build_summary(
         "candidate_strategy_diagnostics": _compact_candidate_strategy_diagnostics(
             candidate_strategy_diagnostics
         ),
+        "candidate_optimizer_evidence": _candidate_optimizer_evidence(
+            candidate_strategy_diagnostics,
+            optimizer_scans,
+        ),
         "optimizer_scans": _compact_optimizer_scans(optimizer_scans),
         "near_promotion": _compact_near_promotion(near_promotion),
         "research_live_gate": _research_live_gate(
@@ -749,6 +753,16 @@ def _candidate_strategy_diagnostic_row(
         ),
         "actionable_symbol_count": actionable_count,
         "requested_symbol_count": requested_count,
+        "actionable_symbols": [
+            row["symbol"]
+            for row in symbol_rows
+            if row["status"] == "actionable_allocation"
+        ],
+        "requested_symbols": [
+            row["symbol"]
+            for row in symbol_rows
+            if abs(row["raw_change_notional_usd"]) > 0.0
+        ],
         "top_symbol": symbol_rows[0] if symbol_rows else {},
     }
 
@@ -810,6 +824,8 @@ def _compact_candidate_strategy_diagnostics(
                 "requested_symbol_count": int(
                     _float_or_zero(row.get("requested_symbol_count"))
                 ),
+                "actionable_symbols": list(row.get("actionable_symbols", []))[:7],
+                "requested_symbols": list(row.get("requested_symbols", []))[:7],
                 "top_symbol": {
                     "symbol": top_symbol.get("symbol", ""),
                     "status": top_symbol.get("status", ""),
@@ -828,6 +844,186 @@ def _compact_candidate_strategy_diagnostics(
         "candidate_count": int(_float_or_zero(diagnostics.get("candidate_count"))),
         "top_candidates": compact_rows,
     }
+
+
+def _candidate_optimizer_evidence(
+    diagnostics: dict[str, Any] | None,
+    scans: dict[str, Any] | None,
+) -> dict[str, Any]:
+    if not diagnostics or not scans:
+        return {}
+    evidence_rows: list[dict[str, Any]] = []
+    for candidate in diagnostics.get("top_candidates", []):
+        if not isinstance(candidate, dict):
+            continue
+        strategy = _candidate_evidence_strategy(candidate)
+        symbols = _candidate_evidence_symbols(candidate)
+        if not strategy or not symbols:
+            continue
+        matches = _matching_optimizer_scan_rows(
+            strategy=strategy,
+            symbols=symbols,
+            scans=scans,
+        )
+        if not matches:
+            continue
+        evidence_pool = [
+            match for match in matches
+            if match.get("exact_symbols")
+        ] or matches
+        evidence_status = _optimizer_evidence_status(evidence_pool)
+        top_match = sorted(evidence_pool, key=_optimizer_evidence_rank_key)[0]
+        evidence_rows.append(
+            {
+                "candidate_label": candidate.get("label", ""),
+                "strategy": strategy,
+                "symbols": symbols,
+                "evidence_status": evidence_status,
+                "match_count": len(matches),
+                "top_match": {
+                    "source_path": top_match.get("source_path", ""),
+                    "source_label": top_match.get("source_label", ""),
+                    "label": top_match.get("label", ""),
+                    "promotion_status": top_match.get("promotion_status", ""),
+                    "promotion_live_ready": _boolish(
+                        top_match.get("promotion_live_ready")
+                    ),
+                    "promotion_reason": top_match.get("promotion_reason", ""),
+                    "return_pct": _float_or_zero(top_match.get("return_pct")),
+                    "wf_non_negative_fold_fraction": _float_or_zero(
+                        top_match.get("wf_non_negative_fold_fraction")
+                    ),
+                    "wf_active_positive_fold_fraction": _float_or_zero(
+                        top_match.get("wf_active_positive_fold_fraction")
+                    ),
+                    "wf_total_evaluation_fills": int(
+                        _float_or_zero(top_match.get("wf_total_evaluation_fills"))
+                    ),
+                    "source_age_minutes": _float_or_zero(
+                        top_match.get("source_age_minutes")
+                    ),
+                },
+            }
+        )
+    if not evidence_rows:
+        return {}
+    evidence_rows.sort(key=_candidate_optimizer_evidence_rank_key)
+    return {
+        "candidate_count": len(evidence_rows),
+        "top_candidates": evidence_rows[:3],
+    }
+
+
+def _candidate_evidence_strategy(candidate: dict[str, Any]) -> str:
+    top_symbol = candidate.get("top_symbol", {})
+    if isinstance(top_symbol, dict):
+        strategy = str(top_symbol.get("strategy", "")).strip()
+        if strategy:
+            return strategy
+    label = str(candidate.get("label", "")).lower()
+    for strategy in (
+        "opportunity_probe",
+        "macd_momentum",
+        "quality_trend",
+        "champion_ensemble",
+        "cross_rate_reversion",
+        "multi_horizon_momentum",
+    ):
+        if strategy in label:
+            return strategy
+    return ""
+
+
+def _candidate_evidence_symbols(candidate: dict[str, Any]) -> list[str]:
+    for key in ("actionable_symbols", "requested_symbols"):
+        symbols = [
+            str(symbol).strip().upper()
+            for symbol in candidate.get(key, [])
+            if str(symbol).strip()
+        ]
+        if symbols:
+            return sorted(set(symbols))
+    top_symbol = candidate.get("top_symbol", {})
+    if isinstance(top_symbol, dict):
+        symbol = str(top_symbol.get("symbol", "")).strip().upper()
+        if symbol:
+            return [symbol]
+    return []
+
+
+def _matching_optimizer_scan_rows(
+    *,
+    strategy: str,
+    symbols: list[str],
+    scans: dict[str, Any],
+) -> list[dict[str, Any]]:
+    wanted_symbols = set(symbols)
+    matches: list[dict[str, Any]] = []
+    for row in scans.get("top_candidates", []):
+        if not isinstance(row, dict):
+            continue
+        source_text = " ".join(
+            str(row.get(key, "")).lower()
+            for key in ("source_path", "source_label", "label")
+        )
+        if strategy.lower() not in source_text:
+            continue
+        scan_symbols = set(_split_symbol_text(row.get("symbols", "")))
+        if not scan_symbols or not wanted_symbols.issubset(scan_symbols):
+            continue
+        match = dict(row)
+        match["exact_symbols"] = scan_symbols == wanted_symbols
+        matches.append(match)
+    return matches
+
+
+def _split_symbol_text(raw: Any) -> list[str]:
+    if not raw:
+        return []
+    return [
+        part.strip().upper()
+        for part in re.split(r"[\s,;|]+", str(raw))
+        if part.strip()
+    ]
+
+
+def _optimizer_evidence_status(matches: list[dict[str, Any]]) -> str:
+    statuses = {
+        str(match.get("promotion_status", "")).upper()
+        for match in matches
+    }
+    if statuses == {"REJECT"}:
+        return "REJECTED_BY_SCAN"
+    if "PROMOTE" in statuses:
+        return "SUPPORTED_BY_SCAN"
+    if "PAPER_ONLY" in statuses:
+        return "PAPER_ONLY_SCAN"
+    return "MIXED_SCAN_EVIDENCE"
+
+
+def _optimizer_evidence_rank_key(row: dict[str, Any]) -> tuple[int, int, float, str]:
+    status_rank = {"REJECT": 0, "PAPER_ONLY": 1, "PROMOTE": 2}
+    return (
+        0 if row.get("exact_symbols") else 1,
+        status_rank.get(str(row.get("promotion_status", "")).upper(), 3),
+        _float_or_zero(row.get("source_age_minutes")),
+        str(row.get("source_label", "")),
+    )
+
+
+def _candidate_optimizer_evidence_rank_key(
+    row: dict[str, Any],
+) -> tuple[int, str]:
+    status_rank = {
+        "REJECTED_BY_SCAN": 0,
+        "PAPER_ONLY_SCAN": 1,
+        "MIXED_SCAN_EVIDENCE": 2,
+        "SUPPORTED_BY_SCAN": 3,
+    }
+    return (
+        status_rank.get(row.get("evidence_status", ""), 4),
+        row.get("candidate_label", ""),
+    )
 
 
 def _compact_optimizer_scans(
@@ -1036,6 +1232,7 @@ def _summary_text(summary: dict[str, Any]) -> str:
     basket_scan = summary.get("basket_activity_scan", {})
     research_cycle = summary.get("research_cycle", {})
     candidate_diagnostics = summary.get("candidate_strategy_diagnostics", {})
+    candidate_evidence = summary.get("candidate_optimizer_evidence", {})
     optimizer_scans = summary.get("optimizer_scans", {})
     near_promotion = summary.get("near_promotion", {})
     research_live_gate = summary.get("research_live_gate", {})
@@ -1153,6 +1350,22 @@ def _summary_text(summary: dict[str, Any]) -> str:
             f"raw={top_symbol.get('raw_change_notional_usd', 0.0):.2f} "
             f"alloc={top_symbol.get('allocation_change_notional_usd', 0.0):.2f} "
             f"bucket={top_symbol.get('raw_reason_bucket', '')}"
+        )
+    if candidate_evidence.get("candidate_count", 0) > 0:
+        top = candidate_evidence.get("top_candidates", [{}])[0]
+        match = top.get("top_match", {})
+        lines.append(
+            "candidate_evidence "
+            f"candidates={candidate_evidence.get('candidate_count', 0)} "
+            f"top={top.get('candidate_label', '')} "
+            f"strategy={top.get('strategy', '')} "
+            f"symbols={' '.join(top.get('symbols', []))} "
+            f"evidence={top.get('evidence_status', '')} "
+            f"source={Path(match.get('source_path', '')).name if match.get('source_path') else 'n/a'} "
+            f"status={match.get('promotion_status', '')} "
+            f"nonneg={match.get('wf_non_negative_fold_fraction', 0.0):.1%} "
+            f"active_pos={match.get('wf_active_positive_fold_fraction', 0.0):.1%} "
+            f"fills={match.get('wf_total_evaluation_fills', 0)}"
         )
     if optimizer_scans.get("scan_count", 0) > 0:
         top = optimizer_scans.get("top_candidates", [{}])[0]
