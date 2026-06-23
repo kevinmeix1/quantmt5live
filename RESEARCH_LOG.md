@@ -1511,3 +1511,21 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   return, and 27.8% non-negative folds.
 - Decision: do not promote. Keep USDCHF on the guarded MACD slot and treat
   isolated heuristic USDCHF pressure as insufficient for fresh live risk.
+
+## 2026-06-23 asset-heavy champion wider-window rejection
+
+- The live research cycle again surfaced `asset_adaptive_dual_squeeze` as the
+  strongest short-horizon signal on `GBPUSD`, with secondary candidates on
+  `AUDUSD` and `USDJPY`.
+- Re-tested the asset-heavy champion family on `GBPUSD`, `AUDUSD`, and
+  `USDJPY` with directional-probe allocation and forced QUALIFY clock, using
+  wider W672 / 144-bar and W960 / 192-bar walk-forward windows.
+- W672 stayed profitable full-sample at +0.007% with 44 trades and 0.025%
+  max drawdown, but rejected because average risk discipline was only
+  90.0/100 and total positive folds were only 40.0%.
+- W960 also rejected: the same asset-heavy row stayed +0.007% full-sample, but
+  positive folds were 50.0%, active-positive folds 60.0%, and non-negative
+  folds 66.7%, below the live gate.
+- Decision: do not promote the asset-heavy champion map or use it for manual
+  entries. Keep it in the optimizer rollup as a near-miss research sleeve, but
+  leave live routing unchanged until the fold distribution improves.

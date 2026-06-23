@@ -84,6 +84,8 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_audusd_macd_aggressive_w480.csv",
     "outputs/backtests/live_watch_eurgbp_gbpusd_opportunity_probe_aggressive_w480.csv",
     "outputs/backtests/live_watch_eurgbp_gbpusd_champion_aggressive_w480.csv",
+    "outputs/backtests/live_watch_champion_asset_signal_w672.csv",
+    "outputs/backtests/live_watch_champion_asset_signal_w960.csv",
     "outputs/backtests/live_watch_eurusd_macd_evening_focus_w480.csv",
     "outputs/backtests/live_watch_quality_trend_size_opt_live6_w480.csv",
     "outputs/backtests/live_watch_quality_trend_opt_live6_w480.csv",
