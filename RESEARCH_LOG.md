@@ -2573,3 +2573,20 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   discretionary USDJPY trade. The current live `quality_trend` sleeve remains
   the safer production mapping, and the new scan is included in live summary
   evidence so future probe signals are rejected explicitly.
+
+## 2026-06-23 MACD micro-threshold check
+
+- Current live diagnostics remained flat while pair-analysis scores warmed in
+  AUDUSD/USDCAD/USDJPY, so I tested a bounded lower-threshold MACD expansion
+  instead of manually forcing a trade.
+- Fresh full-data W960 scan:
+  `outputs/backtests/live_watch_macd_micro_threshold_after_hours_w960.csv`.
+- The current 8/21/8 h075 evening-window setup remained the best choice:
+  +2.400% return, 86 trades, 83.3% positive folds, 83.3% active-positive
+  folds, and 83.3% non-negative folds.
+- Lower-threshold variants did pass the promotion gates, but the more active
+  versions only increased activity to 90 trades while reducing return to
+  +2.100% or +1.806% and lowering median active-fold return.
+- Decision: do not lower MACD thresholds for production. The current setup is
+  already aggressive enough to use the evening window, and lowering thresholds
+  would add churn without improving full-data payoff.
