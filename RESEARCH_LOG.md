@@ -1875,3 +1875,27 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   useful watchlist information, especially MACD on `AUDUSD`/`USDCAD`/`USDCHF`,
   but they do not clear the positive-fold promotion gate and do not justify a
   live-map change yet.
+
+## 2026-06-23 EURUSD/GBPUSD opportunity-probe strict check
+
+- Refreshed live diagnostics after the promoted fast-MACD read-only probe. The
+  live account remained flat with equity 999,181.58 and no open positions.
+  Sentiment and heuristic pressure pointed to possible `AUDUSD` and `EURUSD`
+  shorts, but the promoted fast-MACD family still produced no actionable
+  allocation on current MT5 quotes: `AUDUSD`, `EURUSD`, and `USDCAD` were inside
+  the 0.25 bps exit/noise band, while `USDCHF` was only 0.26 bps versus the
+  0.75 bps entry threshold.
+- The current candidate diagnostics then surfaced `opportunity_probe` risk on
+  `EURUSD` and `GBPUSD`, whose older pair scan was rejected. Tested a stricter
+  two-symbol refinement on that exact pair.
+- Output:
+  `outputs/backtests/live_watch_opportunity_probe_eurusd_gbpusd_strict_w480.csv`.
+- All candidates rejected. The best-ranked `strict_pair_4_12_32_s300` made 386
+  trades, lost 0.086% full-sample, had 0.157% drawdown, and only 33.3% positive
+  and non-negative folds. The tighter `ultra_pair_6_18_48_s425` reduced activity
+  to 175 trades and drawdown to 0.091%, but still lost 0.044% with only 27.8%
+  positive/non-negative folds. The current pair baseline lost 0.271% with 849
+  trades and only 16.7% positive/non-negative folds.
+- Added the strict pair scan to the live status optimizer rollup.
+- Decision: do not promote `opportunity_probe` for `EURUSD`/`GBPUSD`; the
+  stricter filters reduce churn but still do not produce reliable fold quality.
