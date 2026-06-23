@@ -1220,3 +1220,24 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: promote only the validated USDJPY quality-trend expansion. Keep
   max order lots, max live positions, sentiment conflict brake, symbol-state
   cooldown throttle, small-only throttle, and guard flatten stops intact.
+
+## 2026-06-23 live-watch higher-activity rejection pass
+
+- Live was healthy and flat at 2026-06-23 06:57 UTC: equity $999,181.58,
+  day P/L -$818.42, no positions, no margin, no blocked or small-only symbols,
+  and the seven-symbol live command included the promoted
+  `USDJPY=quality_trend` leg.
+- Current diagnostics showed no approved live risk because strategy gates were
+  inactive, not because the risk layer was blocking fresh trades.
+- Tested two narrower "more trades" replacements on the full live-seven data
+  with fixed warmup W480 / 96-bar test windows and forced QUALIFY mode:
+  - `USDJPY=macd_momentum` in the current map: 94 evaluation fills and
+    100/100 risk discipline, but only 50.0% positive folds, 69.2%
+    active-positive folds, and `PAPER_ONLY`.
+  - `GBPUSD=asset_adaptive_dual_squeeze` with the promoted USDJPY quality leg:
+    80 evaluation fills and 100/100 risk discipline, but only 44.4% positive
+    folds, 66.7% active-positive folds, and `PAPER_ONLY`.
+- Decision: no live replacement. The promoted current map plus
+  `USDJPY=quality_trend` remains the strongest validated trade-ready setup;
+  higher-activity alternates increased fill count but did not clear stability
+  gates.
