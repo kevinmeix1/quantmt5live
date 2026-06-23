@@ -137,6 +137,27 @@ print(json.dumps(status, sort_keys=True))
   } @($Root, $Python, $script) $Mt5StatusTimeoutSeconds
 }
 
+function Enable-Mt5AlgoTrading {
+  try {
+    $terminal = Get-Process -Name "terminal64" -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($null -eq $terminal) {
+      Write-GuardLog "algo toggle skipped; MT5 terminal process not found"
+      return
+    }
+    $shell = New-Object -ComObject WScript.Shell
+    $activated = $shell.AppActivate($terminal.Id)
+    Write-GuardLog "algo toggle app_activate pid=$($terminal.Id) activated=$activated"
+    if (-not $activated) {
+      return
+    }
+    Start-Sleep -Milliseconds 700
+    $shell.SendKeys('^e')
+    Start-Sleep -Seconds 2
+  } catch {
+    Write-GuardLog "algo toggle error: $($_.Exception.Message)"
+  }
+}
+
 function Get-LiveMetricsJson {
   return Invoke-JobWithTimeout "live metrics" {
     param($RootPath, $PythonPath)
@@ -183,6 +204,12 @@ while ((Get-Date) -lt $Deadline) {
     $metricStatus = $metrics | ConvertFrom-Json
     if ($status.ok -and $status.terminal_trade_allowed -eq $false) {
       Write-GuardLog "terminal trading disabled; live process cannot place new orders"
+      Enable-Mt5AlgoTrading
+      $jsonAfterToggle = Get-Mt5StatusJson
+      if (-not [string]::IsNullOrWhiteSpace($jsonAfterToggle)) {
+        Write-GuardLog "mt5_after_algo_toggle $jsonAfterToggle"
+        $status = $jsonAfterToggle | ConvertFrom-Json
+      }
     }
     if ($status.ok -and $null -ne $status.positions_count) {
       if ($status.margin_level -gt 0 -and $status.margin_level -lt 1000) {
