@@ -1631,3 +1631,25 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   evidence.
 - Decision: do not promote multi-horizon to live routing. Keep it in discovery
   and require a fresh exact-symbol scan to clear promotion gates first.
+
+## 2026-06-23 single-symbol MACD refinement
+
+- The live pair monitor showed an `AUDUSD` heuristic-only tiny-probe buy while
+  the guarded live MACD strategy remained threshold-gated.
+- Ran W480 / 96-bar fixed-warmup MACD checks on each live MACD symbol
+  (`AUDUSD`, `EURUSD`, `USDCAD`, `USDCHF`) using the current live parameters
+  and the strongest fast-MACD variants from the wider-window scans.
+- No single-symbol MACD row promoted. The closest was `AUDUSD`
+  `fast_6_18_s005`/`fast_6_18_s010`: 55.6% positive folds, 71.4%
+  active-positive folds, 77.8% non-negative folds, and 50 evaluation fills,
+  but still rejected.
+- Ran a tighter AUDUSD-only search around fast 6/18 and 7/20 MACD thresholds,
+  slopes, holding periods, and UTC hour windows. The best risk-balanced rows
+  still rejected at 55.6% positive folds and 77.8% non-negative folds; risk
+  discipline was only 77.8/100 for the closest hold-8 variants.
+- Added the single-symbol MACD scans to the live optimizer rollup and added
+  heuristic-probe optimizer evidence so live-looking heuristic probes show the
+  relevant full-data rejection or paper-only support directly in the status
+  summary.
+- Decision: do not lower live MACD thresholds yet. Keep the fast-MACD family
+  under watch, but require a total-positive-fold improvement before promoting.

@@ -285,6 +285,44 @@ class LiveStatusSummaryScriptTest(TestCase):
         )
         self.assertEqual(top["top_match"]["wf_total_evaluation_fills"], 84)
 
+    def test_heuristic_evidence_matches_macd_scan_alias(self) -> None:
+        evidence = live_status_summary._heuristic_optimizer_evidence(
+            {
+                "candidate_count": 1,
+                "top_candidates": [
+                    {
+                        "symbol": "AUDUSD",
+                        "strategy": "macd_momentum",
+                        "action": "eligible_tiny_probe_buy",
+                    }
+                ],
+            },
+            {
+                "top_candidates": [
+                    {
+                        "source_path": (
+                            "outputs/backtests/"
+                            "live_watch_macd_symbol_audusd_w480.csv"
+                        ),
+                        "source_label": "live_watch_macd_symbol_audusd_w480",
+                        "label": "aud_6_18_h075_s000_hold8",
+                        "symbols": "AUDUSD",
+                        "promotion_status": "REJECT",
+                        "promotion_live_ready": "False",
+                        "wf_non_negative_fold_fraction": "0.7778",
+                        "wf_active_positive_fold_fraction": "0.7143",
+                        "wf_total_evaluation_fills": "40",
+                    }
+                ]
+            },
+        )
+
+        self.assertEqual(evidence["candidate_count"], 1)
+        top = evidence["top_candidates"][0]
+        self.assertEqual(top["evidence_status"], "REJECTED_BY_SCAN")
+        self.assertEqual(top["symbol"], "AUDUSD")
+        self.assertEqual(top["top_match"]["wf_total_evaluation_fills"], 40)
+
     def test_reads_and_writes_summary_files(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

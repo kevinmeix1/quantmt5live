@@ -54,6 +54,11 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_macd_fast_refine4_w480.csv",
     "outputs/backtests/live_watch_macd_fast_refine4_w672.csv",
     "outputs/backtests/live_watch_macd_fast_refine4_w960.csv",
+    "outputs/backtests/live_watch_macd_symbol_audusd_w480.csv",
+    "outputs/backtests/live_watch_macd_symbol_eurusd_w480.csv",
+    "outputs/backtests/live_watch_macd_symbol_usdcad_w480.csv",
+    "outputs/backtests/live_watch_macd_symbol_usdchf_w480.csv",
+    "outputs/backtests/live_watch_macd_audusd_refine_w480.csv",
     "outputs/backtests/live_watch_usdjpy_quality_preopen_w480.csv",
     "outputs/backtests/live_watch_usdcad_macd_intraday_w480.csv",
     "outputs/backtests/live_watch_eurgbp_cross_jpy_quality_w480.csv",
@@ -189,6 +194,11 @@ def build_summary(
         small_only_symbols=small_only_symbols,
     )
     compact_research_cycle = _compact_research_cycle(research_cycle)
+    heuristic_only = _heuristic_only_probes(pair_rows)
+    candidate_evidence = _candidate_optimizer_evidence(
+        candidate_strategy_diagnostics,
+        optimizer_scans,
+    )
     return {
         "timestamp_utc": generated_at,
         "status": status,
@@ -210,7 +220,7 @@ def build_summary(
             pair_rows,
             live_symbols=set(diagnostics_symbols),
         ),
-        "heuristic_only_probes": _heuristic_only_probes(pair_rows),
+        "heuristic_only_probes": heuristic_only,
         "research_consensus": research_consensus or {},
         "fixed_warmup_consensus": fixed_warmup_consensus or {},
         "candidate_watchlist": _compact_candidate_watchlist(candidate_watchlist),
@@ -221,8 +231,9 @@ def build_summary(
         "candidate_strategy_diagnostics": _compact_candidate_strategy_diagnostics(
             candidate_strategy_diagnostics
         ),
-        "candidate_optimizer_evidence": _candidate_optimizer_evidence(
-            candidate_strategy_diagnostics,
+        "candidate_optimizer_evidence": candidate_evidence,
+        "heuristic_optimizer_evidence": _heuristic_optimizer_evidence(
+            heuristic_only,
             optimizer_scans,
         ),
         "optimizer_scans": _compact_optimizer_scans(optimizer_scans),
@@ -561,6 +572,7 @@ def _pair_rows(
                 sent.get("score", pair.get("headline_sentiment_score", 0.0))
             ),
             "diagnostic_status": diagnostic.get("status", ""),
+            "diagnostic_strategy": diagnostic.get("strategy", ""),
             "diagnostic_bucket": diagnostic.get("raw_reason_bucket", ""),
             "diagnostic_reason": diagnostic.get("raw_reason", ""),
             "raw_change_notional_usd": _float_or_zero(
@@ -670,6 +682,7 @@ def _heuristic_only_probes(
                 "combined_score": _float_or_zero(row.get("combined_score")),
                 "sentiment_score": _float_or_zero(row.get("sentiment_score")),
                 "diagnostic_status": diagnostic_status,
+                "strategy": row.get("diagnostic_strategy", ""),
                 "diagnostic_bucket": row.get("diagnostic_bucket", ""),
             }
         )
@@ -947,6 +960,72 @@ def _candidate_optimizer_evidence(
     }
 
 
+def _heuristic_optimizer_evidence(
+    heuristic_only: dict[str, Any] | None,
+    scans: dict[str, Any] | None,
+) -> dict[str, Any]:
+    if not heuristic_only or not scans:
+        return {}
+    evidence_rows: list[dict[str, Any]] = []
+    for candidate in heuristic_only.get("top_candidates", []):
+        if not isinstance(candidate, dict):
+            continue
+        symbol = str(candidate.get("symbol", "")).strip().upper()
+        strategy = str(candidate.get("strategy", "")).strip()
+        if not symbol or not strategy:
+            continue
+        matches = _matching_optimizer_scan_rows(
+            strategy=strategy,
+            symbols=[symbol],
+            scans=scans,
+        )
+        if not matches:
+            continue
+        evidence_pool = [
+            match for match in matches
+            if match.get("exact_symbols")
+        ] or matches
+        top_match = sorted(evidence_pool, key=_optimizer_evidence_rank_key)[0]
+        evidence_rows.append(
+            {
+                "symbol": symbol,
+                "strategy": strategy,
+                "action": candidate.get("action", ""),
+                "evidence_status": _optimizer_evidence_status(evidence_pool),
+                "match_count": len(matches),
+                "top_match": {
+                    "source_path": top_match.get("source_path", ""),
+                    "source_label": top_match.get("source_label", ""),
+                    "label": top_match.get("label", ""),
+                    "promotion_status": top_match.get("promotion_status", ""),
+                    "promotion_live_ready": _boolish(
+                        top_match.get("promotion_live_ready")
+                    ),
+                    "promotion_reason": top_match.get("promotion_reason", ""),
+                    "wf_non_negative_fold_fraction": _float_or_zero(
+                        top_match.get("wf_non_negative_fold_fraction")
+                    ),
+                    "wf_active_positive_fold_fraction": _float_or_zero(
+                        top_match.get("wf_active_positive_fold_fraction")
+                    ),
+                    "wf_total_evaluation_fills": int(
+                        _float_or_zero(top_match.get("wf_total_evaluation_fills"))
+                    ),
+                    "source_age_minutes": _float_or_zero(
+                        top_match.get("source_age_minutes")
+                    ),
+                },
+            }
+        )
+    if not evidence_rows:
+        return {}
+    evidence_rows.sort(key=_heuristic_optimizer_evidence_rank_key)
+    return {
+        "candidate_count": len(evidence_rows),
+        "top_candidates": evidence_rows[:3],
+    }
+
+
 def _candidate_evidence_strategy(candidate: dict[str, Any]) -> str:
     top_symbol = candidate.get("top_symbol", {})
     if isinstance(top_symbol, dict):
@@ -1011,7 +1090,7 @@ def _matching_optimizer_scan_rows(
             str(row.get(key, "")).lower()
             for key in ("source_path", "source_label", "label")
         )
-        if strategy.lower() not in source_text:
+        if not any(token in source_text for token in _strategy_source_tokens(strategy)):
             continue
         scan_symbols = set(_split_symbol_text(row.get("symbols", "")))
         if not scan_symbols or not wanted_symbols.issubset(scan_symbols):
@@ -1020,6 +1099,16 @@ def _matching_optimizer_scan_rows(
         match["exact_symbols"] = scan_symbols == wanted_symbols
         matches.append(match)
     return matches
+
+
+def _strategy_source_tokens(strategy: str) -> tuple[str, ...]:
+    normalized = strategy.lower()
+    aliases = {
+        "macd_momentum": ("macd_momentum", "macd"),
+        "multi_horizon_momentum": ("multi_horizon_momentum", "multi_horizon"),
+        "quality_trend": ("quality_trend", "quality"),
+    }
+    return aliases.get(normalized, (normalized,))
 
 
 def _split_symbol_text(raw: Any) -> list[str]:
@@ -1068,6 +1157,21 @@ def _candidate_optimizer_evidence_rank_key(
     return (
         status_rank.get(row.get("evidence_status", ""), 4),
         row.get("candidate_label", ""),
+    )
+
+
+def _heuristic_optimizer_evidence_rank_key(
+    row: dict[str, Any],
+) -> tuple[int, str]:
+    status_rank = {
+        "REJECTED_BY_SCAN": 0,
+        "PAPER_ONLY_SCAN": 1,
+        "MIXED_SCAN_EVIDENCE": 2,
+        "SUPPORTED_BY_SCAN": 3,
+    }
+    return (
+        status_rank.get(row.get("evidence_status", ""), 4),
+        row.get("symbol", ""),
     )
 
 
@@ -1278,6 +1382,7 @@ def _summary_text(summary: dict[str, Any]) -> str:
     research_cycle = summary.get("research_cycle", {})
     candidate_diagnostics = summary.get("candidate_strategy_diagnostics", {})
     candidate_evidence = summary.get("candidate_optimizer_evidence", {})
+    heuristic_evidence = summary.get("heuristic_optimizer_evidence", {})
     optimizer_scans = summary.get("optimizer_scans", {})
     near_promotion = summary.get("near_promotion", {})
     research_live_gate = summary.get("research_live_gate", {})
@@ -1342,6 +1447,22 @@ def _summary_text(summary: dict[str, Any]) -> str:
             f"diag={top.get('diagnostic_status', '')} "
             f"bucket={top.get('diagnostic_bucket', '')} "
             f"score={top.get('combined_score', 0.0):.2f}"
+        )
+    if heuristic_evidence.get("candidate_count", 0) > 0:
+        top = heuristic_evidence.get("top_candidates", [{}])[0]
+        match = top.get("top_match", {})
+        lines.append(
+            "heuristic_evidence "
+            f"candidates={heuristic_evidence.get('candidate_count', 0)} "
+            f"top={top.get('symbol', '')} "
+            f"strategy={top.get('strategy', '')} "
+            f"action={top.get('action', '')} "
+            f"evidence={top.get('evidence_status', '')} "
+            f"source={Path(match.get('source_path', '')).name if match.get('source_path') else 'n/a'} "
+            f"status={match.get('promotion_status', '')} "
+            f"nonneg={match.get('wf_non_negative_fold_fraction', 0.0):.1%} "
+            f"active_pos={match.get('wf_active_positive_fold_fraction', 0.0):.1%} "
+            f"fills={match.get('wf_total_evaluation_fills', 0)}"
         )
     if research:
         lines.append(
