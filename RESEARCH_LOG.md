@@ -1799,3 +1799,30 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not loosen live multi-horizon thresholds or force manual trades.
   The test achieved more trades by adding churn and negative fold quality, not
   by adding reliable opportunity.
+
+## 2026-06-23 MACD micro-threshold check
+
+- Refreshed live diagnostics still showed no approved strategy risk. Heuristic
+  pressure was short `AUDUSD`, `EURGBP`, and `EURUSD`, long `USDCAD`, but the
+  live strategies remained flat because the MACD and ensemble readings were
+  below tested entry thresholds or in chop/noise regimes.
+- Ran read-only in-memory diagnostics with the near-promoted fast MACD family
+  (`6/18/5`, 0.75 histogram threshold). It still produced no actionable live
+  allocation; `AUDUSD` was closest at 0.59 bps versus a 0.75 bps entry gate,
+  while other MACD symbols were inside exit/noise bands or below threshold.
+- Tested a micro-threshold MACD grid on the four-symbol promoted MACD basket
+  `AUDUSD`, `EURUSD`, `USDCAD`, and `USDCHF`.
+- Output: `outputs/backtests/live_watch_macd_micro_threshold_w480.csv`.
+- Best variants (`6/18/5`, 0.50-0.60 histogram, 0.25-0.50 MACD threshold)
+  stayed `PAPER_ONLY`: 82 trades, 2.082% full-sample return, 0.412% drawdown,
+  61.1% positive folds, 72.2% active folds, 84.6% active-positive folds, and
+  88.9% non-negative folds. The current `8/21/8` baseline still had higher
+  full-sample return at 2.759% with 0.406% drawdown, but also remained
+  `PAPER_ONLY` on W480.
+- A second read-only micro-threshold live probe (`6/18/5`, 0.50 histogram,
+  0.25 MACD threshold) also produced no actionable allocation because current
+  MACD histograms had faded back into the 0.25 bps exit/noise band.
+- Added the micro-threshold scan to the live status optimizer rollup.
+- Decision: do not lower live MACD thresholds yet. The lower threshold does not
+  create a current approved trade and does not clear the short-window positive
+  fold promotion gate.
