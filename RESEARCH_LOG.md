@@ -1675,3 +1675,21 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: keep `EURGBP` on the current live map for now. Reconsider only if
   the exact live-seven cross-rate map clears the total positive-fold gate on
   the shorter windows, not just W960.
+
+## 2026-06-23 research-live squeeze gate evidence
+
+- The live research cycle kept surfacing `champion_ensemble` / `asset_adaptive_dual_squeeze`
+  signals on `GBPUSD` and `AUDUSD` while the live map remained gated by session
+  and squeeze-ratio checks.
+- Ran a fresh exact W480 / 96-bar fixed-warmup validation on `GBPUSD` and
+  `AUDUSD` using `asset_adaptive_dual_squeeze`, directional-probe allocation,
+  and forced QUALIFY clock.
+- The exact research-signal subset rejected: 18 folds, 18 evaluation fills,
+  22.2% positive folds, 57.1% active-positive folds, 83.3% non-negative folds,
+  0.000% median active return, 0.007% worst drawdown, and 93.9/100 average
+  risk discipline.
+- Added the fresh asset-squeeze research scan to the optimizer rollup and added
+  research-live optimizer evidence so high-quality signal diagnostics are tied
+  to full-data promotion evidence in the status summary.
+- Decision: keep the squeeze signals in discovery only. They are not live-ready
+  until risk discipline and total positive folds improve.

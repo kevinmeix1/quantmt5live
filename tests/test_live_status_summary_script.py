@@ -388,6 +388,66 @@ class LiveStatusSummaryScriptTest(TestCase):
         self.assertEqual(top["symbol"], "EURGBP")
         self.assertEqual(top["top_match"]["promotion_status"], "PAPER_ONLY")
 
+    def test_research_live_evidence_matches_signal_alias(self) -> None:
+        evidence = live_status_summary._research_live_optimizer_evidence(
+            {
+                "candidate_count": 1,
+                "top_candidates": [
+                    {
+                        "symbol": "GBPUSD",
+                        "strategy": "champion_ensemble",
+                        "signal": "asset_adaptive_dual_squeeze",
+                        "gate": "strategy_no_change",
+                    }
+                ],
+            },
+            {
+                "top_candidates": [
+                    {
+                        "source_path": (
+                            "outputs/backtests/"
+                            "live_watch_gbpusd_asset_squeeze_w480_summary.csv"
+                        ),
+                        "source_label": "live_watch_gbpusd_asset_squeeze_w480_summary",
+                        "label": "all_asset_adaptive_dual_squeeze",
+                        "symbols": "GBPUSD",
+                        "promotion_status": "PAPER_ONLY",
+                        "promotion_live_ready": "False",
+                        "source_age_minutes": "900",
+                        "wf_positive_fold_fraction": "0.2222",
+                        "wf_non_negative_fold_fraction": "1.0",
+                        "wf_active_positive_fold_fraction": "1.0",
+                        "wf_total_evaluation_fills": "4",
+                    },
+                    {
+                        "source_path": (
+                            "outputs/backtests/"
+                            "live_watch_asset_squeeze_research_signals_w480_summary.csv"
+                        ),
+                        "source_label": (
+                            "live_watch_asset_squeeze_research_signals_w480_summary"
+                        ),
+                        "label": "asset_squeeze_research",
+                        "symbols": "GBPUSD AUDUSD",
+                        "promotion_status": "REJECT",
+                        "promotion_live_ready": "False",
+                        "source_age_minutes": "10",
+                        "wf_positive_fold_fraction": "0.2222",
+                        "wf_non_negative_fold_fraction": "0.8333",
+                        "wf_active_positive_fold_fraction": "0.5714",
+                        "wf_total_evaluation_fills": "18",
+                    }
+                ]
+            },
+        )
+
+        self.assertEqual(evidence["candidate_count"], 1)
+        top = evidence["top_candidates"][0]
+        self.assertEqual(top["evidence_status"], "MIXED_SCAN_EVIDENCE")
+        self.assertEqual(top["signal"], "asset_adaptive_dual_squeeze")
+        self.assertEqual(top["top_match"]["promotion_status"], "REJECT")
+        self.assertEqual(top["top_match"]["wf_total_evaluation_fills"], 18)
+
     def test_reads_and_writes_summary_files(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

@@ -92,6 +92,7 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_live6_exact_candidate_maps_w480_summary.csv",
     "outputs/backtests/live_watch_gbpusd_asset_squeeze_w480_summary.csv",
     "outputs/backtests/live_watch_audusd_asset_squeeze_w480_summary.csv",
+    "outputs/backtests/live_watch_asset_squeeze_research_signals_w480_summary.csv",
     "outputs/backtests/live_watch_multi_horizon_momentum_corrected.csv",
     "outputs/backtests/live_watch_multi_horizon_live6_w960.csv",
     "outputs/backtests/live_watch_multi_horizon_aud_gbp_w480_summary.csv",
@@ -204,6 +205,10 @@ def build_summary(
         candidate_strategy_diagnostics,
         optimizer_scans,
     )
+    research_live_gate = _research_live_gate(
+        research_cycle=compact_research_cycle,
+        pair_rows=pair_rows,
+    )
     return {
         "timestamp_utc": generated_at,
         "status": status,
@@ -247,9 +252,10 @@ def build_summary(
         ),
         "optimizer_scans": _compact_optimizer_scans(optimizer_scans),
         "near_promotion": _compact_near_promotion(near_promotion),
-        "research_live_gate": _research_live_gate(
-            research_cycle=compact_research_cycle,
-            pair_rows=pair_rows,
+        "research_live_gate": research_live_gate,
+        "research_live_optimizer_evidence": _research_live_optimizer_evidence(
+            research_live_gate,
+            optimizer_scans,
         ),
     }
 
@@ -1110,6 +1116,80 @@ def _watchlist_optimizer_evidence(
     }
 
 
+def _research_live_optimizer_evidence(
+    research_live_gate: dict[str, Any] | None,
+    scans: dict[str, Any] | None,
+) -> dict[str, Any]:
+    if not research_live_gate or not scans:
+        return {}
+    evidence_rows: list[dict[str, Any]] = []
+    seen: set[tuple[str, str]] = set()
+    for order, candidate in enumerate(research_live_gate.get("top_candidates", [])):
+        if not isinstance(candidate, dict):
+            continue
+        symbol = str(candidate.get("symbol", "")).strip().upper()
+        signal = str(candidate.get("signal", "")).strip()
+        strategy = signal or str(candidate.get("strategy", "")).strip()
+        if not symbol or not strategy:
+            continue
+        identity = (symbol, strategy)
+        if identity in seen:
+            continue
+        seen.add(identity)
+        matches = _matching_optimizer_scan_rows(
+            strategy=strategy,
+            symbols=[symbol],
+            scans=scans,
+        )
+        if not matches:
+            continue
+        evidence_pool = matches
+        top_match = sorted(evidence_pool, key=_research_optimizer_match_rank_key)[0]
+        evidence_rows.append(
+            {
+                "order": order,
+                "symbol": symbol,
+                "strategy": candidate.get("strategy", ""),
+                "signal": signal,
+                "gate": candidate.get("gate", ""),
+                "evidence_status": _optimizer_evidence_status(evidence_pool),
+                "match_count": len(matches),
+                "top_match": {
+                    "source_path": top_match.get("source_path", ""),
+                    "source_label": top_match.get("source_label", ""),
+                    "label": top_match.get("label", ""),
+                    "promotion_status": top_match.get("promotion_status", ""),
+                    "promotion_live_ready": _boolish(
+                        top_match.get("promotion_live_ready")
+                    ),
+                    "promotion_reason": top_match.get("promotion_reason", ""),
+                    "wf_positive_fold_fraction": _float_or_zero(
+                        top_match.get("wf_positive_fold_fraction")
+                    ),
+                    "wf_non_negative_fold_fraction": _float_or_zero(
+                        top_match.get("wf_non_negative_fold_fraction")
+                    ),
+                    "wf_active_positive_fold_fraction": _float_or_zero(
+                        top_match.get("wf_active_positive_fold_fraction")
+                    ),
+                    "wf_total_evaluation_fills": int(
+                        _float_or_zero(top_match.get("wf_total_evaluation_fills"))
+                    ),
+                    "source_age_minutes": _float_or_zero(
+                        top_match.get("source_age_minutes")
+                    ),
+                },
+            }
+        )
+    if not evidence_rows:
+        return {}
+    evidence_rows.sort(key=_research_live_optimizer_evidence_rank_key)
+    return {
+        "candidate_count": len(evidence_rows),
+        "top_candidates": evidence_rows[:3],
+    }
+
+
 def _candidate_evidence_strategy(candidate: dict[str, Any]) -> str:
     top_symbol = candidate.get("top_symbol", {})
     if isinstance(top_symbol, dict):
@@ -1192,6 +1272,11 @@ def _strategy_source_tokens(strategy: str) -> tuple[str, ...]:
         "multi_horizon_momentum": ("multi_horizon_momentum", "multi_horizon"),
         "quality_trend": ("quality_trend", "quality"),
         "cross_rate_reversion": ("cross_rate_reversion", "cross_rate", "crossrate"),
+        "asset_adaptive_dual_squeeze": (
+            "asset_adaptive_dual_squeeze",
+            "asset_squeeze",
+            "asset_adaptive",
+        ),
     }
     return aliases.get(normalized, (normalized,))
 
@@ -1226,6 +1311,18 @@ def _optimizer_evidence_rank_key(row: dict[str, Any]) -> tuple[int, int, float, 
         0 if row.get("exact_symbols") else 1,
         status_rank.get(str(row.get("promotion_status", "")).upper(), 3),
         _float_or_zero(row.get("source_age_minutes")),
+        str(row.get("source_label", "")),
+    )
+
+
+def _research_optimizer_match_rank_key(
+    row: dict[str, Any],
+) -> tuple[int, float, int, str]:
+    status_rank = {"REJECT": 0, "PAPER_ONLY": 1, "PROMOTE": 2}
+    return (
+        status_rank.get(str(row.get("promotion_status", "")).upper(), 3),
+        _float_or_zero(row.get("source_age_minutes")),
+        0 if row.get("exact_symbols") else 1,
         str(row.get("source_label", "")),
     )
 
@@ -1270,6 +1367,22 @@ def _watchlist_optimizer_evidence_rank_key(
         "SUPPORTED_BY_SCAN": 3,
     }
     return (
+        status_rank.get(row.get("evidence_status", ""), 4),
+        row.get("symbol", ""),
+    )
+
+
+def _research_live_optimizer_evidence_rank_key(
+    row: dict[str, Any],
+) -> tuple[int, int, str]:
+    status_rank = {
+        "REJECTED_BY_SCAN": 0,
+        "PAPER_ONLY_SCAN": 1,
+        "MIXED_SCAN_EVIDENCE": 2,
+        "SUPPORTED_BY_SCAN": 3,
+    }
+    return (
+        int(_float_or_zero(row.get("order"))),
         status_rank.get(row.get("evidence_status", ""), 4),
         row.get("symbol", ""),
     )
@@ -1487,6 +1600,7 @@ def _summary_text(summary: dict[str, Any]) -> str:
     optimizer_scans = summary.get("optimizer_scans", {})
     near_promotion = summary.get("near_promotion", {})
     research_live_gate = summary.get("research_live_gate", {})
+    research_live_evidence = summary.get("research_live_optimizer_evidence", {})
     heuristic_only = summary.get("heuristic_only_probes", {})
     lines = [
         f"{summary['timestamp_utc']} status={summary['status']}",
@@ -1752,6 +1866,24 @@ def _summary_text(summary: dict[str, Any]) -> str:
             f"bucket={top.get('diagnostic_bucket', '')} "
             f"raw={top.get('raw_change_notional_usd', 0.0):.2f} "
             f"alloc={top.get('allocation_change_notional_usd', 0.0):.2f}"
+        )
+    if research_live_evidence.get("candidate_count", 0) > 0:
+        top = research_live_evidence.get("top_candidates", [{}])[0]
+        match = top.get("top_match", {})
+        lines.append(
+            "research_live_evidence "
+            f"candidates={research_live_evidence.get('candidate_count', 0)} "
+            f"top={top.get('symbol', '')} "
+            f"strategy={top.get('strategy', '')} "
+            f"signal={top.get('signal', '')} "
+            f"gate={top.get('gate', '')} "
+            f"evidence={top.get('evidence_status', '')} "
+            f"source={Path(match.get('source_path', '')).name if match.get('source_path') else 'n/a'} "
+            f"status={match.get('promotion_status', '')} "
+            f"pos={match.get('wf_positive_fold_fraction', 0.0):.1%} "
+            f"active_pos={match.get('wf_active_positive_fold_fraction', 0.0):.1%} "
+            f"nonneg={match.get('wf_non_negative_fold_fraction', 0.0):.1%} "
+            f"fills={match.get('wf_total_evaluation_fills', 0)}"
         )
     for symbol, row in summary["pairs"].items():
         lines.append(
