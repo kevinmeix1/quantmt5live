@@ -2323,3 +2323,29 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Added the scan to the live optimizer rollup.
 - Decision: keep the two-position cap and do not promote/expand
   opportunity-probe for this pressure set.
+
+## 2026-06-23 live7 active-pressure checks
+
+- Live account remained flat at `999181.58` equity with live MT5, supervisor,
+  guard, sentiment brake, symbol-state throttle, and live-order loop running.
+- Tested the exact current `opportunity_probe` pressure basket
+  `AUDUSD/USDCAD/USDJPY` with looser "trade more" variants:
+  `outputs/backtests/live_watch_opportunity_probe_aud_cad_jpy_active_pressure_w960.csv`.
+  Every line rejected. The strict line lost 0.245% with 701 trades and only
+  16.7% non-negative folds; loosening to 0.90 score produced 1,638 trades and a
+  larger 0.569% loss.
+- Tested more active champion-ensemble variants on `AUDUSD/GBPUSD/USDJPY`:
+  `outputs/backtests/live_watch_champion_active_aud_gbp_jpy_w960.csv`.
+  The best MACD/asset mix lost 0.045% and missed the non-negative fold gate at
+  66.7%; looser variants were worse.
+- Ran a fresh W960 seven-symbol strategy-map pressure check:
+  `outputs/backtests/live_watch_strategy_maps_live7_pressure_w960_summary.csv`.
+  No map promoted. The best positive map also stopped at 66.7% non-negative
+  folds, while the current live map was negative with only 33.3% non-negative
+  folds. High-activity all-MACD and probe/squeeze style maps remained rejected.
+- Added these scans to the live summary inputs so future diagnostics attach the
+  exact current pressure evidence.
+- Decision: do not weaken risk gates, expand the position cap, or force
+  opportunity-probe/champion trades. Keep the live process enabled and let the
+  existing approved MACD/quality/ensemble gates fire when the market leaves the
+  current chop regime.

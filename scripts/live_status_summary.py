@@ -29,6 +29,7 @@ DEFAULT_CANDIDATE_MAP_CONSENSUS_CSVS = (
     "outputs/backtests/live_watch_top4_macd_consensus.csv",
     "outputs/backtests/live_watch_adaptive_current_pressure_consensus.csv",
     "outputs/backtests/live_watch_adaptive_current_pressure_gated_consensus.csv",
+    "outputs/backtests/live_watch_strategy_maps_live7_pressure_w960_summary.csv",
 )
 DEFAULT_BASKET_ACTIVITY_SCAN_CSV = (
     "outputs/backtests/live_watch_activity_gated_basket_scan.csv"
@@ -102,6 +103,7 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_late_usd_multi_horizon_w480.csv",
     "outputs/backtests/live_watch_late_usd_quality_w480.csv",
     "outputs/backtests/live_watch_live7_active_pressure_maps_w480_summary.csv",
+    "outputs/backtests/live_watch_strategy_maps_live7_pressure_w960_summary.csv",
     "outputs/backtests/live_watch_live6_positive_subset_maps_w480_summary.csv",
     "outputs/backtests/live_watch_live6_probe_candidate_maps_w480_summary.csv",
     "outputs/backtests/live_watch_live6_exact_candidate_maps_w480_summary.csv",
@@ -127,6 +129,7 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_champion_asset_signal_w672.csv",
     "outputs/backtests/live_watch_champion_asset_signal_w960.csv",
     "outputs/backtests/live_watch_champion_asset_squeeze_aud_gbp_eurgbp_w960.csv",
+    "outputs/backtests/live_watch_champion_active_aud_gbp_jpy_w960.csv",
     "outputs/backtests/live_watch_eurusd_macd_evening_focus_w480.csv",
     "outputs/backtests/live_watch_quality_trend_size_opt_live6_w480.csv",
     "outputs/backtests/live_watch_quality_trend_opt_live6_w480.csv",
@@ -146,6 +149,7 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_opportunity_probe_aud_eurgbp_cad_chf_current_w960.csv",
     "outputs/backtests/live_watch_opportunity_probe_aud_gbp_cad_jpy_current_w960.csv",
     "outputs/backtests/live_watch_opportunity_probe_aud_eur_gbp_cad_current_w960.csv",
+    "outputs/backtests/live_watch_opportunity_probe_aud_cad_jpy_active_pressure_w960.csv",
     "outputs/backtests/live_watch_opportunity_probe_eurgbp_gbp_cad_jpy_current_w960.csv",
     "outputs/backtests/live_watch_opportunity_probe_audusd_eurusd_w480.csv",
     "outputs/backtests/live_watch_opportunity_probe_audusd_eurusd_strict_w960.csv",
