@@ -2114,3 +2114,23 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Added the EURGBP W960 scan to the live optimizer rollup.
 - Decision: do not promote EURGBP multi-horizon or loosen the sentiment/risk
   brakes for this sleeve.
+
+## 2026-06-23 opportunity-probe cap expansion check
+
+- Refreshed live health, account, sentiment, attribution, pair analysis, and
+  diagnostics. Live trading infrastructure was still running with the sentiment
+  brake and symbol-state cooldown throttle intact. Account remained flat at
+  `999181.58` equity, `-818.42` day P/L, zero positions, and zero margin.
+- Production remained flat. The all-symbol `opportunity_probe` diagnostic
+  wanted long `AUDUSD` and short `EURGBP`; `GBPUSD`, `USDCAD`, `USDCHF`, and
+  `USDJPY` also fired but were held behind the two-position diagnostic cap.
+- Tested whether loosening that cap would help:
+  `outputs/backtests/live_watch_opportunity_probe_cap_expansion_current_w960.csv`
+  on `AUDUSD`, `EURGBP`, `GBPUSD`, `USDCAD`, `USDCHF`, and `USDJPY`.
+- All candidates rejected. Even the high-score filter lost 0.117% with 652
+  trades and only 20.0% positive/non-negative folds. The live-current broader
+  basket lost 1.132% with 3,725 trades and 0.0% positive/non-negative folds.
+- Added the cap-expansion W960 scan to the live optimizer rollup.
+- Decision: keep the two-position cap. This is exactly the kind of higher
+  turnover path that looks responsive in live diagnostics but has bad
+  full-data survival characteristics.
