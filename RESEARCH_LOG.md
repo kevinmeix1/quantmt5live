@@ -2251,3 +2251,28 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: keep production MACD unchanged and do not promote opportunity-probe.
   The evidence favors waiting for current MACD/ensemble/quality gates instead
   of forcing the higher-turnover probe sleeve.
+
+## 2026-06-23 quality-trend refresh and EURGBP/GBP/CAD/JPY probe check
+
+- Refreshed live health, sentiment, attribution, pair analysis, and diagnostics.
+  Live trading infrastructure remained healthy and real-order enabled. Account
+  was still flat at `999181.58` equity with no positions, no margin, and no
+  live stderr.
+- Production diagnostics and the quality-trend candidate diagnostics requested
+  zero current notional. Quality-trend was gated by weak MACD histogram values
+  on `AUDUSD`, `EURUSD`, `USDCHF`, and `USDJPY`.
+- Validated the current read-only `opportunity_probe` pressure on `EURGBP`,
+  `GBPUSD`, `USDCAD`, and `USDJPY`:
+  `outputs/backtests/live_watch_opportunity_probe_eurgbp_gbp_cad_jpy_current_w960.csv`.
+  All candidates rejected. The least-bad very-strict variant lost 0.182% with
+  478 trades, Sharpe -0.056, and only 16.7% positive/non-negative folds. The
+  live-current line lost 0.570% with 1,676 trades.
+- Refreshed the non-probe quality-trend watch sleeve:
+  `outputs/backtests/live_watch_quality_trend_current_watch_w960.csv`.
+  The current/extended quality-trend variants were positive (+0.637%, 22
+  trades, Sharpe 0.028, 100.0% active-positive/non-negative folds), but only
+  33.3% of folds were active, so promotion remained `PAPER_ONLY`.
+- Added both scans to the live optimizer rollup.
+- Decision: keep quality-trend on watch but do not promote it broadly until
+  active-fold coverage improves; do not promote the current opportunity-probe
+  pressure set.
