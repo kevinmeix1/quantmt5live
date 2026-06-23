@@ -1,6 +1,9 @@
 param(
   [int]$Hours = 6,
-  [double]$MaxOrderLots = 0.25
+  [double]$MaxOrderLots = 0.25,
+  [int]$MaxLiveLoopStaleMinutes = 5,
+  [int]$Mt5StatusTimeoutSeconds = 45,
+  [int]$MetricsTimeoutSeconds = 45
 )
 
 $ErrorActionPreference = "Continue"
@@ -32,6 +35,18 @@ function Get-LiveProcess {
   }
 }
 
+function Stop-LiveProcess($Reason) {
+  $procs = @(Get-LiveProcess)
+  if ($procs.Count -eq 0) {
+    return
+  }
+  foreach ($proc in $procs) {
+    Write-GuardLog "stopping live process pid=$($proc.ProcessId) reason=$Reason"
+    Stop-Process -Id $proc.ProcessId -Force -ErrorAction SilentlyContinue
+  }
+  Start-Sleep -Seconds 2
+}
+
 function Start-LiveProcess {
   if (Get-LiveProcess) {
     return
@@ -45,6 +60,34 @@ function Start-LiveProcess {
   }
   $p = Start-Process -FilePath $Quanthack -ArgumentList $LiveArgs -WorkingDirectory $Root -RedirectStandardOutput $OutLog -RedirectStandardError $ErrLog -WindowStyle Hidden -PassThru
   Write-GuardLog "restarted live process pid=$($p.Id)"
+}
+
+function Restart-LiveProcess($Reason) {
+  Stop-LiveProcess $Reason
+  Start-LiveProcess
+}
+
+function Get-LiveOutputStaleSeconds {
+  if (-not (Test-Path -LiteralPath $OutLog)) {
+    return $null
+  }
+  $age = (Get-Date) - (Get-Item -LiteralPath $OutLog).LastWriteTime
+  return [int][Math]::Floor($age.TotalSeconds)
+}
+
+function Invoke-JobWithTimeout($Label, $ScriptBlock, $ArgumentList, $TimeoutSeconds) {
+  $job = Start-Job -ScriptBlock $ScriptBlock -ArgumentList $ArgumentList
+  try {
+    if (Wait-Job -Job $job -Timeout $TimeoutSeconds) {
+      $output = Receive-Job -Job $job
+      return ($output | Select-Object -Last 1)
+    }
+    Write-GuardLog "$Label timed out after ${TimeoutSeconds}s"
+    Stop-Job -Job $job -ErrorAction SilentlyContinue
+    return $null
+  } finally {
+    Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
+  }
 }
 
 function Get-Mt5StatusJson {
@@ -87,7 +130,19 @@ else:
         mt5.shutdown()
 print(json.dumps(status, sort_keys=True))
 '@
-  return ($script | & $Python -)
+  return Invoke-JobWithTimeout "mt5 status" {
+    param($RootPath, $PythonPath, $PythonScript)
+    Set-Location $RootPath
+    $PythonScript | & $PythonPath -
+  } @($Root, $Python, $script) $Mt5StatusTimeoutSeconds
+}
+
+function Get-LiveMetricsJson {
+  return Invoke-JobWithTimeout "live metrics" {
+    param($RootPath, $PythonPath)
+    Set-Location $RootPath
+    & $PythonPath scripts\live_metrics.py
+  } @($Root, $Python) $MetricsTimeoutSeconds
 }
 
 function Flatten-Live($Reason) {
@@ -98,14 +153,31 @@ function Flatten-Live($Reason) {
 }
 
 $Deadline = (Get-Date).AddHours($Hours)
-Write-GuardLog "guard started hours=$Hours max_order_lots=$MaxOrderLots"
+Write-GuardLog "guard started hours=$Hours max_order_lots=$MaxOrderLots max_live_loop_stale_minutes=$MaxLiveLoopStaleMinutes mt5_timeout_seconds=$Mt5StatusTimeoutSeconds metrics_timeout_seconds=$MetricsTimeoutSeconds"
 
 while ((Get-Date) -lt $Deadline) {
   try {
     Start-LiveProcess
+    $staleSeconds = Get-LiveOutputStaleSeconds
+    if ($null -ne $staleSeconds -and $MaxLiveLoopStaleMinutes -gt 0) {
+      $staleLimitSeconds = $MaxLiveLoopStaleMinutes * 60
+      if ($staleSeconds -gt $staleLimitSeconds) {
+        Restart-LiveProcess "live stdout stale for ${staleSeconds}s"
+      }
+    }
     $json = Get-Mt5StatusJson
+    if ([string]::IsNullOrWhiteSpace($json)) {
+      Write-GuardLog "mt5 status unavailable; skipping risk checks this cycle"
+      Start-Sleep -Seconds 60
+      continue
+    }
     Write-GuardLog "mt5 $json"
-    $metrics = & $Python scripts\live_metrics.py
+    $metrics = Get-LiveMetricsJson
+    if ([string]::IsNullOrWhiteSpace($metrics)) {
+      Write-GuardLog "metrics unavailable; skipping risk checks this cycle"
+      Start-Sleep -Seconds 60
+      continue
+    }
     Write-GuardLog "metrics $metrics"
     $status = $json | ConvertFrom-Json
     $metricStatus = $metrics | ConvertFrom-Json

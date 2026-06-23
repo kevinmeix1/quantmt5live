@@ -1175,3 +1175,28 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: the default allocator repaired risk discipline but did not clear
   live promotion robustness. Add the scan to the status rollup, keep the live
   map unchanged, and continue watching for additional fold confirmation.
+
+## 2026-06-23 adaptive USD-bias and guard continuity pass
+
+- Found a runtime continuity gap after the overnight research run: the guard
+  and live stdout had no loop/metrics updates from about 2026-06-22 21:24 UTC
+  until 2026-06-23 06:26 UTC, then resumed. Windows power settings already had
+  sleep disabled, so the safer fix is to make the guard resilient to blocked
+  subprocess checks and stale live output.
+- Added guard controls that preserve the existing live command and risk
+  limits:
+  - `MaxLiveLoopStaleMinutes` restarts `live-trade` if stdout stops updating
+    while the process is still alive.
+  - `Mt5StatusTimeoutSeconds` and `MetricsTimeoutSeconds` keep the guard loop
+    from wedging inside an MT5/account probe or metrics subprocess.
+- Ran a broad adaptive USD-bias selector over the live-seven full-data feeds
+  with W480 fixed warmup, a one-fold loss cooldown, a churn penalty, and
+  current sentiment/cross-rate recipe candidates. The run produced partial but
+  usable results before being stopped for runtime:
+  - 64 evaluation fills, 100/100 average risk discipline, and 71.4%
+    non-negative folds.
+  - Only 28.6% positive folds and 50.0% active-positive folds, so the adaptive
+    switching idea is not live-promotable.
+- Decision: restart the guard with the new watchdog parameters, leave live
+  strategies and risk controls unchanged, and keep adaptive switching as
+  research-only unless a narrower version clears the full promotion gates.
