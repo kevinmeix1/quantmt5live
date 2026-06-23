@@ -2473,3 +2473,19 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Added the scan to the live optimizer rollup.
 - Decision: do not extend live MACD trading into the late USD session yet. The
   result is close enough to keep watching, but it is not live-ready evidence.
+
+## 2026-06-23 AUDUSD opportunity-probe single-symbol check
+
+- Current read-only candidate diagnostics showed `candidate_all_opportunity_probe`
+  requesting a single actionable `AUDUSD` long. The broader five-symbol probe
+  basket was already rejected, so the exact single-symbol case was tested before
+  considering any promotion.
+- Ran full-data W960 validation:
+  `outputs/backtests/live_watch_opportunity_probe_audusd_current_w960.csv`.
+- Every candidate rejected. The least-bad strict line lost 0.060% with 239
+  trades and only 33.3% non-negative folds. The live-current line lost 0.150%
+  with 440 trades, while looser variants traded 510-540 times and lost more.
+- Added the scan to the live optimizer rollup.
+- Decision: do not promote or special-case `opportunity_probe` for AUDUSD. The
+  single-symbol evidence confirms that the current actionable probe is churn,
+  not a robust survival opportunity.
