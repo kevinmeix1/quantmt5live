@@ -104,6 +104,8 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_regime_switch_live7_w480_summary.csv",
     "outputs/backtests/live_watch_kalman_trend_live7_w480_summary.csv",
     "outputs/backtests/live_watch_late_usd_macd_w480.csv",
+    "outputs/backtests/live_watch_macd_deadzone_relief_live4_w960.csv",
+    "outputs/backtests/live_watch_macd_deadzone_hour_refine_live4_w960.csv",
     "outputs/backtests/live_watch_late_usd_multi_horizon_w480.csv",
     "outputs/backtests/live_watch_late_usd_quality_w480.csv",
     "outputs/backtests/live_watch_live7_active_pressure_maps_w480_summary.csv",

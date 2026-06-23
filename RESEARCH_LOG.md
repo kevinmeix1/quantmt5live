@@ -2435,3 +2435,25 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: this is the correct kind of aggression for the elimination format:
   loosen a parameter set that already passed full-data live-readiness evidence,
   but continue blocking the currently losing probe basket.
+
+## 2026-06-23 MACD dead-zone relief check
+
+- After the promoted MACD config went live, production diagnostics remained
+  flat because the four MACD symbols were inside the 0.25 bps exit/dead zone:
+  AUDUSD 0.23 bps, EURUSD 0.09 bps, USDCAD 0.16 bps, and USDCHF -0.11 bps.
+- Ran a focused full-data W960 scan on `AUDUSD EURUSD USDCAD USDCHF` to test
+  whether lower MACD entry/dead-zone thresholds could safely create more fills:
+  `outputs/backtests/live_watch_macd_deadzone_relief_live4_w960.csv`.
+  The best lower-threshold line made +1.965% with 96 trades, 0.603% drawdown,
+  80.0% active-positive folds, and 83.3% non-negative folds, but stayed
+  `PAPER_ONLY` because total positive folds were 66.7% versus the 67.0% live
+  gate.
+- Ran a narrow hour-window refinement:
+  `outputs/backtests/live_watch_macd_deadzone_hour_refine_live4_w960.csv`.
+  It also stayed `PAPER_ONLY`; excluding early or late hours did not lift the
+  positive-fold rate above 66.7%.
+- Added both scans to the live optimizer rollup.
+- Decision: do not lower the live MACD dead-zone/entry thresholds yet. The
+  variants are close and worth monitoring, but they do not clear the live
+  readiness gate and would be a weaker change than the already-promoted MACD
+  config.
