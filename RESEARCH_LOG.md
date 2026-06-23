@@ -2389,3 +2389,20 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not relax production MACD thresholds right now. The current
   gating is frustratingly quiet, but the looser alternatives do not yet clear
   the survival evidence bar.
+
+## 2026-06-23 five-symbol opportunity-probe pressure check
+
+- Latest read-only `candidate_all_opportunity_probe` diagnostics requested
+  actionable long `AUDUSD` and short `EURGBP`; long `GBPUSD`, short `USDCAD`,
+  and short `USDCHF` were also raw non-zero signals but were blocked behind the
+  active two-position cap.
+- Ran the exact current raw pressure set on full downloaded 15-minute data:
+  `outputs/backtests/live_watch_opportunity_probe_aud_eurgbp_gbp_cad_chf_current_w960.csv`.
+- Every candidate rejected. The strict line was least bad but still lost
+  0.266% with 1,162 trades, Sharpe -0.044, and only 16.7% non-negative folds.
+  The live-current line lost 0.643% with 2,083 trades, while more active lines
+  reached 2,429-2,660 trades and lost 0.755%-0.817%.
+- Added the scan to the live optimizer rollup.
+- Decision: do not expand the two-position cap, promote `opportunity_probe`, or
+  route this pressure set to live risk. More trades here meant faster loss, not
+  better survival.
