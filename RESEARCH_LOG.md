@@ -1848,3 +1848,30 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not promote `opportunity_probe` for `EURGBP`/`USDCHF`. It is
   responsive enough to ask for trades, but the fold evidence says the requests
   are still churn rather than reliable edge.
+
+## 2026-06-23 sentiment-pressure map refresh
+
+- Refreshed live sentiment while the account remained flat. Sentiment became
+  cleaner in the intended direction: `AUDUSD` and `GBPUSD` negative, `USDCAD`,
+  `USDCHF`, and `USDJPY` supportive. Live per-pair pressure narrowed to
+  `AUDUSD` short and `USDCAD` long, but the live MACD/champion/quality gates
+  still produced no approved orders.
+- Re-tested the near-miss sentiment-pressure strategy maps from the W480 scan
+  with longer W672 and W960 fixed-warmup validations.
+- Outputs:
+  - `outputs/backtests/live_watch_sentiment_pressure_maps_w672_refresh_summary.csv`
+  - `outputs/backtests/live_watch_sentiment_pressure_maps_w960_refresh_summary.csv`
+- W672: `top_3_best_symbol_strategies` (`AUDUSD`, `USDCAD`, and `USDCHF` all
+  MACD) was the best active map: 56 trades, 1.504% full-sample return, 0.287%
+  drawdown, 81.2% non-negative folds, but only 37.5% positive folds and 66.7%
+  active-positive folds, so `PAPER_ONLY`.
+- W960: `best_positive_no_jpy` was clean but very inactive: 16 trades, 0.479%
+  full-sample return, 0.175% drawdown, 100% active-positive folds, 100%
+  non-negative folds, but only 23.1% positive folds, so `PAPER_ONLY`.
+  `top_3_best_symbol_strategies` remained active and profitable but was still
+  `PAPER_ONLY` with 38.5% positive folds and 62.5% active-positive folds.
+- Added both longer-window refresh scans to the live status optimizer rollup.
+- Decision: keep the current live map. These sentiment-pressure maps contain
+  useful watchlist information, especially MACD on `AUDUSD`/`USDCAD`/`USDCHF`,
+  but they do not clear the positive-fold promotion gate and do not justify a
+  live-map change yet.
