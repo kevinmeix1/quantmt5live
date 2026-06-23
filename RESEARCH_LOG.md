@@ -1967,7 +1967,7 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   USDJPY multi-horizon lost 0.103% with 118 trades and only 16.7%
   positive/non-negative folds.
 - Then tested an adaptive selector that can choose among the deployed current
-  map plus today’s pressure recipes: `macd_pressure_trio`,
+  map plus today's pressure recipes: `macd_pressure_trio`,
   `opp_eurusd_usdjpy`, `mh_usdjpy`, `macd_top4`, and `quality_usdjpy`.
 - Outputs:
   - `outputs/backtests/live_watch_adaptive_current_pressure_w480_summary.csv`
@@ -1985,3 +1985,31 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not deploy the adaptive current-pressure selector yet. It is the
   best aggressive research lane found in this cycle, but the short-window fold
   stability is not strong enough for live promotion.
+
+## 2026-06-23 gated adaptive pressure selector check
+
+- Refreshed live state again. The production map remained flat, while read-only
+  `opportunity_probe` wanted short `AUDUSD` and `EURUSD`; `GBPUSD` also fired
+  but was blocked by the two-position cap in the diagnostic sleeve.
+- First validated the exact current probe pair:
+  `outputs/backtests/live_watch_opportunity_probe_audusd_eurusd_strict_w960.csv`.
+  All candidates rejected. The best strict pair lost 0.069% with 262 trades and
+  only 33.3% positive/non-negative folds; the current pair baseline lost 0.299%
+  with 877 trades.
+- Re-ran the adaptive current-pressure selector with a positive training gate
+  and cash fallback, plus the currently requested `opp_aud_eurusd` recipe:
+  - `outputs/backtests/live_watch_adaptive_current_pressure_gated_w480_summary.csv`
+  - `outputs/backtests/live_watch_adaptive_current_pressure_gated_w672_summary.csv`
+  - `outputs/backtests/live_watch_adaptive_current_pressure_gated_w960_summary.csv`
+  - `outputs/backtests/live_watch_adaptive_current_pressure_gated_consensus.csv`
+- The gate improved stability. W480 moved from `REJECT` to `PAPER_ONLY`, W672
+  stayed `PAPER_ONLY` with 88.9% non-negative folds, and W960 stayed
+  `PAPER_ONLY` just shy of live promotion. Three-window consensus is
+  `PAPER_ONLY`: 42.9% minimum positive folds, 66.7% minimum active-positive
+  folds, 78.6% minimum non-negative folds, 0.046% minimum median active return,
+  100/100 minimum risk discipline, and 150 evaluation fills. Selections were
+  only `live_current`, `macd_top4`, and `cash_fallback`.
+- Added the gated adaptive consensus and current-pair strict probe check to the
+  live status rollup.
+- Decision: keep live map unchanged. This is a better adaptive research lane,
+  but the total positive-fold rate still misses the live gate.

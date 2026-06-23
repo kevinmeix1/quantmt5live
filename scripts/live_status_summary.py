@@ -28,6 +28,7 @@ DEFAULT_CANDIDATE_MAP_CONSENSUS_CSVS = (
     "outputs/backtests/live_watch_eurgbp_cross_jpy_quality_consensus.csv",
     "outputs/backtests/live_watch_top4_macd_consensus.csv",
     "outputs/backtests/live_watch_adaptive_current_pressure_consensus.csv",
+    "outputs/backtests/live_watch_adaptive_current_pressure_gated_consensus.csv",
 )
 DEFAULT_BASKET_ACTIVITY_SCAN_CSV = (
     "outputs/backtests/live_watch_activity_gated_basket_scan.csv"
@@ -131,6 +132,7 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_opportunity_probe_usdcad_w480.csv",
     "outputs/backtests/live_watch_opportunity_probe_audusd_eurgbp_w480.csv",
     "outputs/backtests/live_watch_opportunity_probe_audusd_eurusd_w480.csv",
+    "outputs/backtests/live_watch_opportunity_probe_audusd_eurusd_strict_w960.csv",
     "outputs/backtests/live_watch_opportunity_probe_audusd_usdjpy_w480.csv",
     "outputs/backtests/live_watch_opportunity_probe_eurusd_gbpusd_w480.csv",
     "outputs/backtests/live_watch_opportunity_probe_eurusd_gbpusd_strict_w480.csv",
