@@ -1953,3 +1953,35 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not change the live map or loosen brakes. Keep the trio MACD
   idea on watch as an aggressive near-miss, but do not promote it while the
   competition risk-discipline score is this poor.
+
+## 2026-06-23 adaptive current-pressure recipe check
+
+- Current live diagnostics stayed flat, but read-only candidate diagnostics
+  moved to short `EURUSD`/long `USDJPY` `opportunity_probe` and long `USDJPY`
+  `multi_horizon_momentum`.
+- First validated the actionable sleeves directly:
+  - `outputs/backtests/live_watch_opportunity_probe_eurusd_usdjpy_strict_w960.csv`
+  - `outputs/backtests/live_watch_multi_horizon_usdjpy_current_w960.csv`
+- Both were rejected. The best `EURUSD`/`USDJPY` opportunity-probe candidate
+  lost 0.133% with 363 trades and only 33.3% positive/non-negative folds.
+  USDJPY multi-horizon lost 0.103% with 118 trades and only 16.7%
+  positive/non-negative folds.
+- Then tested an adaptive selector that can choose among the deployed current
+  map plus today’s pressure recipes: `macd_pressure_trio`,
+  `opp_eurusd_usdjpy`, `mh_usdjpy`, `macd_top4`, and `quality_usdjpy`.
+- Outputs:
+  - `outputs/backtests/live_watch_adaptive_current_pressure_w480_summary.csv`
+  - `outputs/backtests/live_watch_adaptive_current_pressure_w672_summary.csv`
+  - `outputs/backtests/live_watch_adaptive_current_pressure_w960_summary.csv`
+  - `outputs/backtests/live_watch_adaptive_current_pressure_consensus.csv`
+- W960 promoted: 83.3% positive folds, 100.0% active-positive/non-negative
+  folds, 0.139% median active test return, 100/100 risk discipline, and 46
+  fills, mostly selecting `macd_top4`.
+- W672 was `PAPER_ONLY`: 55.6% positive folds, 71.4% active-positive folds,
+  77.8% non-negative folds, 100/100 risk discipline, and 130 fills.
+- W480 rejected: 42.9% positive folds, 54.5% active-positive folds, 64.3%
+  non-negative folds, 100/100 risk discipline, and 132 fills.
+- Added the three-window adaptive consensus to the candidate-map rollup.
+- Decision: do not deploy the adaptive current-pressure selector yet. It is the
+  best aggressive research lane found in this cycle, but the short-window fold
+  stability is not strong enough for live promotion.

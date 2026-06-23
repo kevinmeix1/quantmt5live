@@ -27,6 +27,7 @@ DEFAULT_CANDIDATE_MAP_CONSENSUS_CSVS = (
     "outputs/backtests/live_watch_candidate_eurgbp_cross_rate_consensus.csv",
     "outputs/backtests/live_watch_eurgbp_cross_jpy_quality_consensus.csv",
     "outputs/backtests/live_watch_top4_macd_consensus.csv",
+    "outputs/backtests/live_watch_adaptive_current_pressure_consensus.csv",
 )
 DEFAULT_BASKET_ACTIVITY_SCAN_CSV = (
     "outputs/backtests/live_watch_activity_gated_basket_scan.csv"
@@ -108,6 +109,7 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_multi_horizon_aud_gbp_w480_summary.csv",
     "outputs/backtests/live_watch_multi_horizon_pressure_refine_w480.csv",
     "outputs/backtests/live_watch_multi_horizon_eurusd_gbpusd_pressure_w960.csv",
+    "outputs/backtests/live_watch_multi_horizon_usdjpy_current_w960.csv",
     "outputs/backtests/live_watch_quality_eurusd_gbpusd_pressure_w960.csv",
     "outputs/backtests/live_watch_usdcad_usdchf_macd_aggressive_w480.csv",
     "outputs/backtests/live_watch_audusd_macd_aggressive_w480.csv",
@@ -132,6 +134,7 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_opportunity_probe_audusd_usdjpy_w480.csv",
     "outputs/backtests/live_watch_opportunity_probe_eurusd_gbpusd_w480.csv",
     "outputs/backtests/live_watch_opportunity_probe_eurusd_gbpusd_strict_w480.csv",
+    "outputs/backtests/live_watch_opportunity_probe_eurusd_usdjpy_strict_w960.csv",
 )
 OPTIMIZER_SCAN_STALE_MINUTES = 6 * 60
 DEFAULT_NEAR_PROMOTION_JSON = "outputs/backtests/live_watch_near_promotion_latest.json"
