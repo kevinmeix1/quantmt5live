@@ -119,12 +119,16 @@ class LiveStrategyDiagnosticsTest(TestCase):
 
         strategy_map = live_strategy_diagnostics._strategy_map_for_args(
             args,
-            ("AUDUSD", "EURUSD"),
+            ("AUDUSD", "EURUSD", "USDJPY"),
         )
 
         self.assertEqual(
             strategy_map,
-            ("AUDUSD=macd_momentum", "EURUSD=macd_momentum"),
+            (
+                "AUDUSD=macd_momentum",
+                "EURUSD=macd_momentum",
+                "USDJPY=quality_trend",
+            ),
         )
 
     def test_parser_accepts_directional_probe_allocation_profile(self) -> None:

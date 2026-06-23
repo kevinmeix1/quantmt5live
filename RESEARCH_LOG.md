@@ -1200,3 +1200,23 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: restart the guard with the new watchdog parameters, leave live
   strategies and risk controls unchanged, and keep adaptive switching as
   research-only unless a narrower version clears the full promotion gates.
+
+## 2026-06-23 USDJPY quality-trend live expansion
+
+- Re-tested the current live map with `USDJPY=quality_trend` added across three
+  fixed-warmup windows on the full live-seven dataset:
+  - W480: 92 evaluation fills, 100/100 risk discipline, 71.4% positive folds,
+    100.0% active folds, 71.4% active-positive folds, 71.4% non-negative folds,
+    0.406% worst test drawdown, `PROMOTE`.
+  - W672: 68 fills, 100/100 risk discipline, 75.0% positive folds, 87.5%
+    active folds, 85.7% active-positive folds, 87.5% non-negative folds,
+    0.316% worst drawdown, `PROMOTE`.
+  - W960: 56 fills, 100/100 risk discipline, 100.0% positive, active,
+    active-positive, and non-negative folds, 0.406% worst drawdown, `PROMOTE`.
+- The consensus file
+  `outputs/backtests/live_watch_current_jpy_quality_consensus.csv` reports
+  `PROMOTE` with all three windows passed, 216 combined evaluation fills, and
+  100/100 minimum average risk discipline.
+- Decision: promote only the validated USDJPY quality-trend expansion. Keep
+  max order lots, max live positions, sentiment conflict brake, symbol-state
+  cooldown throttle, small-only throttle, and guard flatten stops intact.

@@ -74,9 +74,23 @@ while ((Get-Date) -lt $Deadline) {
     "--strategy-map", "GBPUSD=champion_ensemble",
     "--strategy-map", "USDCAD=macd_momentum",
     "--strategy-map", "USDCHF=macd_momentum",
+    "--strategy-map", "USDJPY=quality_trend",
     "--output-json", "outputs\candidate_eurgbp_cross_rate_live_strategy_diagnostics_latest.json",
     "--history-jsonl", "outputs\candidate_eurgbp_cross_rate_live_strategy_diagnostics_history.jsonl",
     "--output-text", "outputs\candidate_eurgbp_cross_rate_live_strategy_diagnostics_latest.txt"
+  )
+  Invoke-And-Log "candidate_diag_current_plus_jpy_quality" @(
+    "scripts\live_strategy_diagnostics.py",
+    "--strategy-map", "AUDUSD=macd_momentum",
+    "--strategy-map", "EURGBP=champion_ensemble",
+    "--strategy-map", "EURUSD=macd_momentum",
+    "--strategy-map", "GBPUSD=champion_ensemble",
+    "--strategy-map", "USDCAD=macd_momentum",
+    "--strategy-map", "USDCHF=macd_momentum",
+    "--strategy-map", "USDJPY=quality_trend",
+    "--output-json", "outputs\candidate_current_jpy_quality_live_strategy_diagnostics_latest.json",
+    "--history-jsonl", "outputs\candidate_current_jpy_quality_live_strategy_diagnostics_history.jsonl",
+    "--output-text", "outputs\candidate_current_jpy_quality_live_strategy_diagnostics_latest.txt"
   )
   Invoke-And-Log "candidate_diag_all_quality_trend" @(
     "scripts\live_strategy_diagnostics.py",
@@ -86,6 +100,7 @@ while ((Get-Date) -lt $Deadline) {
     "--strategy-map", "GBPUSD=quality_trend",
     "--strategy-map", "USDCAD=quality_trend",
     "--strategy-map", "USDCHF=quality_trend",
+    "--strategy-map", "USDJPY=quality_trend",
     "--allocation-profile", "directional_probe",
     "--output-json", "outputs\candidate_all_quality_trend_live_strategy_diagnostics_latest.json",
     "--history-jsonl", "outputs\candidate_all_quality_trend_live_strategy_diagnostics_history.jsonl",
@@ -99,6 +114,7 @@ while ((Get-Date) -lt $Deadline) {
     "--strategy-map", "GBPUSD=asset_adaptive_dual_squeeze",
     "--strategy-map", "USDCAD=volatility_squeeze",
     "--strategy-map", "USDCHF=macd_momentum",
+    "--strategy-map", "USDJPY=quality_trend",
     "--allocation-profile", "directional_probe",
     "--output-json", "outputs\candidate_best_symbol_mix_live_strategy_diagnostics_latest.json",
     "--history-jsonl", "outputs\candidate_best_symbol_mix_live_strategy_diagnostics_history.jsonl",
@@ -127,6 +143,7 @@ while ((Get-Date) -lt $Deadline) {
     "--strategy-map", "GBPUSD=asset_adaptive_dual_squeeze",
     "--strategy-map", "USDCAD=macd_momentum",
     "--strategy-map", "USDCHF=macd_momentum",
+    "--strategy-map", "USDJPY=quality_trend",
     "--output-json", "outputs\candidate_promoted_best_per_symbol_live_strategy_diagnostics_latest.json",
     "--history-jsonl", "outputs\candidate_promoted_best_per_symbol_live_strategy_diagnostics_history.jsonl",
     "--output-text", "outputs\candidate_promoted_best_per_symbol_live_strategy_diagnostics_latest.txt"
@@ -139,6 +156,7 @@ while ((Get-Date) -lt $Deadline) {
     "--strategy-map", "GBPUSD=multi_horizon_momentum",
     "--strategy-map", "USDCAD=macd_momentum",
     "--strategy-map", "USDCHF=macd_momentum",
+    "--strategy-map", "USDJPY=quality_trend",
     "--output-json", "outputs\candidate_expanded_best_per_symbol_live_strategy_diagnostics_latest.json",
     "--history-jsonl", "outputs\candidate_expanded_best_per_symbol_live_strategy_diagnostics_history.jsonl",
     "--output-text", "outputs\candidate_expanded_best_per_symbol_live_strategy_diagnostics_latest.txt"
@@ -169,6 +187,7 @@ while ((Get-Date) -lt $Deadline) {
     "--live-strategy-map", "GBPUSD=champion_ensemble",
     "--live-strategy-map", "USDCAD=macd_momentum",
     "--live-strategy-map", "USDCHF=macd_momentum",
+    "--live-strategy-map", "USDJPY=quality_trend",
     "--min-quality-score", "1.0",
     "--output-json", "outputs\live_candidate_watchlist_latest.json",
     "--output-text", "outputs\live_candidate_watchlist_latest.txt"

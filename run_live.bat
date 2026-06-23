@@ -29,7 +29,8 @@ quanthack live-trade ^
   --strategy-map GBPUSD=champion_ensemble ^
   --strategy-map USDCAD=macd_momentum ^
   --strategy-map USDCHF=macd_momentum ^
+  --strategy-map USDJPY=quality_trend ^
   --symbol AUDUSD --symbol EURGBP --symbol EURUSD --symbol GBPUSD ^
-  --symbol USDCAD --symbol USDCHF ^
+  --symbol USDCAD --symbol USDCHF --symbol USDJPY ^
   --i-understand-live-orders
 pause

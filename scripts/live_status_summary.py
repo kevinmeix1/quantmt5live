@@ -23,6 +23,7 @@ SMALL_ONLY_FRESH_RISK_STATES = {
     "small_only_until_recovery",
 }
 DEFAULT_CANDIDATE_MAP_CONSENSUS_CSVS = (
+    "outputs/backtests/live_watch_current_jpy_quality_consensus.csv",
     "outputs/backtests/live_watch_candidate_eurgbp_cross_rate_consensus.csv",
     "outputs/backtests/live_watch_top4_macd_consensus.csv",
 )
@@ -33,6 +34,7 @@ DEFAULT_CANDIDATE_DIAGNOSTICS_JSONS = (
     "outputs/candidate_all_opportunity_probe_live_strategy_diagnostics_latest.json",
     "outputs/candidate_all_multi_horizon_live_strategy_diagnostics_latest.json",
     "outputs/candidate_eurgbp_cross_rate_live_strategy_diagnostics_latest.json",
+    "outputs/candidate_current_jpy_quality_live_strategy_diagnostics_latest.json",
     "outputs/candidate_all_quality_trend_live_strategy_diagnostics_latest.json",
     "outputs/candidate_sentiment_no_jpy_live_strategy_diagnostics_latest.json",
     "outputs/candidate_best_symbol_mix_live_strategy_diagnostics_latest.json",

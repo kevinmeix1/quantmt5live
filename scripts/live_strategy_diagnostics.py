@@ -23,7 +23,7 @@ from quanthack.trading.live_dry_run import (
 from quanthack.trading.mt5_executor import Mt5LiveExecutor
 
 
-SYMBOLS = ("AUDUSD", "EURGBP", "EURUSD", "GBPUSD", "USDCAD", "USDCHF")
+SYMBOLS = ("AUDUSD", "EURGBP", "EURUSD", "GBPUSD", "USDCAD", "USDCHF", "USDJPY")
 STRATEGY = "champion_ensemble"
 STRATEGY_MAP = (
     "AUDUSD=macd_momentum",
@@ -32,6 +32,7 @@ STRATEGY_MAP = (
     "GBPUSD=champion_ensemble",
     "USDCAD=macd_momentum",
     "USDCHF=macd_momentum",
+    "USDJPY=quality_trend",
 )
 BLOCKED_STATES = (
     "cooldown_realized_drag",
