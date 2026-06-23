@@ -1365,3 +1365,18 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not promote. Adding GBPUSD to the MACD pressure universe creates
   more activity, but not enough fold stability to justify changing the live
   strategy map or MACD thresholds.
+
+## 2026-06-23 current-pressure opportunity-probe rejection
+
+- Re-tested the latest actionable `candidate_all_opportunity_probe` pressure on
+  the exact requested/throttled symbols: `AUDUSD`, `EURUSD`, `GBPUSD`, and
+  `USDCHF`.
+- Ran full-data W480 / 96-bar optimization with directional-probe allocation and
+  forced QUALIFY clock, including stricter score, spread, volatility-penalty,
+  and shorter-hold variants.
+- Best row was `score4_hyper_filter`: 380 trades, -0.060% return, 0.141%
+  drawdown, 50.0% positive folds, 50.0% active-positive folds, and 50.0%
+  non-negative folds. The live-style current row was worse: 1,698 trades,
+  -0.551% return, and 16.7% non-negative folds.
+- Decision: do not promote. The stricter probe reduces churn damage but still
+  has negative median active return and no fold-stable edge.

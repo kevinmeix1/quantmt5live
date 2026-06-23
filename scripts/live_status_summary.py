@@ -83,6 +83,7 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_quality_trend_size_opt_live6_w480.csv",
     "outputs/backtests/live_watch_quality_trend_opt_live6_w480.csv",
     "outputs/backtests/live_watch_opportunity_probe_opt_live6_w480.csv",
+    "outputs/backtests/live_watch_opportunity_probe_pressure4_w480.csv",
 )
 OPTIMIZER_SCAN_STALE_MINUTES = 6 * 60
 DEFAULT_NEAR_PROMOTION_JSON = "outputs/backtests/live_watch_near_promotion_latest.json"
