@@ -1481,3 +1481,18 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   are more robust across the wider windows, and the faster variants remain
   research-only because W480 and W960 do not both clear the total positive-fold
   gate.
+
+## 2026-06-23 AUDUSD/EURUSD opportunity-probe rejection
+
+- Fresh opportunity-probe diagnostics showed directional-probe allocations for
+  `AUDUSD` long and `EURUSD` long, while the guarded live map remained flat.
+- Prior portfolio artifacts for the same pair were negative, so a focused
+  fixed-warmup optimizer was run to test stricter score, spread, volatility,
+  and holding-period filters on full 15-minute data.
+- Best full-sample row was `aud_eur_score5`: 92 trades, +0.025% return,
+  0.058% drawdown, 38.9% positive folds, 38.9% active-positive folds, and
+  38.9% non-negative folds. The live-like current probe was materially worse:
+  877 trades, -0.299% return, and 22.2% non-negative folds.
+- Decision: do not promote. The current AUDUSD/EURUSD opportunity-probe signal
+  remains too fold-unstable to justify a manual trade or live strategy-map
+  change.
