@@ -90,6 +90,7 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_opportunity_probe_opt_live6_w480.csv",
     "outputs/backtests/live_watch_opportunity_probe_pressure4_w480.csv",
     "outputs/backtests/live_watch_opportunity_probe_usdchf_usdjpy_w480.csv",
+    "outputs/backtests/live_watch_opportunity_probe_usdchf_w480.csv",
     "outputs/backtests/live_watch_opportunity_probe_audusd_eurgbp_w480.csv",
     "outputs/backtests/live_watch_opportunity_probe_audusd_eurusd_w480.csv",
 )

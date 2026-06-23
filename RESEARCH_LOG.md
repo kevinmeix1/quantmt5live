@@ -1496,3 +1496,18 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not promote. The current AUDUSD/EURUSD opportunity-probe signal
   remains too fold-unstable to justify a manual trade or live strategy-map
   change.
+
+## 2026-06-23 USDCHF-only opportunity-probe rejection
+
+- Fresh pair analysis showed a heuristic-only `USDCHF` buy with supportive
+  sentiment, but the guarded live MACD map still had no approved target because
+  the current histogram was inside the strategy gate.
+- Ran a focused full-data W480 / 96-bar optimizer on `USDCHF` only using the
+  directional-probe allocation profile and forced QUALIFY clock.
+- Every tested opportunity-probe variant was rejected. The best row,
+  `usdchf_score3_5`, produced 132 trades, -0.036% return, 0.062% drawdown,
+  55.6% positive folds, 55.6% active-positive folds, and 55.6% non-negative
+  folds. The live-like current probe was much worse: 409 trades, -0.131%
+  return, and 27.8% non-negative folds.
+- Decision: do not promote. Keep USDCHF on the guarded MACD slot and treat
+  isolated heuristic USDCHF pressure as insufficient for fresh live risk.
