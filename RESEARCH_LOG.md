@@ -2194,3 +2194,34 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   fresh evidence to this current candidate.
 - Decision: do not restart live with opportunity-probe or loosen the
   two-position cap for this pressure set.
+
+## 2026-06-23 USDCHF opportunity-probe pressure check
+
+- Refreshed sentiment, attribution, pair analysis, and diagnostics again.
+  Production remained flat, while read-only `opportunity_probe` requested a
+  short `USDCHF` allocation. The diagnostic was already marked `PENALTY_RISK`
+  because the sleeve is one-sided.
+- Validated the exact current USDCHF opportunity-probe pressure on full
+  downloaded 15-minute data:
+  `outputs/backtests/live_watch_opportunity_probe_usdchf_current_w960.csv`.
+  All candidates rejected. The least-bad very-strict variant lost 0.040% with
+  131 trades, Sharpe -0.021, and only 16.7% positive/non-negative folds. The
+  live-current baseline lost 0.131% with 409 trades.
+- Added the W960 scan to the live optimizer rollup so future summaries attach
+  fresh evidence if USDCHF probe pressure reappears.
+- Decision: do not promote USDCHF opportunity-probe despite the active signal;
+  the full-data evidence says it adds churn and negative expectancy.
+
+## 2026-06-23 AUD/EURGBP/CAD/CHF cap-expanded probe check
+
+- After another full-data research cycle, the live read-only `opportunity_probe`
+  candidate shifted to long `AUDUSD` and long `EURGBP`, with short `USDCAD` and
+  short `USDCHF` blocked behind the two-position diagnostic cap.
+- Validated the exact cap-expanded set:
+  `outputs/backtests/live_watch_opportunity_probe_aud_eurgbp_cad_chf_current_w960.csv`.
+  All candidates rejected. The least-bad very-strict variant lost 0.105% with
+  491 trades, Sharpe -0.024, 50.0% positive/non-negative folds, and negative
+  active median return. The live-current baseline lost 0.522% with 1,671 trades.
+- Added the scan to the live optimizer rollup.
+- Decision: do not loosen the live two-position cap or promote opportunity-probe
+  for this AUD/EURGBP/CAD/CHF pressure set.
