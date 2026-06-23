@@ -1319,3 +1319,22 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   produced live-time actionable diagnostics, but W480 optimizer rows remain
   negative and unstable; asset-squeeze candidates remain rejected or
   concentration-limited. No live promotion.
+
+## 2026-06-23 live-like symbol eligibility scan
+
+- Added allocation-profile and fixed QUALIFY clock pass-through to
+  `symbol-eligibility-optimize`, so symbol subset research can now match the
+  live diagnostics clock/allocation assumptions.
+- Ran a narrowed full-data W480 scan on the active downside-pressure MACD
+  symbols (`AUDUSD`, `EURUSD`, `GBPUSD`) after a broader five-symbol
+  directional-probe combination scan proved too slow for the live watch cycle.
+- Directional-probe allocation result:
+  - Best subset was `AUDUSD,EURUSD` with 79 trades, +0.050% full-sample
+    return, 0.052% drawdown, 50.0% positive folds, 60.0% active-positive
+    folds, 66.7% non-negative folds, and 0/100 risk discipline.
+- Default allocation result:
+  - The same three-symbol pressure universe produced zero trades, so the
+    directional-probe activity is not a default live-promotion path.
+- Decision: do not promote. The scan confirms the current AUD/EUR downside
+  pressure is visible to research tooling, but not stable or risk-disciplined
+  enough to change live strategy selection.
