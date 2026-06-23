@@ -65,6 +65,7 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_macd_current_threshold_retest_default_w960.csv",
     "outputs/backtests/live_watch_macd_current_threshold_retest_w960.csv",
     "outputs/backtests/live_watch_macd_current_vs_fast_live4_w960.csv",
+    "outputs/backtests/live_watch_macd_gate_relief_live4_w960.csv",
     "outputs/backtests/live_watch_macd_aggressive_bounded_w960.csv",
     "outputs/backtests/live_watch_macd_negative_pressure_trio_w960.csv",
     "outputs/backtests/live_watch_macd_negative_pressure_plus_usd_offsets_w960.csv",

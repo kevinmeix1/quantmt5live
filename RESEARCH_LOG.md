@@ -2375,3 +2375,17 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: no live-map promotion from this batch. The live engine remains
   enabled for approved production MACD/quality/ensemble signals, but the current
   aggressive probe/session ideas should stay blocked from fresh live risk.
+
+## 2026-06-23 MACD gate-relief check
+
+- Tested whether production MACD symbols could safely trade more by relaxing
+  histogram/trend-efficiency gates:
+  `outputs/backtests/live_watch_macd_gate_relief_live4_w960.csv`.
+- No candidate promoted. The best guarded fast variant made +0.050% with 95
+  trades, but stopped at 66.7% non-negative/active-positive folds versus the
+  70.0% live gate. More active variants produced 155-183 trades and were
+  negative or had weaker fold stability.
+- Added the scan to the live optimizer rollup.
+- Decision: do not relax production MACD thresholds right now. The current
+  gating is frustratingly quiet, but the looser alternatives do not yet clear
+  the survival evidence bar.
