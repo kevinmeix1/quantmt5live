@@ -1338,3 +1338,15 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not promote. The scan confirms the current AUD/EUR downside
   pressure is visible to research tooling, but not stable or risk-disciplined
   enough to change live strategy selection.
+
+## 2026-06-23 EURGBP cross-rate with USDJPY quality rejection
+
+- Re-tested the EURGBP cross-rate replacement against the current seven-symbol
+  live map, including the promoted USDJPY quality-trend leg.
+- Built W480, W672, and W960 strategy-map optimizer outputs plus a consensus
+  report for `eurgbp_cross_jpy_quality`.
+- `eurgbp_cross_jpy_quality` stayed `PAPER_ONLY` in all windows and
+  underperformed `current_jpy_quality` on minimum positive folds: 44.4% versus
+  the current map's 50.0% floor.
+- Decision: do not promote. Keep EURGBP on `champion_ensemble` and keep the
+  cross-rate map in watchlist/research-only status.
