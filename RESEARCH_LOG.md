@@ -1826,3 +1826,25 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not lower live MACD thresholds yet. The lower threshold does not
   create a current approved trade and does not clear the short-window positive
   fold promotion gate.
+
+## 2026-06-23 EURGBP/USDCHF opportunity-probe strict check
+
+- Refreshed live sentiment, attribution, per-pair analysis, and diagnostics.
+  The live account remained flat with equity 999,181.58 and day P/L -818.42.
+  Per-pair analysis moved every live symbol to `wait`, but candidate diagnostics
+  still showed the read-only `opportunity_probe` sleeve requesting directional
+  probe risk on `EURGBP` and `USDCHF`.
+- The existing six-symbol opportunity-probe scan was already rejected, so tested
+  a stricter two-symbol refinement on the currently requested candidate pair:
+  `EURGBP` and `USDCHF`.
+- Output:
+  `outputs/backtests/live_watch_opportunity_probe_eurgbp_usdchf_strict_w480.csv`.
+- All candidates rejected. The cleanest `ultra_pair_6_18_48_s425` cut trade
+  count to 172 and held drawdown to 0.044%, but still lost 0.014% full-sample
+  with only 38.9% positive folds and 38.9% non-negative folds. The current pair
+  baseline produced 810 trades, lost 0.245%, and had only 27.8% positive and
+  non-negative folds.
+- Added the strict pair scan to the live status optimizer rollup.
+- Decision: do not promote `opportunity_probe` for `EURGBP`/`USDCHF`. It is
+  responsive enough to ask for trades, but the fold evidence says the requests
+  are still churn rather than reliable edge.
