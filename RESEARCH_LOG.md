@@ -1276,3 +1276,18 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: no live replacement. The GBPUSD MACD variant increases trade
   count but materially worsens fold stability, so keep GBPUSD on the current
   champion ensemble and track the rejection in the status rollup.
+
+## 2026-06-23 EURGBP MACD pressure rejection
+
+- Live diagnostics around 2026-06-23 07:06 UTC stayed flat: all symbols were
+  `no_closed_sample`, the risk layer had no blocked or small-only symbols, and
+  EURGBP/GBPUSD were still gated by champion-ensemble session filters.
+- Tested a narrow activity replacement that changed only EURGBP from
+  `champion_ensemble` to `macd_momentum` while keeping the promoted
+  `USDJPY=quality_trend` leg:
+  - 78 evaluation fills, 100/100 risk discipline, 44.4% positive folds, 66.7%
+    active-positive folds, 77.8% non-negative folds, 0.305% worst test
+    drawdown, `PAPER_ONLY`.
+- Decision: do not promote. The EURGBP MACD sleeve remains research-only
+  because it did not clear the total positive-fold gate, even though it kept
+  drawdown and risk discipline acceptable.
