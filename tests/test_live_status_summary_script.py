@@ -225,6 +225,66 @@ class LiveStatusSummaryScriptTest(TestCase):
 
         self.assertEqual(evidence, {})
 
+    def test_fixed_warmup_summary_rows_are_normalized_for_evidence(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            scan = root / "live_watch_multi_horizon_aud_gbp_w480_summary.csv"
+            scan.write_text(
+                "\n".join(
+                    [
+                        (
+                            "strategy,symbols,promotion_status,"
+                            "promotion_live_ready,promotion_reason,"
+                            "non_negative_fold_fraction,"
+                            "active_positive_fold_fraction,"
+                            "total_evaluation_fills"
+                        ),
+                        (
+                            "multi_horizon_momentum,AUDUSD GBPUSD,REJECT,"
+                            "False,non-negative fold fraction 44.4% is below 70.0%,"
+                            "0.4444,0.4444,84"
+                        ),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            scans = live_status_summary.read_optimizer_scans(
+                (str(scan),),
+                now_utc=live_status_summary.datetime(2026, 1, 1, tzinfo=live_status_summary.UTC),
+            )
+            evidence = live_status_summary._candidate_optimizer_evidence(
+                {
+                    "top_candidates": [
+                        {
+                            "label": "candidate_all_multi_horizon",
+                            "actionable_symbols": ["AUDUSD", "GBPUSD"],
+                            "top_symbol": {
+                                "symbol": "AUDUSD",
+                                "strategy": "multi_horizon_momentum",
+                                "status": "actionable_allocation",
+                                "raw_change_notional_usd": 800000.0,
+                            },
+                        }
+                    ]
+                },
+                scans,
+            )
+
+        top_scan = scans["top_candidates"][0]
+        self.assertEqual(top_scan["label"], "multi_horizon_momentum")
+        self.assertEqual(top_scan["wf_non_negative_fold_fraction"], "0.4444")
+        self.assertEqual(evidence["candidate_count"], 1)
+        top = evidence["top_candidates"][0]
+        self.assertEqual(top["evidence_status"], "REJECTED_BY_SCAN")
+        self.assertEqual(top["symbols"], ["AUDUSD", "GBPUSD"])
+        self.assertEqual(
+            top["top_match"]["wf_non_negative_fold_fraction"],
+            0.4444,
+        )
+        self.assertEqual(top["top_match"]["wf_total_evaluation_fills"], 84)
+
     def test_reads_and_writes_summary_files(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

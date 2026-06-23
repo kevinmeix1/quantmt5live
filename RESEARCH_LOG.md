@@ -1612,3 +1612,22 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   matched to their full-data rejection evidence before anyone promotes them.
 - Decision: keep router/session-breakout in discovery only. Do not route live
   risk to these sleeves until a fresh scan clears the existing promotion gates.
+
+## 2026-06-23 AUDUSD/GBPUSD multi-horizon rejection
+
+- Fresh `candidate_all_multi_horizon` diagnostics requested aggressive
+  directional-probe allocations on `AUDUSD` and `GBPUSD`, after live allocation
+  caps trimmed the raw $1.6M request to about $99.9k total notional.
+- Ran an exact full-data W480 / 96-bar fixed-warmup validation on `AUDUSD` and
+  `GBPUSD` with `multi_horizon_momentum`, directional-probe allocation, and
+  forced QUALIFY clock.
+- The exact subset rejected: 18 folds, 84 evaluation fills, 44.4% positive
+  folds, 44.4% active-positive folds, 44.4% non-negative folds, -0.0004%
+  median active return, 0.018% worst drawdown, and 78.3/100 average risk
+  discipline.
+- Added fixed-warmup summary normalization to the live status scanner, then
+  added the exact AUDUSD/GBPUSD multi-horizon summary to the optimizer rollup
+  so future live-looking multi-horizon bursts surface their true rejection
+  evidence.
+- Decision: do not promote multi-horizon to live routing. Keep it in discovery
+  and require a fresh exact-symbol scan to clear promotion gates first.

@@ -83,6 +83,9 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_live6_exact_candidate_maps_w480_summary.csv",
     "outputs/backtests/live_watch_gbpusd_asset_squeeze_w480_summary.csv",
     "outputs/backtests/live_watch_audusd_asset_squeeze_w480_summary.csv",
+    "outputs/backtests/live_watch_multi_horizon_momentum_corrected.csv",
+    "outputs/backtests/live_watch_multi_horizon_live6_w960.csv",
+    "outputs/backtests/live_watch_multi_horizon_aud_gbp_w480_summary.csv",
     "outputs/backtests/live_watch_usdcad_usdchf_macd_aggressive_w480.csv",
     "outputs/backtests/live_watch_audusd_macd_aggressive_w480.csv",
     "outputs/backtests/live_watch_eurgbp_gbpusd_opportunity_probe_aggressive_w480.csv",
@@ -376,7 +379,7 @@ def read_optimizer_scans(
             scan_rows = list(csv.DictReader(handle))
         if not scan_rows:
             continue
-        top_row = dict(scan_rows[0])
+        top_row = _normalize_optimizer_scan_row(dict(scan_rows[0]))
         top_row["source_path"] = str(scan_path)
         top_row["source_label"] = scan_path.stem
         top_row["source_mtime_utc"] = mtime_utc.isoformat()
@@ -388,6 +391,27 @@ def read_optimizer_scans(
         "scan_count": len(rows),
         "top_candidates": rows,
     }
+
+
+def _normalize_optimizer_scan_row(row: dict[str, Any]) -> dict[str, Any]:
+    """Accept both optimizer CSVs and fixed-warmup one-row summary CSVs."""
+    normalized = dict(row)
+    if not str(normalized.get("label", "")).strip():
+        normalized["label"] = str(normalized.get("strategy", "")).strip()
+    field_aliases = {
+        "positive_fold_fraction": "wf_positive_fold_fraction",
+        "active_fold_fraction": "wf_active_fold_fraction",
+        "active_positive_fold_fraction": "wf_active_positive_fold_fraction",
+        "non_negative_fold_fraction": "wf_non_negative_fold_fraction",
+        "median_active_test_return_pct": "wf_median_active_test_return_pct",
+        "worst_test_drawdown_pct": "wf_worst_test_drawdown_pct",
+        "total_evaluation_fills": "wf_total_evaluation_fills",
+        "average_risk_discipline_score": "risk_discipline_score",
+    }
+    for source, target in field_aliases.items():
+        if target not in normalized and source in normalized:
+            normalized[target] = normalized[source]
+    return normalized
 
 
 def build_parser() -> argparse.ArgumentParser:
