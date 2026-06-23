@@ -2038,3 +2038,28 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not promote the current AUD/EUR or AUD/JPY pressure sleeves.
   Multi-horizon AUD/EUR is the nearest active sleeve, but it is still a
   paper-only watch item until full-sample return and fold stability improve.
+
+## 2026-06-23 active AUD/EURGBP opportunity-probe refresh
+
+- User pressure was explicitly for more trades, so I refreshed the live account,
+  pair analysis, sentiment, attribution, and candidate diagnostics without
+  removing the live guardrails. MT5, `live_supervisor.ps1`, `live_guard.ps1`,
+  and `quanthack.exe live-trade` were all running; the account was flat at
+  `999181.58` equity, `-818.42` day P/L, zero margin, and zero open positions.
+- The production map still requested no order. The read-only `opportunity_probe`
+  sleeve requested long `AUDUSD` and short `EURGBP`; other active probe signals
+  were blocked by the two-position throttle.
+- Validated that exact current pair on the full downloaded 15-minute data:
+  `outputs/backtests/live_watch_opportunity_probe_audusd_eurgbp_current_w960.csv`.
+  All candidates rejected. The current live-style baseline lost 0.323% with
+  1,269 trades and 0.0% positive/non-negative folds. The best stricter variant
+  still lost 0.022% with only 20.0% positive/non-negative folds.
+- Rechecked the MACD core parameter evidence before changing live thresholds.
+  The current `8/21/8` MACD core remains stronger than the faster `7/20/5`
+  alternative on the tested top-four MACD sleeve: about 74 fills and +2.759%
+  full-sample return versus 52 fills and +1.933%, with W672/W960 live-ready but
+  W480 still only paper-only for both families.
+- Added the current AUDUSD/EURGBP W960 probe scan to the live optimizer rollup.
+- Decision: do not force trades or loosen the two-position/loss/sentiment
+  brakes. Keep the live process enabled and let it trade only when the deployed
+  strategy/risk gates approve.
