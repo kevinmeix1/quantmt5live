@@ -1380,3 +1380,19 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   -0.551% return, and 16.7% non-negative folds.
 - Decision: do not promote. The stricter probe reduces churn damage but still
   has negative median active return and no fold-stable edge.
+
+## 2026-06-23 EURGBP cross-rate intraday refresh
+
+- Refreshed the fast cross-rate signal screen on the full 15-minute data for
+  `AUDUSD`, `EURGBP`, `EURUSD`, `GBPUSD`, `USDCAD`, and `USDCHF`.
+- `EURGBP` remains the only eligible cross-rate watchlist symbol:
+  `raw_l12_z1_dev0_25_slip0` produced 31 active samples, 71.0% hit rate,
+  1.50 bps average signed forward return, 0.31 bps edge after cost, and 1.58
+  quality score.
+- A relaxed GBPUSD dual-squeeze W480 refinement was attempted because live
+  diagnostics still show squeeze-ratio gating, but the walk-forward sweep
+  exceeded the live-watch compute window and wrote no CSV. Treat it as
+  inconclusive, not evidence.
+- Decision: do not promote. EURGBP cross-rate remains useful watchlist context,
+  but prior portfolio-level validation still rejects switching EURGBP from
+  `champion_ensemble` to `cross_rate_reversion`.
