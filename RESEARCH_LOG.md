@@ -2559,3 +2559,17 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Updated `scripts/live_status_summary.py` so optimizer evidence reads and
   ranks every row from each scan CSV instead of only row 1. This prevents a
   paper-only first row from hiding a promoted row lower in a scan.
+
+## 2026-06-23 USDJPY opportunity-probe rejection
+
+- Live candidate diagnostics showed a directional-probe USDJPY opportunity
+  signal at 22:06 UTC, but production USDJPY remains on `quality_trend`.
+- Ran exact full-data W960 validation:
+  `outputs/backtests/live_watch_opportunity_probe_usdjpy_current_w960.csv`.
+- All tested USDJPY opportunity-probe variants were rejected. The best
+  `fast_strict` candidate made -0.174%, had 428 trades, and produced 0.0%
+  positive, active-positive, and non-negative walk-forward folds.
+- Decision: do not route USDJPY to `opportunity_probe` and do not force a
+  discretionary USDJPY trade. The current live `quality_trend` sleeve remains
+  the safer production mapping, and the new scan is included in live summary
+  evidence so future probe signals are rejected explicitly.

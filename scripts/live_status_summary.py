@@ -151,6 +151,7 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_opportunity_probe_cap_expansion_current_w960.csv",
     "outputs/backtests/live_watch_opportunity_probe_eurgbp_usdchf_strict_w480.csv",
     "outputs/backtests/live_watch_opportunity_probe_usdchf_usdjpy_w480.csv",
+    "outputs/backtests/live_watch_opportunity_probe_usdjpy_current_w960.csv",
     "outputs/backtests/live_watch_opportunity_probe_usdchf_w480.csv",
     "outputs/backtests/live_watch_opportunity_probe_usdchf_current_w960.csv",
     "outputs/backtests/live_watch_opportunity_probe_usdcad_w480.csv",
