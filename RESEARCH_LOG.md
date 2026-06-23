@@ -1350,3 +1350,18 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   the current map's 50.0% floor.
 - Decision: do not promote. Keep EURGBP on `champion_ensemble` and keep the
   cross-rate map in watchlist/research-only status.
+
+## 2026-06-23 five-pair MACD pressure refinement
+
+- Ran a focused full-data W480 / 96-bar MACD refinement on the current pressure
+  set: `AUDUSD`, `EURUSD`, `GBPUSD`, `USDCAD`, and `USDCHF`.
+- Used the imported full 15-minute pricer files
+  (`data/full_20gb_15m_prices.csv` and `data/full_20gb_15m_quotes.csv`), default
+  live-style allocation, and forced QUALIFY research clock.
+- Best row was `faster_6_18_slope010_5pair`: 98 trades, +1.931% return, 0.527%
+  drawdown, 55.6% positive folds, 71.4% active-positive folds, and 77.8%
+  non-negative folds. It remained `PAPER_ONLY` because total positive folds did
+  not clear the 67.0% live gate.
+- Decision: do not promote. Adding GBPUSD to the MACD pressure universe creates
+  more activity, but not enough fold stability to justify changing the live
+  strategy map or MACD thresholds.
