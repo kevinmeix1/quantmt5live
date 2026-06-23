@@ -2013,3 +2013,28 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   live status rollup.
 - Decision: keep live map unchanged. This is a better adaptive research lane,
   but the total positive-fold rate still misses the live gate.
+
+## 2026-06-23 active AUD/EUR pressure sleeve refresh
+
+- Refreshed live diagnostics. The production map remained flat, but the
+  read-only `multi_horizon_momentum` sleeve requested short `AUDUSD` and
+  `EURUSD`, while `opportunity_probe` requested short `AUDUSD` and `USDJPY`.
+- Validated the current opportunity-probe pair:
+  `outputs/backtests/live_watch_opportunity_probe_audusd_usdjpy_strict_w960.csv`.
+  All candidates rejected. The best filtered pair lost 0.066% with 326 trades
+  and only 50.0% positive/non-negative folds; the current pair baseline lost
+  0.357% with 882 trades and 0.0% positive/non-negative folds.
+- Validated the current multi-horizon pair:
+  `outputs/backtests/live_watch_multi_horizon_audusd_eurusd_current_w960.csv`.
+  The best strict candidate lost 0.071% with 246 trades, 66.7%
+  positive/non-negative folds, and a small positive median active fold, but it
+  still missed the 70.0% non-negative fold gate and lost full-sample.
+- Ran a stricter refinement around that near-miss:
+  `outputs/backtests/live_watch_multi_horizon_audusd_eurusd_strict_refine_w960.csv`.
+  The best `strict_f3_s8_eff35` reduced trades to 192 and improved median active
+  return to 0.006%, but still lost 0.077% and remained at 66.7%
+  positive/non-negative folds.
+- Added the new W960 scans to the live optimizer rollup.
+- Decision: do not promote the current AUD/EUR or AUD/JPY pressure sleeves.
+  Multi-horizon AUD/EUR is the nearest active sleeve, but it is still a
+  paper-only watch item until full-sample return and fold stability improve.
