@@ -1736,3 +1736,22 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not expand live MACD to all seven symbols yet. The extra symbols
   increase trade count but do not improve enough fold stability to justify live
   promotion.
+
+## 2026-06-23 exact EURGBP cross-rate refresh
+
+- Re-tested the live-seven map with `EURGBP=cross_rate_reversion` plus
+  `USDJPY=quality_trend` after the watchlist kept surfacing the cross-rate
+  sleeve while the live map still used champion ensemble on `EURGBP`.
+- Existing exact W480 refresh rejected hard, so ran exact W672 and W960
+  fixed-warmup validations against the same seven-symbol map:
+  - `outputs/backtests/live_watch_eurgbp_cross_jpy_quality_w672_refresh_summary.csv`
+    was `PAPER_ONLY`: 50.0% positive folds, 80.0% active-positive folds,
+    87.5% non-negative folds, 62 fills, 0.304% worst drawdown.
+  - `outputs/backtests/live_watch_eurgbp_cross_jpy_quality_w960_refresh_summary.csv`
+    was `PAPER_ONLY`: 46.2% positive folds, 75.0% active-positive folds,
+    84.6% non-negative folds, 50 fills, 0.304% worst drawdown.
+- Added both exact refresh scans to the status rollup. The older smaller-symbol
+  W960 promote is now treated as weaker than the exact live-seven refresh set.
+- Decision: keep `EURGBP` cross-rate in watchlist only. It is useful alpha
+  context, but the exact live-seven evidence still misses the total positive
+  fold promotion gate.

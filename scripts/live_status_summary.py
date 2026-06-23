@@ -67,6 +67,8 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_candidate_eurgbp_cross_rate_w672_summary.csv",
     "outputs/backtests/live_watch_candidate_eurgbp_cross_rate_w960_summary.csv",
     "outputs/backtests/live_watch_eurgbp_cross_jpy_quality_w480_refresh_summary.csv",
+    "outputs/backtests/live_watch_eurgbp_cross_jpy_quality_w672_refresh_summary.csv",
+    "outputs/backtests/live_watch_eurgbp_cross_jpy_quality_w960_refresh_summary.csv",
     "outputs/backtests/live_watch_eurgbp_cross_jpy_quality_w480.csv",
     "outputs/backtests/live_watch_eurgbp_cross_jpy_quality_w672.csv",
     "outputs/backtests/live_watch_eurgbp_cross_jpy_quality_w960.csv",
