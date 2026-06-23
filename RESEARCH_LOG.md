@@ -1529,3 +1529,20 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not promote the asset-heavy champion map or use it for manual
   entries. Keep it in the optimizer rollup as a near-miss research sleeve, but
   leave live routing unchanged until the fold distribution improves.
+
+## 2026-06-23 AUDUSD/USDJPY opportunity-probe rejection
+
+- Fresh research-only `candidate_all_opportunity_probe` diagnostics requested
+  directional-probe allocations on `AUDUSD` and `USDJPY`, while the guarded
+  live map remained flat.
+- Ran a focused full-data W480 / 96-bar optimizer on `AUDUSD` and `USDJPY`
+  with current, stricter score, tighter spread, volatility-penalty, and
+  holding-period variants.
+- The best row, `aud_jpy_score5`, produced 80 trades, +0.015% full-sample
+  return, 0.046% max drawdown, but only 44.4% positive folds, 47.1%
+  active-positive folds, and 50.0% non-negative folds. The live-like current
+  probe was strongly negative: 882 trades, -0.357% return, and 5.6%
+  non-negative folds.
+- Decision: do not promote. The current AUDUSD/USDJPY opportunity burst is
+  another unstable probe pattern, so keep it research-only and do not force
+  manual or live-map exposure.
