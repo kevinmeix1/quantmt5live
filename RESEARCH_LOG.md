@@ -1423,3 +1423,18 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   increased churn but weakened fold stability.
 - Decision: do not promote. Keep the live MACD parameters unchanged; track
   fast 6/18 as near-promotion research only.
+
+## 2026-06-23 USDCHF/USDJPY opportunity-probe rejection
+
+- Fresh live candidate diagnostics showed `opportunity_probe` actionable on
+  `USDCHF` short and `USDJPY` long under the directional-probe allocation
+  profile, while the guarded live map still had no approved target changes.
+- Ran a focused full-data W480 / 96-bar optimizer on `USDCHF` and `USDJPY`
+  using directional-probe allocation and forced QUALIFY clock.
+- The best row was `score5_spread3`: 88 trades, -0.036% return, 0.043%
+  drawdown, 38.9% positive folds, 38.9% active-positive folds, and 38.9%
+  non-negative folds. The live-like current probe was much worse: 851 trades,
+  -0.339% return, and 11.1% non-negative folds.
+- Decision: do not promote. The current live opportunity looked active but
+  remained historically negative, so keep it research-only and do not force a
+  manual USDCHF/USDJPY pair trade.
