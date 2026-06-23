@@ -2489,3 +2489,19 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not promote or special-case `opportunity_probe` for AUDUSD. The
   single-symbol evidence confirms that the current actionable probe is churn,
   not a robust survival opportunity.
+
+## 2026-06-23 USDCAD opportunity-probe single-symbol check
+
+- Fresh candidate diagnostics shifted the read-only `candidate_all_opportunity_probe`
+  sleeve to a single actionable `USDCAD` long. The existing W480 evidence was
+  rejected, so the exact current single-symbol case was refreshed on full data.
+- Ran W960 validation:
+  `outputs/backtests/live_watch_opportunity_probe_usdcad_current_w960.csv`.
+- Every candidate rejected. The live-current line lost 0.127% with 421 trades
+  and only 16.7% non-negative folds. Looser variants traded 483-533 times and
+  lost more; the strict variant reduced fills to 237 but had 0.0% non-negative
+  folds.
+- Added the scan to the live optimizer rollup.
+- Decision: do not promote or special-case `opportunity_probe` for USDCAD. The
+  current USD-supportive headline backdrop is not enough to overcome the
+  strategy's full-data churn profile.
