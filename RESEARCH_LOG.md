@@ -2406,3 +2406,32 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not expand the two-position cap, promote `opportunity_probe`, or
   route this pressure set to live risk. More trades here meant faster loss, not
   better survival.
+
+## 2026-06-23 promoted MACD gate relief and restarted live loop
+
+- Current production diagnostics remained flat, with MACD symbols sitting near
+  but mostly below the old 8/21/8, 1.25 bps histogram gate. The live account was
+  flat, so this was a clean time to activate a tested parameter refinement.
+- Promoted the fixed-warmup W960 MACD candidate from
+  `outputs/backtests/live_watch_macd_current_threshold_retest_default_w960.csv`:
+  `fast_6_18_h075_s005` on `AUDUSD EURUSD USDCAD USDCHF`. It made +2.142%,
+  kept max drawdown to 0.411%, scored 100/100 risk discipline, produced 82
+  trades, and passed live readiness with 80.0% positive folds and 100.0%
+  active-positive/non-negative folds.
+- Updated `configs/competition.toml` MACD parameters to 6/18/5,
+  0.75 bps histogram, 0.50 bps MACD line, 0.05 bps histogram slope, and 0.10
+  trend efficiency. This increases qualified MACD opportunity while preserving
+  max live positions, order lot cap, daily-loss brake, rolling-Sharpe brake,
+  sentiment brake, and symbol-state cooldown throttle.
+- Tested the current raw `opportunity_probe` pressure basket
+  `EURGBP/EURUSD/GBPUSD/USDCAD`:
+  `outputs/backtests/live_watch_opportunity_probe_eurgbp_eurusd_gbpusd_usdcad_current_w960.csv`.
+  Every candidate rejected; the least-bad strict line lost 0.240% with 943
+  trades, while looser variants traded 1,671-2,151 times and lost 0.512%-0.658%.
+- Restarted the live MT5 loop through `live_guard.ps1` so the promoted config is
+  active. The restarted loop printed `LIVE - REAL ORDERS`, retained the
+  sentiment/cooldown/loss brakes, and its first iteration produced no forced
+  order.
+- Decision: this is the correct kind of aggression for the elimination format:
+  loosen a parameter set that already passed full-data live-readiness evidence,
+  but continue blocking the currently losing probe basket.
