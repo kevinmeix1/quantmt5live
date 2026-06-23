@@ -425,6 +425,48 @@ class LiveStatusSummaryScriptTest(TestCase):
         )
         self.assertEqual(top["top_match"]["wf_total_evaluation_fills"], 84)
 
+    def test_optimizer_scans_rank_all_rows_not_only_first(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            scan = root / "strategy_map_summary.csv"
+            scan.write_text(
+                "\n".join(
+                    [
+                        (
+                            "rank,label,symbols,promotion_status,"
+                            "promotion_live_ready,positive_fold_fraction,"
+                            "active_positive_fold_fraction,"
+                            "non_negative_fold_fraction,"
+                            "median_active_test_return_pct,"
+                            "total_evaluation_fills"
+                        ),
+                        (
+                            "1,all_quality,AUDUSD EURUSD,PAPER_ONLY,False,"
+                            "0.3333,1.0,1.0,0.0024,22"
+                        ),
+                        (
+                            "2,current_live,AUDUSD EURUSD USDCAD USDCHF,"
+                            "PROMOTE,True,0.8333,0.8333,0.8333,0.0018,86"
+                        ),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            scans = live_status_summary.read_optimizer_scans(
+                (str(scan),),
+                now_utc=live_status_summary.datetime(
+                    2026, 1, 1, tzinfo=live_status_summary.UTC
+                ),
+            )
+
+        self.assertEqual(scans["scan_count"], 2)
+        top = scans["top_candidates"][0]
+        self.assertEqual(top["label"], "current_live")
+        self.assertEqual(top["promotion_status"], "PROMOTE")
+        self.assertEqual(top["source_row_index"], 2)
+
     def test_heuristic_evidence_matches_macd_scan_alias(self) -> None:
         evidence = live_status_summary._heuristic_optimizer_evidence(
             {

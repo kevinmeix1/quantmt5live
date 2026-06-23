@@ -2542,3 +2542,20 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   `forex_allowed_utc_hours` to improve evidence-backed opportunity while
   keeping live loss, sentiment, cooldown, max-lot, and position-cap brakes
   intact.
+
+## 2026-06-23 post-expansion map refresh
+
+- Refreshed a full-data W960 strategy-map comparison after the MACD evening
+  window was promoted:
+  `outputs/backtests/live_watch_strategy_maps_after_macd_hours_w960_summary.csv`.
+- Current live map remains `PROMOTE`: +2.374% return, 116 trades, 83.3%
+  positive folds, 83.3% active-positive folds, and 83.3% non-negative folds.
+- `macd_core_only` slightly improved return to +2.400% but reduced activity to
+  86 trades, so it does not satisfy the current need for more live opportunity.
+- `promoted_best_per_symbol` also passed `PROMOTE` but reduced activity to 98
+  trades and reduced full-sample return to +2.295%.
+- More active alternatives such as all-MACD and multi-horizon overlays were
+  rejected on fold stability, so no production map swap was justified.
+- Updated `scripts/live_status_summary.py` so optimizer evidence reads and
+  ranks every row from each scan CSV instead of only row 1. This prevents a
+  paper-only first row from hiding a promoted row lower in a scan.

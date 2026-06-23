@@ -105,12 +105,14 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_kalman_trend_live7_w480_summary.csv",
     "outputs/backtests/live_watch_late_usd_macd_w480.csv",
     "outputs/backtests/live_watch_macd_late_usd_session_live4_w960.csv",
+    "outputs/backtests/live_watch_macd_8_21_late_session_w960.csv",
     "outputs/backtests/live_watch_macd_deadzone_relief_live4_w960.csv",
     "outputs/backtests/live_watch_macd_deadzone_hour_refine_live4_w960.csv",
     "outputs/backtests/live_watch_late_usd_multi_horizon_w480.csv",
     "outputs/backtests/live_watch_late_usd_quality_w480.csv",
     "outputs/backtests/live_watch_live7_active_pressure_maps_w480_summary.csv",
     "outputs/backtests/live_watch_strategy_maps_live7_pressure_w960_summary.csv",
+    "outputs/backtests/live_watch_strategy_maps_after_macd_hours_w960_summary.csv",
     "outputs/backtests/live_watch_live6_positive_subset_maps_w480_summary.csv",
     "outputs/backtests/live_watch_live6_probe_candidate_maps_w480_summary.csv",
     "outputs/backtests/live_watch_live6_exact_candidate_maps_w480_summary.csv",
@@ -466,13 +468,15 @@ def read_optimizer_scans(
             scan_rows = list(csv.DictReader(handle))
         if not scan_rows:
             continue
-        top_row = _normalize_optimizer_scan_row(dict(scan_rows[0]))
-        top_row["source_path"] = str(scan_path)
-        top_row["source_label"] = scan_path.stem
-        top_row["source_mtime_utc"] = mtime_utc.isoformat()
-        top_row["source_age_minutes"] = age_minutes
-        top_row["source_stale"] = age_minutes > OPTIMIZER_SCAN_STALE_MINUTES
-        rows.append(top_row)
+        for row_index, scan_row in enumerate(scan_rows, start=1):
+            top_row = _normalize_optimizer_scan_row(dict(scan_row))
+            top_row["source_path"] = str(scan_path)
+            top_row["source_label"] = scan_path.stem
+            top_row["source_row_index"] = row_index
+            top_row["source_mtime_utc"] = mtime_utc.isoformat()
+            top_row["source_age_minutes"] = age_minutes
+            top_row["source_stale"] = age_minutes > OPTIMIZER_SCAN_STALE_MINUTES
+            rows.append(top_row)
     rows.sort(key=_optimizer_scan_rank_key)
     return {
         "scan_count": len(rows),
