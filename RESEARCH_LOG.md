@@ -2292,3 +2292,19 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   by scan severity.
 - Decision: do not promote this champion refresh yet. It is useful watchlist
   evidence, but still too concentrated for live expansion.
+
+## 2026-06-23 GBPUSD multi-horizon current-pressure check
+
+- Live candidate diagnostics repeatedly showed `multi_horizon_momentum`
+  requesting a large GBPUSD short, trimmed to about `$49,959` by leverage,
+  asset-class, and symbol caps.
+- Ran a focused W960 full-data optimizer on GBPUSD only:
+  `outputs/backtests/live_watch_multi_horizon_gbpusd_current_pressure_w960.csv`.
+- The strict `gbp_10_40_strict` variant had 83.3% non-negative folds but only
+  50.0% active coverage, 8 evaluation fills, slightly negative total return
+  (-0.003%), and failed the promotion gate. Production-style `6/24` variants
+  made small money (+0.035% to +0.042%) but had only 50.0% non-negative folds.
+- Added the scan to the live optimizer rollup so future multi-horizon pressure
+  gets attached to this fresh evidence.
+- Decision: do not add GBPUSD multi-horizon to the live map yet. It remains a
+  watch candidate, not a high-conviction margin candidate.
