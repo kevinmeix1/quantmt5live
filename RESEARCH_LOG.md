@@ -1261,3 +1261,18 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   missed the total positive-fold promotion gate. Added
   `outputs/backtests/live_watch_macd_threshold_pressure_w480.csv` to the
   status optimizer rollup for future watch cycles.
+
+## 2026-06-23 GBPUSD MACD pressure rejection
+
+- Fresh live diagnostics around 2026-06-23 07:03 UTC showed EURGBP and USDJPY
+  as heuristic-only probes, but the deployed live strategies still had zero
+  requested notional and no risk-layer blocks.
+- Tested a more active USD-pressure map that changed only the GBPUSD sleeve
+  from `champion_ensemble` to `macd_momentum`, while keeping the promoted
+  `USDJPY=quality_trend` leg:
+  - 102 evaluation fills, 100/100 risk discipline, 33.3% positive folds,
+    46.2% active-positive folds, 61.1% non-negative folds, 0.499% worst
+    test drawdown, `REJECT`.
+- Decision: no live replacement. The GBPUSD MACD variant increases trade
+  count but materially worsens fold stability, so keep GBPUSD on the current
+  champion ensemble and track the rejection in the status rollup.
