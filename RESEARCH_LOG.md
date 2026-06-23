@@ -1755,3 +1755,21 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: keep `EURGBP` cross-rate in watchlist only. It is useful alpha
   context, but the exact live-seven evidence still misses the total positive
   fold promotion gate.
+
+## 2026-06-23 quality-trend pressure refinement
+
+- Refreshed live pair analysis showed broader heuristic pressure:
+  `AUDUSD`, `EURUSD`, and `GBPUSD` short; `USDCAD` and `USDCHF` long. The live
+  strategy map still stayed flat because MACD/champion/quality thresholds did
+  not confirm entries.
+- Tested lower-threshold quality-trend candidates on that five-symbol pressure
+  set: `AUDUSD`, `EURUSD`, `GBPUSD`, `USDCAD`, and `USDCHF`.
+- Output: `outputs/backtests/live_watch_quality_trend_pressure_refine_w480.csv`.
+- Best candidate was `strict_active_quality`: 26 trades, 0.388% full-sample
+  return, 0.342% max drawdown, 100/100 risk discipline, 100% active-positive
+  folds, and 100% non-negative folds, but only 16.7% positive/active folds.
+  The current-quality baseline had the highest full-sample return, 0.650%, but
+  the same 16.7% positive/active fold coverage.
+- Added the pressure refinement scan to the status rollup.
+- Decision: quality-trend remains useful as a low-drawdown sleeve, but this
+  refinement is too inactive to solve the live flat/no-approved-risk state.
