@@ -2094,3 +2094,23 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: keep the live config and running process unchanged. The faster MACD
   family remains the best more-active watch item, but the evidence does not yet
   justify restarting live with lower thresholds.
+
+## 2026-06-23 focused EURGBP multi-horizon check
+
+- Refreshed live state again. Production remained flat, but read-only
+  diagnostics showed two active sleeves: `opportunity_probe` wanted short
+  `AUDUSD` and short `EURGBP`, while `multi_horizon_momentum` wanted a short
+  `EURGBP` allocation. Sentiment still labeled `EURGBP` supportive, so the live
+  sentiment brake remained relevant for fresh short risk.
+- The AUDUSD/EURGBP opportunity-probe sleeve was already covered by
+  `outputs/backtests/live_watch_opportunity_probe_audusd_eurgbp_current_w960.csv`
+  and remained rejected, so I did not re-run it.
+- Ran a focused EURGBP-only multi-horizon validation:
+  `outputs/backtests/live_watch_multi_horizon_eurgbp_current_w960.csv`.
+  All active variants rejected. The live-current setup lost 0.051% with 66
+  trades and only 20.0% positive/non-negative folds. The stricter variants
+  either lost money or became too inactive; the only positive full-sample line
+  made just 2 trades with 0.0% active folds.
+- Added the EURGBP W960 scan to the live optimizer rollup.
+- Decision: do not promote EURGBP multi-horizon or loosen the sentiment/risk
+  brakes for this sleeve.
