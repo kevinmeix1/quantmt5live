@@ -1291,3 +1291,31 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not promote. The EURGBP MACD sleeve remains research-only
   because it did not clear the total positive-fold gate, even though it kept
   drawdown and risk discipline acceptable.
+
+## 2026-06-23 live readiness and early-session rejection pass
+
+- MT5 terminal trading permission flipped off during the live watch even though
+  account trading remained allowed. Re-enabled Algo Trading and added guarded
+  auto-recovery in `scripts/live_guard.ps1`: the guard now checks the MT5
+  terminal flag, sends the Algo Trading hotkey only when the flag is false,
+  re-checks, and logs the result. The live command and risk brakes were not
+  loosened.
+- Added `scripts/live_near_promotion.py` and supervisor/status wiring so the
+  live watch ranks research rows by distance from promotion gates. Current top
+  near-miss remains `faster_6_18` on the MACD sleeve, but it is still
+  `PAPER_ONLY` because positive folds are below target.
+- Ran a focused W480 refinement around the `6/18/5` MACD sleeve on `AUDUSD`,
+  `EURUSD`, `USDCAD`, and `USDCHF`:
+  - Best family (`base_6_18_h075` and equivalent histogram/slope variants):
+    82 full-sample trades, +2.082% return, 0.412% drawdown, 57.1% positive
+    folds, 87.0% active-positive folds, 91.4% non-negative folds,
+    `PAPER_ONLY`.
+  - Decision: no MACD live-parameter change. Activity is useful, but fold
+    stability is not high enough for promotion.
+- Tested early-session `session_momentum` grids for 06-10 UTC and 06-14 UTC,
+  including loose 1.0 bps thresholds. They produced zero trades on full data,
+  so the family is not useful for the current early-session flat period.
+- Rechecked opportunity-probe and asset-squeeze candidates. Opportunity-probe
+  produced live-time actionable diagnostics, but W480 optimizer rows remain
+  negative and unstable; asset-squeeze candidates remain rejected or
+  concentration-limited. No live promotion.
