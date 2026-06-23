@@ -1241,3 +1241,23 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   `USDJPY=quality_trend` remains the strongest validated trade-ready setup;
   higher-activity alternates increased fill count but did not clear stability
   gates.
+
+## 2026-06-23 MACD threshold pressure scan
+
+- Live remained flat around 2026-06-23 06:59 UTC because the four deployed
+  MACD symbols were below threshold, while the risk layer showed no symbol
+  blocks.
+- Ran a bounded full-data W480 / 96-bar MACD pressure scan on the deployed
+  MACD sleeve symbols (`AUDUSD`, `EURUSD`, `USDCAD`, `USDCHF`):
+  - `faster_6_18`: 82 trades, +2.082% full-sample return, 0.412% max drawdown,
+    61.1% positive folds, 84.6% active-positive folds, 88.9% non-negative
+    folds, `PAPER_ONLY`.
+  - `live_current`: 74 trades, +2.759% full-sample return, 44.4% positive
+    folds, 66.7% active-positive folds, 77.8% non-negative folds, `PAPER_ONLY`.
+  - Looser `lower_hist_0_75` stayed `PAPER_ONLY`; very loose/wider-hour
+    candidates were `REJECT`.
+- Decision: no live MACD threshold change. The faster candidate is worth
+  monitoring because it improved activity and active-fold stability, but it
+  missed the total positive-fold promotion gate. Added
+  `outputs/backtests/live_watch_macd_threshold_pressure_w480.csv` to the
+  status optimizer rollup for future watch cycles.
