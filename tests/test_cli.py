@@ -1446,6 +1446,9 @@ class CliTest(TestCase):
                     str(quote_path),
                     "--min-symbols",
                     "2",
+                    "--allocation-profile",
+                    "directional_probe",
+                    "--force-qualify-mode",
                     "--output",
                     str(output_path),
                 ],
@@ -1457,6 +1460,8 @@ class CliTest(TestCase):
 
         self.assertIn("Symbol Eligibility Optimization", output)
         self.assertIn("Walk-forward ranking: off", output)
+        self.assertIn("Allocation profile: directional_probe", output)
+        self.assertIn("Force qualify mode: yes", output)
         self.assertIn("rank,candidate,strategy,symbols", csv_text)
         self.assertIn("wf_positive_fold_fraction", csv_text)
         self.assertIn("rank,strategy,symbol,fills", attribution_text)

@@ -2,11 +2,16 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import TestCase
 
+from quanthack.backtesting.allocation_profiles import (
+    ALLOCATION_PROFILE_DIRECTIONAL_PROBE,
+    allocation_policy_for_strategy,
+)
 from quanthack.backtesting.symbol_eligibility_optimizer import (
     optimize_symbol_eligibility,
     write_symbol_attribution_rank_csv,
     write_symbol_eligibility_csv,
 )
+from quanthack.core.clock import FixedModeClock
 from quanthack.core.config import load_config
 from quanthack.market.sample_data import generate_synthetic_market_data
 
@@ -106,6 +111,41 @@ class SymbolEligibilityOptimizerTest(TestCase):
         self.assertEqual(
             [candidate.rank_key for candidate in result.candidates],
             sorted([candidate.rank_key for candidate in result.candidates], reverse=True),
+        )
+
+    def test_optimizer_accepts_live_research_policy_and_clock(self) -> None:
+        config = load_config("configs/competition.toml")
+        data = generate_synthetic_market_data(
+            symbols=("EURUSD", "GBPUSD", "USDJPY"),
+            periods=72,
+            interval_minutes=15,
+            seed=85,
+        )
+
+        result = optimize_symbol_eligibility(
+            config=config,
+            prices=data.prices,
+            quotes=data.quotes,
+            strategy_name="macd_momentum",
+            symbols=("EURUSD", "GBPUSD", "USDJPY"),
+            min_symbols=2,
+            max_symbols=3,
+            min_fills=0,
+            include_walk_forward=True,
+            train_size=24,
+            test_size=12,
+            step_size=12,
+            allocation_policy=allocation_policy_for_strategy(
+                "macd_momentum",
+                config,
+                profile=ALLOCATION_PROFILE_DIRECTIONAL_PROBE,
+            ),
+            clock=FixedModeClock(),
+        )
+
+        self.assertGreaterEqual(len(result.candidates), 1)
+        self.assertTrue(
+            all(candidate.walk_forward is not None for candidate in result.candidates)
         )
 
     def test_optimizer_can_include_combinational_candidate_search(self) -> None:

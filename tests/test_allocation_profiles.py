@@ -19,6 +19,7 @@ from quanthack.cli import (
     portfolio_universe_scan,
     quality_trend_optimize,
     strategy_map_optimize,
+    symbol_eligibility_optimize,
     volatility_squeeze_optimize,
 )
 from quanthack.core.clock import CompetitionMode, FixedModeClock, UTC
@@ -131,6 +132,15 @@ class AllocationProfilesTest(TestCase):
                 "--force-qualify-mode",
             ]
         )
+        symbol_eligibility_args = (
+            symbol_eligibility_optimize.build_parser().parse_args(
+                [
+                    "--allocation-profile",
+                    ALLOCATION_PROFILE_DIRECTIONAL_PROBE,
+                    "--force-qualify-mode",
+                ]
+            )
+        )
 
         self.assertEqual(
             backtest_args.allocation_profile,
@@ -176,6 +186,10 @@ class AllocationProfilesTest(TestCase):
             quality_args.allocation_profile,
             ALLOCATION_PROFILE_DIRECTIONAL_PROBE,
         )
+        self.assertEqual(
+            symbol_eligibility_args.allocation_profile,
+            ALLOCATION_PROFILE_DIRECTIONAL_PROBE,
+        )
         self.assertTrue(backtest_args.force_qualify_mode)
         self.assertTrue(warmup_args.force_qualify_mode)
         self.assertTrue(universe_args.force_qualify_mode)
@@ -185,6 +199,7 @@ class AllocationProfilesTest(TestCase):
         self.assertTrue(strategy_map_args.force_qualify_mode)
         self.assertTrue(volatility_args.force_qualify_mode)
         self.assertTrue(kalman_args.force_qualify_mode)
+        self.assertTrue(symbol_eligibility_args.force_qualify_mode)
 
     def test_fixed_mode_clock_always_returns_configured_mode(self) -> None:
         clock = FixedModeClock(CompetitionMode.QUALIFY)

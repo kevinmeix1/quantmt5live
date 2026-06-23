@@ -12,6 +12,8 @@ from quanthack.backtesting.competition_score import (
 )
 from quanthack.backtesting.metrics import PerformanceMetrics
 from quanthack.backtesting.portfolio_backtest import PortfolioBacktestEngine
+from quanthack.backtesting.portfolio_allocator import AllocationPolicy
+from quanthack.core.clock import CompetitionClock, FixedModeClock
 from quanthack.core.config import AppConfig
 from quanthack.core.instruments import instrument_for
 from quanthack.market.market_data import PriceHistory, QuoteHistory
@@ -50,8 +52,11 @@ def run_strategy_attribution(
     quotes: QuoteHistory,
     strategy_names: tuple[str, ...] = STRATEGY_NAMES,
     symbols: tuple[str, ...] | None = None,
+    allocation_policy: AllocationPolicy | None = None,
+    clock: CompetitionClock | FixedModeClock | None = None,
 ) -> StrategyAttributionReport:
     selected_symbols = _selected_symbols(prices=prices, quotes=quotes, symbols=symbols)
+    backtest_clock = clock or config.competition.to_clock()
     rows: list[StrategyAttributionRow] = []
     for strategy_name in _normalize_unique_strategy_names(strategy_names):
         engine = PortfolioBacktestEngine(
@@ -68,7 +73,8 @@ def run_strategy_attribution(
                 )
                 for symbol in selected_symbols
             },
-            clock=config.competition.to_clock(),
+            allocation_policy=allocation_policy,
+            clock=backtest_clock,
             fill_model=FillModel(slippage_bps=config.backtest.slippage_bps),
             periods_per_year=config.backtest.periods_per_year,
         )

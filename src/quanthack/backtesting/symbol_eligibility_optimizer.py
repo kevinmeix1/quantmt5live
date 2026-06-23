@@ -14,10 +14,12 @@ from quanthack.backtesting.portfolio_strategy_compare import (
     PortfolioStrategyComparisonRow,
     compare_portfolio_strategies,
 )
+from quanthack.backtesting.portfolio_allocator import AllocationPolicy
 from quanthack.backtesting.strategy_attribution import (
     StrategyAttributionRow,
     run_strategy_attribution,
 )
+from quanthack.core.clock import CompetitionClock, FixedModeClock
 from quanthack.core.config import AppConfig
 from quanthack.core.instruments import instrument_for
 from quanthack.market.market_data import PriceHistory, QuoteHistory
@@ -120,6 +122,8 @@ def optimize_symbol_eligibility(
     include_combinations: bool = False,
     combination_pool_size: int = 0,
     max_combinations: int = 200,
+    allocation_policy: AllocationPolicy | None = None,
+    clock: CompetitionClock | FixedModeClock | None = None,
 ) -> SymbolEligibilityOptimization:
     if min_symbols < 1:
         raise ValueError("min_symbols must be at least 1")
@@ -141,6 +145,8 @@ def optimize_symbol_eligibility(
         quotes=quotes,
         strategy_names=(normalized_strategy,),
         symbols=symbols,
+        allocation_policy=allocation_policy,
+        clock=clock,
     )
     available_symbols = attribution.symbols
     effective_max_symbols = max_symbols or len(available_symbols)
@@ -176,6 +182,8 @@ def optimize_symbol_eligibility(
             quotes=quotes,
             strategy_names=(normalized_strategy,),
             symbols=candidate_symbols,
+            allocation_policy=allocation_policy,
+            clock=clock,
         )
         if comparison.best is None:
             continue
@@ -192,6 +200,8 @@ def optimize_symbol_eligibility(
                     train_size=train_size,
                     test_size=test_size,
                     step_size=step_size,
+                    allocation_policy=allocation_policy,
+                    clock=clock,
                 )
             except ValueError as exc:
                 walk_forward_error = str(exc)
