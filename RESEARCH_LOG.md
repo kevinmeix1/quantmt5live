@@ -2505,3 +2505,20 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not promote or special-case `opportunity_probe` for USDCAD. The
   current USD-supportive headline backdrop is not enough to overcome the
   strategy's full-data churn profile.
+
+## 2026-06-23 MACD promotion refresh
+
+- Refreshed the stale full-data W960 MACD threshold scan on
+  `AUDUSD EURUSD USDCAD USDCHF`:
+  `outputs/backtests/live_watch_macd_current_threshold_retest_default_w960.csv`.
+- The previously live `6/18/5` MACD line fell back to `PAPER_ONLY`: +2.142%
+  return, 82 trades, but only 66.7% positive folds and 80.0% active-positive
+  folds.
+- The `8/21/8` variants passed live promotion. The selected live setting
+  `live_current_8_21_h075` made +2.396% with 80 trades, 83.3% positive folds,
+  and 100.0% active-positive/non-negative folds. It keeps the lower 0.75 bps
+  histogram threshold for more opportunity while restoring fold stability.
+- Updated `configs/competition.toml` MACD parameters to 8/21/8, 0.75 bps
+  histogram, 0.50 bps MACD line, 0.00 bps slope, and 0.10 trend efficiency.
+- Decision: promote the refreshed 8/21/8 MACD setting and restart the guarded
+  live loop so production uses the currently live-ready MACD evidence.
