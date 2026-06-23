@@ -2063,3 +2063,34 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not force trades or loosen the two-position/loss/sentiment
   brakes. Keep the live process enabled and let it trade only when the deployed
   strategy/risk gates approve.
+
+## 2026-06-23 active AUD/EUR/CHF and MACD threshold retest
+
+- Refreshed the live stack again. MT5, `live_supervisor.ps1`,
+  `live_guard.ps1`, and `quanthack.exe live-trade` were running with the
+  sentiment brake and symbol-state cooldown throttle intact. Account state was
+  still flat: `999181.58` equity, `-818.42` day P/L, zero open positions, zero
+  margin, and no live stderr log.
+- Production diagnostics stayed flat. The all-symbol `opportunity_probe`
+  diagnostic requested short `AUDUSD` and long `EURUSD`; short `USDCHF` also
+  fired but was behind the two-position diagnostic throttle.
+- Validated that active opportunity sleeve on full data:
+  `outputs/backtests/live_watch_opportunity_probe_aud_eur_chf_current_w960.csv`.
+  All variants rejected. The best high-score filter still lost 0.077% with 354
+  trades, 40.0% positive/non-negative folds, and negative active median return.
+  The live-current baseline lost 0.488% with 1,812 trades.
+- Tested whether less-conservative MACD thresholds could admit more production
+  trades:
+  - `outputs/backtests/live_watch_macd_current_threshold_retest_default_w960.csv`
+  - `outputs/backtests/live_watch_macd_current_threshold_retest_w960.csv`
+- Under production/default allocation, faster `6/18/5` with 0.75 histogram,
+  0.50 MACD, 0.05 slope, and 16-bar hold promoted on this W960 retest with 82
+  trades and +2.142%. But the prior W480/W672/W960 stability set still makes it
+  weaker than current production: W480 was paper-only at 61.1% positive folds,
+  W672 promoted, and W960 was a paper-only near-miss in the 240/192 fold set.
+  Current `8/21/8` remains higher return on the core sleeve (+2.759% full
+  sample) with W672/W960 promotion and the same W480 caution.
+- Added the new scans to the live optimizer rollup.
+- Decision: keep the live config and running process unchanged. The faster MACD
+  family remains the best more-active watch item, but the evidence does not yet
+  justify restarting live with lower thresholds.
