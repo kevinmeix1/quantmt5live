@@ -2522,3 +2522,23 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   histogram, 0.50 bps MACD line, 0.00 bps slope, and 0.10 trend efficiency.
 - Decision: promote the refreshed 8/21/8 MACD setting and restart the guarded
   live loop so production uses the currently live-ready MACD evidence.
+
+## 2026-06-23 MACD late-session expansion
+
+- Current live state was flat with zero requested exposure. At 21:47 UTC,
+  `AUDUSD` and `USDCAD` were blocked by the MACD session window while the
+  account was flat, so I retested a controlled late-session expansion rather
+  than removing risk brakes.
+- Fresh full-data W960 scan:
+  `outputs/backtests/live_watch_macd_8_21_late_session_w960.csv`.
+- Current 8/21/8 hours 6-14 remained `PROMOTE`: +2.396% return, 80 trades,
+  83.3% positive folds, 100.0% active-positive/non-negative folds.
+- Extended 8/21/8 hours 6-14 plus 20-22 also passed `PROMOTE`: +2.400%
+  return, 86 trades, 83.3% positive folds, 83.3% active-positive folds, and
+  83.3% non-negative folds with unchanged 0.605% max drawdown.
+- Late-only 20-22 variants were rejected due weak active fold stability, so
+  this is an additive evening window only, not an evening-only strategy.
+- Decision: add UTC hours 20, 21, and 22 to `strategy.macd_momentum`
+  `forex_allowed_utc_hours` to improve evidence-backed opportunity while
+  keeping live loss, sentiment, cooldown, max-lot, and position-cap brakes
+  intact.
