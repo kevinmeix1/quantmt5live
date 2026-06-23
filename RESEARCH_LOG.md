@@ -1438,3 +1438,29 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not promote. The current live opportunity looked active but
   remained historically negative, so keep it research-only and do not force a
   manual USDCHF/USDJPY pair trade.
+
+## 2026-06-23 USDCAD intraday MACD rejection
+
+- Fresh pair analysis showed a heuristic-only `USDCAD` buy with supportive
+  sentiment, while the guarded live MACD strategy still had no approved target
+  because the histogram was inside the exit band.
+- Ran a focused full-data W480 / 96-bar USDCAD-only MACD refinement with forced
+  QUALIFY clock, testing current live, near-band, fast 6/18, fast-light, and
+  narrower London/session variants.
+- Every tested candidate produced zero fixed-warmup evaluation fills and was
+  rejected as inactive, so the heuristic USDCAD pressure does not support
+  relaxing MACD thresholds.
+- Decision: do not promote. Keep USDCAD on the current guarded MACD slot and
+  wait for a true live MACD trigger.
+
+## 2026-06-23 AUDUSD/EURGBP opportunity-probe rejection
+
+- Fresh opportunity-probe diagnostics showed directional-probe allocations for
+  `AUDUSD` long and `EURGBP` short, while the guarded live map remained flat.
+- Ran a focused full-data W480 / 96-bar optimizer on `AUDUSD` and `EURGBP`
+  with current, stricter score, tighter spread, and longer-hold variants.
+- Best fold-stability row was `aud_eurgbp_score3_5`: 230 trades, -0.012%
+  return, 0.081% drawdown, and 44.4% positive / active-positive / non-negative
+  folds. The strict positive-return rows reached only 33.3% non-negative folds.
+- Decision: do not promote. The current live-looking opportunity probe remains
+  too unstable out of sample to justify a manual or live-map trade.

@@ -133,6 +133,13 @@ class LiveStatusSummaryScriptTest(TestCase):
 
         self.assertEqual(summary["status"], "LIVE_POSITIONS_OPEN")
 
+    def test_read_json_treats_partial_optional_file_as_missing(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "near_promotion.json"
+            path.write_text("", encoding="utf-8")
+
+            self.assertEqual(live_status_summary.read_json(path), {})
+
     def test_reads_and_writes_summary_files(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

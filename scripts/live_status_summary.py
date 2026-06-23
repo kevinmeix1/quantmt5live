@@ -53,6 +53,7 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_macd_pressure5_refine_w480.csv",
     "outputs/backtests/live_watch_macd_fast_refine4_w480.csv",
     "outputs/backtests/live_watch_usdjpy_quality_preopen_w480.csv",
+    "outputs/backtests/live_watch_usdcad_macd_intraday_w480.csv",
     "outputs/backtests/live_watch_eurgbp_cross_jpy_quality_w480.csv",
     "outputs/backtests/live_watch_eurgbp_cross_jpy_quality_w672.csv",
     "outputs/backtests/live_watch_eurgbp_cross_jpy_quality_w960.csv",
@@ -87,6 +88,7 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_opportunity_probe_opt_live6_w480.csv",
     "outputs/backtests/live_watch_opportunity_probe_pressure4_w480.csv",
     "outputs/backtests/live_watch_opportunity_probe_usdchf_usdjpy_w480.csv",
+    "outputs/backtests/live_watch_opportunity_probe_audusd_eurgbp_w480.csv",
 )
 OPTIMIZER_SCAN_STALE_MINUTES = 6 * 60
 DEFAULT_NEAR_PROMOTION_JSON = "outputs/backtests/live_watch_near_promotion_latest.json"
@@ -279,7 +281,10 @@ def read_json(path: str | Path) -> dict[str, Any]:
     json_path = Path(path)
     if not json_path.exists():
         return {}
-    return json.loads(json_path.read_text(encoding="utf-8"))
+    try:
+        return json.loads(json_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
 
 
 def read_research_consensus(path: str | Path) -> dict[str, str] | None:
