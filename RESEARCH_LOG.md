@@ -2225,3 +2225,29 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Added the scan to the live optimizer rollup.
 - Decision: do not loosen the live two-position cap or promote opportunity-probe
   for this AUD/EURGBP/CAD/CHF pressure set.
+
+## 2026-06-23 MACD current-vs-fast and AUD/GBP/CAD/JPY probe check
+
+- Refreshed live health, sentiment, attribution, pair analysis, production
+  diagnostics, and research cycle. MT5, `live_supervisor.ps1`, `live_guard.ps1`,
+  and real-order `quanthack.exe live-trade` were still running. Account stayed
+  flat at `999181.58` equity with zero positions and no live stderr.
+- Production diagnostics stayed flat, but the read-only `opportunity_probe`
+  sleeve requested short `AUDUSD` and short `GBPUSD`; long `USDCAD` and long
+  `USDJPY` were blocked behind the two-position diagnostic cap.
+- Validated the exact active-plus-blocked opportunity-probe set:
+  `outputs/backtests/live_watch_opportunity_probe_aud_gbp_cad_jpy_current_w960.csv`.
+  All candidates rejected. The least-bad very-strict variant lost 0.134% with
+  488 trades, Sharpe -0.030, and only 33.3% positive/non-negative folds. The
+  live-current line lost 0.606% with 1,715 trades.
+- Tested the more credible non-probe path, current MACD versus faster MACD
+  variants on the live MACD symbols:
+  `outputs/backtests/live_watch_macd_current_vs_fast_live4_w960.csv`.
+  Current `8/21/8` remained best and promoted: +2.759%, 0.406% max drawdown,
+  Sharpe 0.046, 74 trades, 83.3% positive folds, 100.0% active-positive and
+  non-negative folds. The faster 7/20 variant promoted but had lower return and
+  fewer trades, while 6/18 variants were paper-only.
+- Added both scans to the live optimizer rollup.
+- Decision: keep production MACD unchanged and do not promote opportunity-probe.
+  The evidence favors waiting for current MACD/ensemble/quality gates instead
+  of forcing the higher-turnover probe sleeve.
