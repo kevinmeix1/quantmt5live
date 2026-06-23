@@ -183,6 +183,48 @@ class LiveStatusSummaryScriptTest(TestCase):
         self.assertEqual(top["symbols"], ["AUDUSD", "EURUSD"])
         self.assertEqual(top["top_match"]["promotion_status"], "REJECT")
 
+    def test_candidate_optimizer_evidence_skips_inactive_top_symbol(self) -> None:
+        evidence = live_status_summary._candidate_optimizer_evidence(
+            {
+                "top_candidates": [
+                    {
+                        "label": "candidate_all_opportunity_probe",
+                        "actionable_symbols": [],
+                        "requested_symbols": [],
+                        "top_symbol": {
+                            "symbol": "AUDUSD",
+                            "status": "strategy_no_change",
+                            "strategy": "opportunity_probe",
+                            "raw_change_notional_usd": 0.0,
+                            "allocation_change_notional_usd": 0.0,
+                        },
+                    }
+                ]
+            },
+            {
+                "top_candidates": [
+                    {
+                        "source_path": (
+                            "outputs/backtests/"
+                            "live_watch_opportunity_probe_audusd_usdjpy_w480.csv"
+                        ),
+                        "source_label": (
+                            "live_watch_opportunity_probe_audusd_usdjpy_w480"
+                        ),
+                        "label": "aud_jpy_score5",
+                        "symbols": "AUDUSD USDJPY",
+                        "promotion_status": "REJECT",
+                        "promotion_live_ready": "False",
+                        "wf_non_negative_fold_fraction": "0.5000",
+                        "wf_active_positive_fold_fraction": "0.4700",
+                        "wf_total_evaluation_fills": "68",
+                    }
+                ]
+            },
+        )
+
+        self.assertEqual(evidence, {})
+
     def test_reads_and_writes_summary_files(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

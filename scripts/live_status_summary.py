@@ -93,6 +93,7 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_opportunity_probe_pressure4_w480.csv",
     "outputs/backtests/live_watch_opportunity_probe_usdchf_usdjpy_w480.csv",
     "outputs/backtests/live_watch_opportunity_probe_usdchf_w480.csv",
+    "outputs/backtests/live_watch_opportunity_probe_usdcad_w480.csv",
     "outputs/backtests/live_watch_opportunity_probe_audusd_eurgbp_w480.csv",
     "outputs/backtests/live_watch_opportunity_probe_audusd_eurusd_w480.csv",
     "outputs/backtests/live_watch_opportunity_probe_audusd_usdjpy_w480.csv",
@@ -951,7 +952,19 @@ def _candidate_evidence_symbols(candidate: dict[str, Any]) -> list[str]:
     top_symbol = candidate.get("top_symbol", {})
     if isinstance(top_symbol, dict):
         symbol = str(top_symbol.get("symbol", "")).strip().upper()
-        if symbol:
+        status = str(top_symbol.get("status", "")).strip()
+        raw_change = _float_or_zero(top_symbol.get("raw_change_notional_usd"))
+        allocation_change = _float_or_zero(
+            top_symbol.get("allocation_change_notional_usd")
+        )
+        if (
+            symbol
+            and (
+                status == "actionable_allocation"
+                or abs(raw_change) > 0.0
+                or abs(allocation_change) > 0.0
+            )
+        ):
             return [symbol]
     return []
 

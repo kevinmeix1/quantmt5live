@@ -1562,3 +1562,18 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not promote. The EURUSD/GBPUSD pressure signal is active but
   historically unstable, so keep it research-only and leave live routing
   unchanged.
+
+## 2026-06-23 USDCAD-only opportunity-probe rejection
+
+- Fresh pair analysis showed a heuristic-only `USDCAD` buy with supportive
+  sentiment, while the guarded live MACD strategy remained threshold-gated.
+- Ran a focused full-data W480 / 96-bar optimizer on `USDCAD` only using the
+  directional-probe allocation profile and forced QUALIFY clock.
+- Every opportunity-probe variant rejected. The best row, `usdcad_score3_5`,
+  produced 123 trades, -0.033% return, 0.048% drawdown, 44.4% positive folds,
+  44.4% active-positive folds, and 44.4% non-negative folds. The live-like
+  current probe was worse: 421 trades, -0.127% return, and 16.7%
+  non-negative folds.
+- Decision: do not promote. Treat isolated USDCAD heuristic buy pressure as
+  insufficient for fresh live risk until a tested MACD or opportunity-probe
+  variant clears fold-stability gates.
