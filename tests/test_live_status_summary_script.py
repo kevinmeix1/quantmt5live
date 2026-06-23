@@ -155,6 +155,7 @@ class LiveStatusSummaryScriptTest(TestCase):
                 root / "candidate_eurgbp_cross_rate_live_strategy_diagnostics_latest.json"
             )
             optimizer_scan = root / "quality_trend_opt.csv"
+            near_promotion = root / "near_promotion.json"
             output_json = root / "summary.json"
             output_text = root / "summary.txt"
             history = root / "summary.jsonl"
@@ -468,6 +469,29 @@ class LiveStatusSummaryScriptTest(TestCase):
                 + "\n",
                 encoding="utf-8",
             )
+            near_promotion.write_text(
+                json.dumps(
+                    {
+                        "scan_count": 1,
+                        "top_candidates": [
+                            {
+                                "source_path": str(optimizer_scan),
+                                "label": "micro_current",
+                                "promotion_status": "REJECT",
+                                "promotion_gap_score": 0.11,
+                                "positive_fold_fraction": 0.3333,
+                                "active_positive_fold_fraction": 0.7500,
+                                "non_negative_fold_fraction": 0.8889,
+                                "median_active_test_return_pct": 0.000051,
+                                "evaluation_fills": 28,
+                                "failed_gates": ["positive_folds -33.7%"],
+                                "promotion_reason": "average risk discipline",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
 
             live_status_summary.main(
                 [
@@ -505,6 +529,8 @@ class LiveStatusSummaryScriptTest(TestCase):
                     str(candidate_diagnostics),
                     "--optimizer-scan-csv",
                     str(optimizer_scan),
+                    "--near-promotion-json",
+                    str(near_promotion),
                     "--output-json",
                     str(output_json),
                     "--output-text",
@@ -563,6 +589,8 @@ class LiveStatusSummaryScriptTest(TestCase):
             summary["optimizer_scans"]["top_candidates"][0]["source_stale"]
         )
         self.assertIn("optimizer_scans scans=1 top=micro_current", text)
+        self.assertIn("near_promotion candidates=1 top=micro_current", text)
+        self.assertIn("blockers=positive_folds -33.7%", text)
         self.assertIn("age=", text)
         self.assertIn("stale=no", text)
         self.assertIn("status=REJECT live_ready=no", text)

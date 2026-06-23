@@ -199,6 +199,7 @@ while ((Get-Date) -lt $Deadline) {
       "--force-qualify-mode"
     )
   }
+  Invoke-And-Log "near_promotion" @("scripts\live_near_promotion.py")
   Invoke-And-Log "status_summary" @("scripts\live_status_summary.py")
   Start-Sleep -Seconds $IntervalSeconds
 }

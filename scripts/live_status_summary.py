@@ -79,6 +79,7 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_opportunity_probe_opt_live6_w480.csv",
 )
 OPTIMIZER_SCAN_STALE_MINUTES = 6 * 60
+DEFAULT_NEAR_PROMOTION_JSON = "outputs/backtests/live_watch_near_promotion_latest.json"
 
 LIVE_LOOP_PATTERN = re.compile(
     r"iteration=(?P<iteration>\d+)\s+timestamp=(?P<timestamp>\S+)\s+"
@@ -104,6 +105,7 @@ def build_summary(
     research_cycle: dict[str, Any] | None = None,
     candidate_strategy_diagnostics: dict[str, Any] | None = None,
     optimizer_scans: dict[str, Any] | None = None,
+    near_promotion: dict[str, Any] | None = None,
     generated_at_utc: str | None = None,
 ) -> dict[str, Any]:
     generated_at = generated_at_utc or datetime.now(UTC).isoformat()
@@ -193,6 +195,7 @@ def build_summary(
             candidate_strategy_diagnostics
         ),
         "optimizer_scans": _compact_optimizer_scans(optimizer_scans),
+        "near_promotion": _compact_near_promotion(near_promotion),
         "research_live_gate": _research_live_gate(
             research_cycle=compact_research_cycle,
             pair_rows=pair_rows,
@@ -412,6 +415,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Optimizer result CSV to surface; repeatable.",
     )
+    parser.add_argument("--near-promotion-json", default=DEFAULT_NEAR_PROMOTION_JSON)
     parser.add_argument("--output-json", default="outputs/live_status_summary_latest.json")
     parser.add_argument("--output-text", default="outputs/live_status_summary_latest.txt")
     parser.add_argument("--history-jsonl", default="outputs/live_status_summary_history.jsonl")
@@ -451,6 +455,7 @@ def main(argv: list[str] | None = None) -> None:
         optimizer_scans=read_optimizer_scans(
             tuple(args.optimizer_scan_csv or DEFAULT_OPTIMIZER_SCAN_CSVS)
         ),
+        near_promotion=read_json(args.near_promotion_json),
     )
     write_summary_json(summary, args.output_json)
     write_summary_text(summary, args.output_text)
@@ -858,6 +863,44 @@ def _compact_optimizer_scans(
     }
 
 
+def _compact_near_promotion(summary: dict[str, Any] | None) -> dict[str, Any]:
+    if not summary:
+        return {}
+    compact_rows = []
+    for row in summary.get("top_candidates", [])[:3]:
+        if not isinstance(row, dict):
+            continue
+        compact_rows.append(
+            {
+                "source_path": row.get("source_path", ""),
+                "label": row.get("label", ""),
+                "promotion_status": row.get("promotion_status", ""),
+                "promotion_gap_score": _float_or_zero(
+                    row.get("promotion_gap_score")
+                ),
+                "positive_fold_fraction": _float_or_zero(
+                    row.get("positive_fold_fraction")
+                ),
+                "active_positive_fold_fraction": _float_or_zero(
+                    row.get("active_positive_fold_fraction")
+                ),
+                "non_negative_fold_fraction": _float_or_zero(
+                    row.get("non_negative_fold_fraction")
+                ),
+                "median_active_test_return_pct": _float_or_zero(
+                    row.get("median_active_test_return_pct")
+                ),
+                "evaluation_fills": int(_float_or_zero(row.get("evaluation_fills"))),
+                "failed_gates": row.get("failed_gates", []),
+                "promotion_reason": row.get("promotion_reason", ""),
+            }
+        )
+    return {
+        "candidate_count": int(_float_or_zero(summary.get("scan_count"))),
+        "top_candidates": compact_rows,
+    }
+
+
 def _compact_research_cycle(
     cycle: dict[str, Any] | None,
 ) -> dict[str, Any]:
@@ -976,6 +1019,7 @@ def _summary_text(summary: dict[str, Any]) -> str:
     research_cycle = summary.get("research_cycle", {})
     candidate_diagnostics = summary.get("candidate_strategy_diagnostics", {})
     optimizer_scans = summary.get("optimizer_scans", {})
+    near_promotion = summary.get("near_promotion", {})
     research_live_gate = summary.get("research_live_gate", {})
     heuristic_only = summary.get("heuristic_only_probes", {})
     lines = [
@@ -1109,6 +1153,22 @@ def _summary_text(summary: dict[str, Any]) -> str:
             f"median_active={top.get('wf_median_active_test_return_pct', 0.0):.3%} "
             f"fills={top.get('wf_total_evaluation_fills', 0)} "
             f"reason={top.get('promotion_reason', '')}"
+        )
+    if near_promotion.get("candidate_count", 0) > 0:
+        top = near_promotion.get("top_candidates", [{}])[0]
+        blockers = top.get("failed_gates", [])
+        lines.append(
+            "near_promotion "
+            f"candidates={near_promotion.get('candidate_count', 0)} "
+            f"top={top.get('label', '')} "
+            f"source={Path(top.get('source_path', '')).name if top.get('source_path') else 'n/a'} "
+            f"status={top.get('promotion_status', '')} "
+            f"gap={top.get('promotion_gap_score', 0.0):.3f} "
+            f"pos={top.get('positive_fold_fraction', 0.0):.1%} "
+            f"active_pos={top.get('active_positive_fold_fraction', 0.0):.1%} "
+            f"nonneg={top.get('non_negative_fold_fraction', 0.0):.1%} "
+            f"fills={top.get('evaluation_fills', 0)} "
+            f"blockers={';'.join(blockers) if isinstance(blockers, list) else blockers}"
         )
     candidate_map_rows = _candidate_map_rows(candidate_map)
     if candidate_map_rows:
