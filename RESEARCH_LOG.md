@@ -1577,3 +1577,18 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not promote. Treat isolated USDCAD heuristic buy pressure as
   insufficient for fresh live risk until a tested MACD or opportunity-probe
   variant clears fold-stability gates.
+
+## 2026-06-23 alpha-router signal discovery added
+
+- The live research cycle was only writing signal diagnostics for
+  `champion_ensemble` and `cross_rate_reversion`, which kept the monitor blind
+  to router-level sleeves already supported by `generate_signals`.
+- A manual expanded run showed `alpha_router` produces clean diagnostics on the
+  full live-seven data: qualified rows included `USDCHF`, `GBPUSD`, and
+  `EURUSD` session-breakout signals plus `USDJPY` mean reversion. The direct
+  `macd_momentum`, `quality_trend`, `opportunity_probe`, `volatility_squeeze`,
+  `dual_squeeze`, and `asset_adaptive_dual_squeeze` strategy classes do not
+  expose the signal-diagnostics API and remain excluded from defaults.
+- Added `alpha_router` to the default live research-cycle signal diagnostics so
+  the supervisor can surface more trade-frequency candidates for validation
+  without changing live routing or bypassing live risk controls.

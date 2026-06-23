@@ -56,7 +56,11 @@ DEFAULT_BASKETS = (
     "usd_ok:EURUSD,USDCAD,USDJPY",
 )
 DEFAULT_BASKET_STRATEGIES = ("macd_momentum", "champion_ensemble")
-DEFAULT_SIGNAL_STRATEGIES = ("champion_ensemble", "cross_rate_reversion")
+DEFAULT_SIGNAL_STRATEGIES = (
+    "champion_ensemble",
+    "cross_rate_reversion",
+    "alpha_router",
+)
 
 
 def build_parser() -> argparse.ArgumentParser:

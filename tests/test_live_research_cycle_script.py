@@ -22,6 +22,12 @@ _SPEC.loader.exec_module(live_research_cycle)
 
 
 class LiveResearchCycleScriptTest(TestCase):
+    def test_default_signal_strategies_include_router_context(self) -> None:
+        self.assertEqual(
+            live_research_cycle.DEFAULT_SIGNAL_STRATEGIES,
+            ("champion_ensemble", "cross_rate_reversion", "alpha_router"),
+        )
+
     def test_qualifies_signal_row_requires_activity_and_edge(self) -> None:
         row = SignalDiagnosticRow(
             symbol="EURUSD",
