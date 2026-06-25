@@ -3319,3 +3319,24 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   not raise the two-position cap for it, and do not manually force the
   short/long pressure set. The latest active opportunity-probe read still looks
   like high-churn negative expectancy.
+
+## 2026-06-25 isolated EURGBP cross-rate rejection
+
+- The live watchlist continued to surface `EURGBP` cross-rate reversion with a
+  fast-screen quality score of 1.58, about 71% hit rate, and roughly 0.31 bps
+  edge after cost, but the exact live-seven `EURGBP=cross_rate_reversion`
+  replacement had already rejected at 66.7% non-negative folds. To check
+  whether a narrower EURGBP-only promotion was viable, I ran an isolated
+  strategy-map refresh on the current live7 W960 full-data import:
+  `outputs/backtests/live_watch_eurgbp_isolated_strategy_refresh_20260625_w960.csv`.
+- `EURGBP=cross_rate_reversion`, `EURGBP=champion_ensemble`,
+  `EURGBP=quality_trend`, and `EURGBP=macd_momentum` all produced zero
+  isolated fixed-warmup fills and rejected. The cross-rate fast-screen edge
+  needs multi-symbol context and does not translate into a standalone EURGBP
+  live sleeve.
+- Added the isolated refresh to the live status optimizer rollup so watchlist
+  evidence has an exact-symbol rejection available alongside the broader
+  seven-symbol cross-rate replacement rejection.
+- Decision: keep `EURGBP` on the champion sleeve and keep cross-rate in
+  watchlist/research-only mode until it clears a portfolio-level live map,
+  rather than promoting an isolated zero-fill setup.
