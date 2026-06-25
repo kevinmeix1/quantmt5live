@@ -4307,3 +4307,31 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   not change the live `GBPUSD=champion_ensemble` route. The current research
   signal remains watch-only until a fixed-warmup scan can pass the normal fold
   stability gates.
+
+## 2026-06-25 MACD hour-23 expansion no-op
+
+- At 22:10 UTC the live stack was healthy and flat: equity 999,159.41, day
+  P/L -840.59, no open positions, no margin, and no live orders since the
+  14:11 UTC EURUSD/USDCHF exits. `EURUSD` and `USDCHF` remained in observe
+  state until 2026-06-26 03:11:48 UTC, while other symbols were flat because
+  live MACD/champion/quality gates did not request notional.
+- Revalidated the active full-data import:
+  `outputs/backtests/live7_full_data_validation_20260625.json`. The seven live
+  FX symbols all had aligned 15-minute price/quote rows from 2026-05-11 through
+  2026-06-10. Validation warnings were weekend-scale gaps and spread outliers
+  on AUDUSD/EURGBP/GBPUSD/USDCHF, so the CSVs are usable for guarded scans but
+  still deserve the existing spread/quality brakes.
+- Tested whether the promoted micro MACD sleeve could safely add the upcoming
+  UTC hour 23 without changing thresholds, lots, sentiment, observe cooldowns,
+  or loss brakes:
+  `outputs/backtests/live_watch_macd_micro_hour23_refresh_20260625_w960.csv`.
+  Adding hour 23, or hour 23 plus hour 0, produced exactly the same +1.306%
+  full-sample return, 1.105% drawdown, 134 trades, 83.3% positive folds, 100.0%
+  non-negative folds, and 75 evaluation fills as the current live hour set.
+  The pure night-only variants were rejected with only six trades and 0.0%
+  positive active folds.
+- Decision: keep the current promoted micro MACD hours
+  `[6,7,8,9,10,11,12,13,14,20,21,22]`. Hour 23 is not rejected for hurting
+  performance, but it has no historical executable fills in this scan, so
+  adding it would be an unproven gate removal rather than an evidence-backed
+  activity expansion.
