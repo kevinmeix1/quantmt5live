@@ -4075,3 +4075,22 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   only. Keep max-lot, sentiment, observe/cooldown, small-only, and loss brakes
   unchanged; this is an evidence-backed activity expansion, not a risk-control
   removal.
+
+## 2026-06-25 MACD hour-18 rollback after recheck
+
+- After restarting the live stack, the system stayed flat into 20:44 UTC and
+  a fresh micro-MACD efficiency scan was run on the aligned live7 full-data
+  import:
+  `outputs/backtests/live_watch_macd_micro_eff_relief_h18_20260625_w960.csv`.
+- The looser trend-efficiency candidates (`eff03`, `eff02`, `eff01`) all
+  stayed `PAPER_ONLY`; they added fills but failed live promotion on total and
+  active positive-fold stability.
+- A direct apples-to-apples recheck in
+  `outputs/backtests/live_watch_macd_hour18_recheck_20260625_w960.csv` showed
+  the original hours beating the hour-18 expansion: `current_micro_old_hours`
+  returned +1.306% with 1.105% max drawdown and 134 trades, while
+  `current_micro_add_h18` returned +1.133% with 1.276% max drawdown and 140
+  trades. Both rows were only `PAPER_ONLY` in the fresh recheck.
+- Decision: roll back the hour-18 config expansion and remove the hour-18 scan
+  from the default status-summary source list. Keep the promoted old MACD
+  hours live; do not loosen efficiency just to create churn.
