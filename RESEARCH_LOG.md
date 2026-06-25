@@ -3139,3 +3139,37 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   cost, agreement, sentiment, cooldown, max-lot, max-position, and loss-brake
   gates unchanged. The current `AUDUSD` near-hit is not enough evidence for
   another live threshold relaxation.
+
+## 2026-06-25 AUDUSD/EURGBP/GBPUSD opportunity-probe refresh rejection
+
+- The research-only `opportunity_probe` sleeve rotated back to the
+  `AUDUSD`/`EURGBP`/`GBPUSD` pressure basket while production remained flat. I
+  refreshed the exact basket on the current live7 full-data import:
+  `outputs/backtests/live_watch_opportunity_probe_aud_eurgbp_gbp_refresh_20260625_w960.csv`
+  and
+  `outputs/backtests/live_watch_opportunity_probe_aud_eurgbp_gbp_default_refresh_20260625_w960.csv`.
+- Both allocation profiles rejected every row. The least-bad
+  `hyper_filtered_s3_00_hold4_20` row still lost 0.170% with 802 trades and
+  only 33.3% positive/active-positive/non-negative folds; the live-current row
+  lost 0.385% with 1,253 trades and 0.0% non-negative folds.
+- Decision: do not route this basket to `opportunity_probe` and do not force
+  the current research-only AUDUSD/EURGBP/GBPUSD trades. The pattern remains
+  active but negative-edge churn on full data.
+
+## 2026-06-25 AUDUSD/EURUSD/USDCHF opportunity-probe refresh rejection
+
+- After the previous refresh, the research-only `opportunity_probe` sleeve
+  rotated to `AUDUSD`/`EURUSD`/`USDCHF`. I refreshed that exact basket on the
+  current live7 full-data import:
+  `outputs/backtests/live_watch_opportunity_probe_aud_eur_chf_refresh_20260625_w960.csv`
+  and
+  `outputs/backtests/live_watch_opportunity_probe_aud_eur_chf_default_refresh_20260625_w960.csv`.
+- Both allocation profiles rejected every row. The least-bad `live_now_strict`
+  row still lost 0.122% with 622 trades, only 33.3%
+  positive/active-positive/non-negative folds, and negative median active-fold
+  return. The live-current row lost 0.488% with 1,812 trades and only 16.7%
+  non-negative folds.
+- Decision: do not route `AUDUSD`, `EURUSD`, or `USDCHF` to the
+  `opportunity_probe` sleeve and do not force the current research-only basket.
+  The USD-supportive macro context is not enough to overcome this full-data
+  churn profile.
