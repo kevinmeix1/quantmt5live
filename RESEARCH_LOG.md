@@ -3277,3 +3277,23 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   AUD/EUR and GBP-only scans.
 - Decision: do not route the current AUD/EUR/GBP/CAD/CHF pressure basket to
   `multi_horizon_momentum`, and do not use it to force fresh live risk.
+
+## 2026-06-25 EURGBP/EURUSD opportunity-probe refresh rejection
+
+- The read-only all-symbol `opportunity_probe` diagnostic was actionable only
+  on short `EURGBP` and short `EURUSD`, while production stayed flat and the
+  status summary was still citing the older 2026-06-23 exact basket scan. I
+  refreshed the exact basket on the current live7 full-data import:
+  `outputs/backtests/live_watch_opportunity_probe_eurgbp_eurusd_refresh_20260625_w960.csv`
+  and
+  `outputs/backtests/live_watch_opportunity_probe_eurgbp_eurusd_default_refresh_20260625_w960.csv`.
+- Both allocation profiles rejected every row. The least-bad `very_strict`
+  row lost 0.060% with 238 trades, 0.078% drawdown, and only 16.7%
+  positive/active-positive/non-negative folds. The live-current row lost
+  0.263% with 838 trades and 0.0% non-negative folds.
+- Added the fresh files to the live status optimizer rollup so future
+  `candidate_all_opportunity_probe` evidence cites same-day rejection instead
+  of the stale EURGBP/EURUSD scan.
+- Decision: do not route `EURGBP` and `EURUSD` to `opportunity_probe` and do
+  not force the current short basket. The live research signal remains
+  negative-edge churn on full data.
