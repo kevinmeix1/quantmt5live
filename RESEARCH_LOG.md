@@ -2889,3 +2889,21 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: promote the micro-entry row to live MACD config to increase trade
   opportunity while leaving the cost gate, sentiment brake, cooldown throttle,
   max-lot cap, max-position cap, and loss brakes intact.
+
+## 2026-06-25 MACD slope relief check
+
+- With live attribution refreshed, the account was flat and most symbols were
+  cooldown-blocked from fresh risk. `EURUSD` and `GBPUSD` were only small-only
+  eligible, and `EURUSD` was being held by the MACD slope gate.
+- Refreshed the default live-profile W960 scan on the full 15-minute dataset:
+  `outputs/backtests/live_watch_macd_slope_relief_default_20260625_w960.csv`.
+- The current `slope=0.05` row remained rank 1: +1.806% return, 90 trades,
+  83.3% positive folds, 83.3% active-positive folds, 83.3% non-negative folds,
+  and 0.456% max drawdown.
+- The `slope=0.00` row also promoted with the same fold stability, +1.748%
+  return, 94 trades, and 0.457% max drawdown. The more aggressive `hist=0.20`
+  row promoted but dropped to +1.250% with higher drawdown, and the `hist=0.15`
+  row rejected.
+- Decision: set live `min_histogram_slope_bps` to `0.0` as a narrow
+  trade-frequency relief step. Do not lower the histogram/MACD thresholds or
+  bypass cost, sentiment, cooldown, max-lot, max-position, or loss brakes.
