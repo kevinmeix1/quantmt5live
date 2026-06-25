@@ -4178,3 +4178,22 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: keep `USDJPY=quality_trend` unchanged and do not widen USDJPY
   hours for the current late-session pressure. The full-data scan found no
   executable after-hours quality-trend edge to promote.
+
+## 2026-06-25 EURGBP/GBPUSD champion MACD-diversifier rejection
+
+- Fresh 21:22 UTC pair analysis showed the strongest non-blocked advisory
+  pressure on `EURGBP` and continued negative `GBPUSD` sentiment, while live
+  `champion_ensemble` remained flat because both Kalman trend and asset squeeze
+  legs were outside the 21 UTC session window.
+- Tested whether adding an in-family MACD diversifier to `champion_ensemble`
+  could create validated late-session activity without widening live gates:
+  `outputs/backtests/live_watch_champion_macd_diversifier_eurgbp_gbpusd_latesession_20260625_w960.csv`.
+- Current, 10% MACD, 25% MACD, 40% MACD, 50/50 Kalman-MACD, and MACD-only
+  champion variants were evaluated on the full live7 15-minute import with W960
+  fixed-warmup folds. The MACD-heavy blends raised full-sample trades to 28 and
+  return to roughly +0.40%, but all blend candidates stayed `PAPER_ONLY`: only
+  16.7% of folds were positive and all positive walk-forward contribution came
+  from one fold. The MACD-only gate was `REJECT`.
+- Decision: keep `EURGBP=champion_ensemble` and `GBPUSD=champion_ensemble`
+  unchanged. The late-session MACD diversifier is not stable enough to promote
+  and would be a churn-prone way to force trades.
