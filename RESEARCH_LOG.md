@@ -3233,3 +3233,27 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: keep the current live map. The refresh confirms useful watchlist
   pressure, but not a live-ready replacement for the guarded MACD/champion/
   quality-trend command.
+
+## 2026-06-25 MACD near-promotion refresh rejection
+
+- Refreshed the stale `lower_6_18_h050_m035_eff07_s003_hold16` near-promotion
+  family on the current live7 W960 full-data import:
+  `outputs/backtests/live_watch_macd_near_promotion_refresh_default_20260625_w960.csv`
+  and
+  `outputs/backtests/live_watch_macd_near_promotion_refresh_directional_20260625_w960.csv`.
+- Default sizing still promotes the current live `8/21/8 h=0.25 m=0.35
+  eff=0.04 hold10` MACD row: +1.111% return, 114 trades, 1.176% drawdown,
+  and 83.3% positive/active-positive/non-negative folds.
+- The more active `6/18/5` near-promotion rows remain profitable but
+  `PAPER_ONLY`; the best lower-threshold row made +1.965% with 96 trades and
+  83.3% non-negative folds, but stayed at 66.7% positive folds versus the
+  67.0% live gate.
+- Directional-probe sizing rejected every row. The same family expanded to
+  158-191 trades, fell to 50.0% non-negative folds, and several rows lost
+  money; the current live row also rejected under directional sizing.
+- Added both refresh files to the status/near-promotion rollup and changed the
+  near-promotion tie-breaker to prefer fresher evidence when promotion quality
+  is otherwise identical.
+- Decision: do not switch live MACD to the 6/18 near-promotion family and do
+  not use directional-probe sizing for MACD. Keep the current promoted MACD
+  configuration active.

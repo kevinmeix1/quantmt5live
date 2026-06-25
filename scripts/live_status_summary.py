@@ -75,6 +75,8 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_macd_cost_relief_default_20260625_w960.csv",
     "outputs/backtests/live_watch_macd_cost_relief_20260625_w960.csv",
     "outputs/backtests/live_watch_macd_micro_trigger_directional_20260625_w960.csv",
+    "outputs/backtests/live_watch_macd_near_promotion_refresh_default_20260625_w960.csv",
+    "outputs/backtests/live_watch_macd_near_promotion_refresh_directional_20260625_w960.csv",
     "outputs/backtests/live_watch_macd_eurusd_gbpusd_map_probe_20260625_w960.csv",
     "outputs/backtests/live_watch_macd_current_threshold_retest_default_w960.csv",
     "outputs/backtests/live_watch_macd_current_threshold_retest_w960.csv",

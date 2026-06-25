@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import importlib.util
 import json
-from datetime import datetime, timezone
+import os
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import TestCase
@@ -54,6 +55,34 @@ class LiveNearPromotionTest(TestCase):
             "positive_folds",
             summary["top_candidates"][0]["failed_gates"][0],
         )
+
+    def test_prefers_fresher_scan_when_near_miss_quality_ties(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            older = root / "older.csv"
+            newer = root / "newer.csv"
+            header = (
+                "rank,label,symbols,promotion_status,promotion_live_ready,"
+                "promotion_reason,wf_positive_fold_fraction,"
+                "wf_active_positive_fold_fraction,wf_non_negative_fold_fraction,"
+                "wf_median_active_test_return_pct,wf_total_evaluation_fills"
+            )
+            row = (
+                "1,same_quality,AUDUSD EURUSD,PAPER_ONLY,False,total positive folds,"
+                "0.6666666667,0.80,0.8333333333,0.002,54"
+            )
+            older.write_text(header + "\n" + row + "\n", encoding="utf-8")
+            newer.write_text(header + "\n" + row + "\n", encoding="utf-8")
+            now = datetime(2026, 6, 25, tzinfo=timezone.utc)
+            os.utime(older, ((now - timedelta(days=2)).timestamp(),) * 2)
+            os.utime(newer, ((now - timedelta(minutes=5)).timestamp(),) * 2)
+
+            summary = live_near_promotion.build_near_promotion_summary(
+                (str(older), str(newer)),
+                now_utc=now,
+            )
+
+        self.assertEqual(summary["top_candidates"][0]["source_path"], str(newer))
 
     def test_cli_writes_json_and_text(self) -> None:
         with TemporaryDirectory() as tmpdir:

@@ -268,13 +268,14 @@ def _failed_gates(
     return gates
 
 
-def _rank_key(row: dict[str, Any]) -> tuple[int, float, int, float, str]:
+def _rank_key(row: dict[str, Any]) -> tuple[int, float, int, float, float, str]:
     status_rank = {"PAPER_ONLY": 0, "REJECT": 1, "UNVALIDATED": 2}
     return (
         status_rank.get(row["promotion_status"], 3),
         row["promotion_gap_score"],
         -row["evaluation_fills"],
         -row["median_active_test_return_pct"],
+        row["source_age_minutes"],
         row["label"],
     )
 
