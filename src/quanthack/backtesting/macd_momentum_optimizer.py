@@ -32,6 +32,7 @@ class MacdMomentumParameterSet:
     max_holding_period: int
     allowed_utc_hours: tuple[int, ...] | None = None
     min_histogram_slope_bps: float = 0.0
+    exit_histogram_bps: float | None = None
 
     def __post_init__(self) -> None:
         if not self.label.strip():
@@ -52,6 +53,11 @@ class MacdMomentumParameterSet:
             raise ValueError("max_holding_period must be at least 1")
         if self.min_histogram_slope_bps < 0:
             raise ValueError("min_histogram_slope_bps cannot be negative")
+        if self.exit_histogram_bps is not None:
+            if self.exit_histogram_bps < 0:
+                raise ValueError("exit_histogram_bps cannot be negative")
+            if self.exit_histogram_bps >= self.min_histogram_bps:
+                raise ValueError("exit_histogram_bps must be below min_histogram_bps")
         if self.allowed_utc_hours is not None:
             if not self.allowed_utc_hours:
                 raise ValueError("allowed_utc_hours cannot be empty")
@@ -212,6 +218,7 @@ def write_macd_momentum_optimization_csv(
                 "slow_window",
                 "signal_window",
                 "min_histogram_bps",
+                "exit_histogram_bps",
                 "min_macd_bps",
                 "min_histogram_slope_bps",
                 "min_trend_efficiency",
@@ -257,6 +264,11 @@ def write_macd_momentum_optimization_csv(
                     "slow_window": parameters.slow_window,
                     "signal_window": parameters.signal_window,
                     "min_histogram_bps": parameters.min_histogram_bps,
+                    "exit_histogram_bps": (
+                        ""
+                        if parameters.exit_histogram_bps is None
+                        else parameters.exit_histogram_bps
+                    ),
                     "min_macd_bps": parameters.min_macd_bps,
                     "min_histogram_slope_bps": parameters.min_histogram_slope_bps,
                     "min_trend_efficiency": parameters.min_trend_efficiency,
@@ -324,9 +336,13 @@ def _config_with_parameters(
         slow_window=parameters.slow_window,
         signal_window=parameters.signal_window,
         min_histogram_bps=parameters.min_histogram_bps,
-        exit_histogram_bps=min(
-            config.macd_momentum.exit_histogram_bps,
-            parameters.min_histogram_bps * 0.5,
+        exit_histogram_bps=(
+            parameters.exit_histogram_bps
+            if parameters.exit_histogram_bps is not None
+            else min(
+                config.macd_momentum.exit_histogram_bps,
+                parameters.min_histogram_bps * 0.5,
+            )
         ),
         min_macd_bps=parameters.min_macd_bps,
         min_histogram_slope_bps=parameters.min_histogram_slope_bps,

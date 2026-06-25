@@ -2907,3 +2907,31 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: set live `min_histogram_slope_bps` to `0.0` as a narrow
   trade-frequency relief step. Do not lower the histogram/MACD thresholds or
   bypass cost, sentiment, cooldown, max-lot, max-position, or loss brakes.
+
+## 2026-06-25 EURUSD pressure and MACD exit-band check
+
+- Refreshed live sentiment and pair state. `EURUSD` and `GBPUSD` were the only
+  small-only recovery candidates under the 96-hour attribution view, while
+  `AUDUSD`, `EURGBP`, `USDCAD`, `USDCHF`, and `USDJPY` were still blocked or
+  observe-only for fresh risk.
+- The supervisor showed a research-only `multi_horizon_momentum` EURUSD
+  allocation, so I isolated EURUSD on full W960 data:
+  `outputs/backtests/live_watch_multi_horizon_eurusd_isolated_20260625_w960.csv`.
+  All tested rows produced zero trades and remain rejected for live mapping.
+- I also checked whether switching the `EURUSD GBPUSD` small-only pressure pair
+  to MACD would help:
+  `outputs/backtests/live_watch_macd_eurusd_gbpusd_map_probe_20260625_w960.csv`.
+  The tested rows also produced zero trades and rejected, so `GBPUSD` stays on
+  the champion ensemble sleeve.
+- Added independent MACD `exit=` candidate support to the optimizer so the
+  dead/exit band can be tested directly instead of only through the histogram
+  threshold.
+- Exit-band scan:
+  `outputs/backtests/live_watch_macd_exit_band_relief_20260625_w960.csv`.
+  The current auto/0.10 exit rows remained stronger at +1.748% with 94 trades.
+  Narrower 0.075/0.05 exit rows still promoted but slipped to +1.673%, and the
+  looser `hist=0.20` rows promoted with lower +1.174% return and higher 0.752%
+  drawdown.
+- Decision: keep live MACD exit band and thresholds unchanged. The new optimizer
+  support stays because it improves future evidence gathering, but no live
+  config promotion is justified from this scan.

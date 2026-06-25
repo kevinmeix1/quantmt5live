@@ -35,7 +35,8 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "Candidate as label,fast_window,slow_window,signal_window,"
             "min_histogram_bps,min_macd_bps,min_trend_efficiency,"
-            "max_holding_period[,allowed_utc_hours][,min_histogram_slope_bps]. "
+            "max_holding_period[,allowed_utc_hours][,min_histogram_slope_bps]"
+            "[,exit=exit_histogram_bps]. "
             "Use hours like 11|12|13."
         ),
     )
@@ -125,6 +126,7 @@ def run(args: argparse.Namespace) -> None:
             f"slow={params.slow_window}, "
             f"signal={params.signal_window}, "
             f"hist={params.min_histogram_bps:.2f}, "
+            f"exit={_format_optional_float(params.exit_histogram_bps)}, "
             f"macd={params.min_macd_bps:.2f}, "
             f"slope={params.min_histogram_slope_bps:.2f}, "
             f"eff={params.min_trend_efficiency:.2f}, "
@@ -147,11 +149,12 @@ def main(argv: Sequence[str] | None = None) -> None:
 
 def _parse_candidate(raw: str) -> MacdMomentumParameterSet:
     parts = [part.strip() for part in raw.split(",")]
-    if len(parts) not in {8, 9, 10}:
+    if len(parts) < 8 or len(parts) > 11:
         raise argparse.ArgumentTypeError(
             "candidate must be label,fast_window,slow_window,signal_window,"
             "min_histogram_bps,min_macd_bps,min_trend_efficiency,"
             "max_holding_period[,allowed_utc_hours][,min_histogram_slope_bps]"
+            "[,exit=exit_histogram_bps]"
         )
     (
         label,
@@ -165,13 +168,23 @@ def _parse_candidate(raw: str) -> MacdMomentumParameterSet:
     ) = parts[:8]
     allowed_utc_hours: tuple[int, ...] | None = None
     min_histogram_slope_bps = 0.0
-    if len(parts) >= 9:
-        if _looks_like_hours(parts[8]):
-            allowed_utc_hours = _parse_hours(parts[8])
+    exit_histogram_bps: float | None = None
+    numeric_tokens_seen = 0
+    for token in parts[8:]:
+        if _looks_like_exit(token):
+            exit_histogram_bps = _parse_named_float(token)
+        elif _looks_like_slope(token):
+            min_histogram_slope_bps = _parse_named_float(token)
+        elif _looks_like_hours(token) and allowed_utc_hours is None:
+            allowed_utc_hours = _parse_hours(token)
+        elif numeric_tokens_seen == 0:
+            min_histogram_slope_bps = float(token)
+            numeric_tokens_seen += 1
+        elif numeric_tokens_seen == 1:
+            exit_histogram_bps = float(token)
+            numeric_tokens_seen += 1
         else:
-            min_histogram_slope_bps = float(parts[8])
-    if len(parts) == 10:
-        min_histogram_slope_bps = float(parts[9])
+            raise argparse.ArgumentTypeError(f"unrecognized optional candidate token: {token}")
     try:
         return MacdMomentumParameterSet(
             label=label,
@@ -184,6 +197,7 @@ def _parse_candidate(raw: str) -> MacdMomentumParameterSet:
             max_holding_period=int(max_holding_period),
             allowed_utc_hours=allowed_utc_hours,
             min_histogram_slope_bps=min_histogram_slope_bps,
+            exit_histogram_bps=exit_histogram_bps,
         )
     except ValueError as exc:
         raise argparse.ArgumentTypeError(str(exc)) from exc
@@ -207,6 +221,12 @@ def _format_hours(hours: tuple[int, ...] | None) -> str:
     return "|".join(str(hour) for hour in hours)
 
 
+def _format_optional_float(value: float | None) -> str:
+    if value is None:
+        return "auto"
+    return f"{value:.2f}"
+
+
 def _looks_like_hours(raw: str) -> bool:
     stripped = raw.strip()
     if any(separator in stripped for separator in ("|", ";", ":")):
@@ -215,3 +235,21 @@ def _looks_like_hours(raw: str) -> bool:
         hour = int(stripped)
         return 0 <= hour <= 23
     return False
+
+
+def _looks_like_exit(raw: str) -> bool:
+    normalized = raw.strip().lower()
+    return normalized.startswith("exit=") or normalized.startswith("exit_histogram_bps=")
+
+
+def _looks_like_slope(raw: str) -> bool:
+    normalized = raw.strip().lower()
+    return normalized.startswith("slope=") or normalized.startswith("min_histogram_slope_bps=")
+
+
+def _parse_named_float(raw: str) -> float:
+    try:
+        _, value = raw.split("=", 1)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(f"expected name=value token: {raw}") from exc
+    return float(value)

@@ -68,6 +68,7 @@ class MacdMomentumOptimizerTest(TestCase):
 
         self.assertIn("rank,label,symbols,fast_window", text)
         self.assertIn("min_histogram_slope_bps", text)
+        self.assertIn("exit_histogram_bps", text)
         self.assertIn("allowed_utc_hours", text)
         self.assertIn("fast", text)
         self.assertIn("wf_active_positive_fold_fraction", text)
@@ -165,6 +166,21 @@ class MacdMomentumOptimizerTest(TestCase):
 
         self.assertEqual(parameters.min_histogram_slope_bps, 0.25)
 
+    def test_parameter_set_accepts_exit_histogram(self) -> None:
+        parameters = MacdMomentumParameterSet(
+            "exit",
+            6,
+            18,
+            5,
+            2.0,
+            1.0,
+            0.2,
+            12,
+            exit_histogram_bps=0.5,
+        )
+
+        self.assertEqual(parameters.exit_histogram_bps, 0.5)
+
     def test_parameter_set_rejects_negative_histogram_slope(self) -> None:
         with self.assertRaisesRegex(ValueError, "min_histogram_slope_bps"):
             MacdMomentumParameterSet(
@@ -177,6 +193,20 @@ class MacdMomentumOptimizerTest(TestCase):
                 0.2,
                 12,
                 min_histogram_slope_bps=-0.1,
+            )
+
+    def test_parameter_set_rejects_exit_at_entry_threshold(self) -> None:
+        with self.assertRaisesRegex(ValueError, "exit_histogram_bps"):
+            MacdMomentumParameterSet(
+                "bad_exit",
+                6,
+                18,
+                5,
+                2.0,
+                1.0,
+                0.2,
+                12,
+                exit_histogram_bps=2.0,
             )
 
     def test_parameter_set_rejects_invalid_session_hours(self) -> None:
