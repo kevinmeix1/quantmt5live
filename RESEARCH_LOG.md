@@ -2850,3 +2850,18 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: keep USDJPY on the guarded quality-trend sleeve, but do not widen
   hours, reduce thresholds, or force any discretionary USDJPY trade. Let the
   live process trade only if the tested production gates actually clear.
+
+## 2026-06-25 MACD live-threshold relaxation check
+
+- Live diagnostics showed several MACD symbols close to the entry gate, so I
+  tested whether lowering the live histogram threshold from 0.75 bps to
+  0.50 bps would safely make the promoted live MACD sleeve more active.
+- Exact live-four W960 refresh on `AUDUSD EURUSD USDCAD USDCHF`:
+  `outputs/backtests/live_watch_macd_live_relax_h050_20260625_w960.csv`.
+- The relaxed 0.50 bps row was identical to the current 0.75 bps row on this
+  reproducible scan, but both rejected: -0.052% return, 193 trades, 33.3%
+  positive/active-positive/non-negative folds. The 0.35 bps micro row was
+  weaker at -0.059% and also rejected.
+- Decision: do not lower `strategy.macd_momentum.min_histogram_bps` in live
+  config. Keep the 0.75 bps gate and let production trade only after the tested
+  MACD, cost, sentiment, and cooldown gates clear.
