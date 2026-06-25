@@ -3173,3 +3173,21 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   `opportunity_probe` sleeve and do not force the current research-only basket.
   The USD-supportive macro context is not enough to overcome this full-data
   churn profile.
+
+## 2026-06-25 session/alpha-router refresh rejection
+
+- The live research cycle flagged session-style signals on `USDCHF`, `GBPUSD`,
+  `EURUSD`, and `AUDUSD`, with `USDCHF` also showing supportive sentiment and a
+  positive intraday technical score. I refreshed the exact session/alpha sleeve
+  candidates on the current live7 full-data import:
+  `outputs/backtests/live_watch_session_alpha_refresh_20260625_w960.csv`.
+- Every tested map rejected. The least-bad candidate was `USDCHF` as
+  `session_breakout`, but it still lost 0.027%, had a 0/100 risk-discipline
+  score, and stopped at 66.7% non-negative folds versus the 70.0% live gate.
+  The all-session map lost 0.092% with only 50.0% non-negative folds, while
+  alpha-router variants were much worse, with 0.0% non-negative folds and
+  losses from 0.213% to 0.813%.
+- Decision: do not promote `session_breakout` or `alpha_router` for these
+  symbols, and do not force the current USDCHF long pressure. Keep the current
+  guarded live map and let only promoted MACD/champion/quality logic place
+  orders.
