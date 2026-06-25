@@ -3789,3 +3789,25 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   `min_macd_bps=0.05`, `max_holding_period=6`) while keeping the same
   validated session hours, lot cap, loss brakes, sentiment brake, and
   symbol-state throttle intact.
+
+## 2026-06-25 hour-16 non-MACD expansion checks
+
+- Current live pressure at 16:15 UTC showed heuristic-only AUDUSD and GBPUSD
+  buys plus a USDCAD sell, while production stayed flat because MACD and
+  quality-trend session gates were closed and champion/volatility/pullback
+  signals did not align.
+- Refreshed session-momentum hour-16 candidates for AUDUSD/GBPUSD/USDCAD in
+  `outputs/backtests/live_watch_session_momentum_aud_gbp_cad_h16_refresh_20260625_w960.csv`.
+  Every candidate produced zero trades and zero active folds, including loose
+  hour-16-only shapes.
+- Refreshed quality-trend hour-16 candidates for AUDUSD/GBPUSD/USDCAD/USDJPY in
+  `outputs/backtests/live_watch_quality_trend_aud_gbp_cad_jpy_h16_refresh_20260625_w960.csv`.
+  The best small extended row was positive (+0.017%, 19 trades) with 100.0%
+  active-positive and non-negative active folds, but only 33.3% total positive
+  folds and 33.3% active fold coverage, so it stayed `PAPER_ONLY`. The
+  stricter late-session row rejected.
+- A volatility-squeeze near-miss walk-forward scan was attempted, but the
+  optimizer did not finish within the live supervision time cap and wrote no
+  completed CSV. Its process tree was stopped; no result was used for routing.
+- Decision: do not add hour 16 to session momentum or quality trend, and do not
+  loosen volatility-squeeze routing without a completed walk-forward result.
