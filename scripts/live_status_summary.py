@@ -94,6 +94,7 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_macd_negative_pressure_trio_w960.csv",
     "outputs/backtests/live_watch_macd_negative_pressure_plus_usd_offsets_w960.csv",
     "outputs/backtests/live_watch_macd_pressure_triad_*_w960*.csv",
+    "outputs/backtests/live_watch_macd_*_w960.csv",
     "outputs/backtests/live_watch_macd_nonblocked_refresh_20260625_w960.csv",
     "outputs/backtests/live_watch_macd_audusd_current_full_20260625_w960.csv",
     "outputs/backtests/live_watch_macd_audusd_promoted_shape_20260625_w960.csv",
