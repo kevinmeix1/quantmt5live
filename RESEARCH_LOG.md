@@ -3621,3 +3621,22 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not switch `USDJPY` to MACD or loosen live MACD parameters from
   this scan. Keep it on the near-promotion watchlist and require another
   confirming full-window pass before changing live configuration.
+
+## 2026-06-25 champion squeeze refresh
+
+- The monitor-only research cycle again surfaced `GBPUSD` and `AUDUSD`
+  `asset_adaptive_dual_squeeze` signals, while production stayed flat because
+  the live `champion_ensemble` detected chop/no valid squeeze setup. I
+  refreshed an AUDUSD/GBPUSD/EURGBP champion ensemble slice on the current W960
+  full-data import:
+  `outputs/backtests/live_watch_champion_squeeze_refresh_20260625_w960.csv`.
+- The current live weights and two looser/asset-heavier variants all made about
+  0.285%-0.321% with 18 trades and low drawdown, but the walk-forward evidence
+  was concentrated in one active fold: total positive folds were only 16.7% and
+  largest positive fold contribution was 100.0%. The asset-only variant made no
+  trades and was rejected.
+- Added the W960 refresh to the live status optimizer rollup so repeated
+  squeeze research signals cite fresh same-day evidence.
+- Decision: do not lower `champion_ensemble` entry scores or push an
+  asset-heavy squeeze variant live. The signal is interesting for monitoring,
+  but it is not broad enough across folds to justify increased live risk.
