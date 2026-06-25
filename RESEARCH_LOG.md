@@ -3811,3 +3811,17 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   completed CSV. Its process tree was stopped; no result was used for routing.
 - Decision: do not add hour 16 to session momentum or quality trend, and do not
   loosen volatility-squeeze routing without a completed walk-forward result.
+
+## 2026-06-25 micro-MACD hour-16 rejection
+
+- After promoting the micro MACD thresholds, refreshed the exact hour-16
+  session question for the non-observe MACD symbols AUDUSD and USDCAD.
+- Output:
+  `outputs/backtests/live_watch_macd_micro_aud_cad_h16_refresh_20260625_w960.csv`.
+  The current validated hours row remained positive but only `PAPER_ONLY` on
+  this two-symbol slice (+0.798%, 20 trades, 50.0% active folds, 100.0%
+  active-positive folds). Adding hour 16 reduced return to +0.701% and stayed
+  `PAPER_ONLY`. Hour-16-only variants lost -0.144% with 12 trades, 33.3%
+  active-positive folds, 66.7% non-negative folds, and `REJECT` status.
+- Decision: keep MACD live hours unchanged. The current 16:00 UTC USDCAD and
+  AUDUSD pressure is not a validated micro-MACD expansion signal.
