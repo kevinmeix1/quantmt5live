@@ -493,6 +493,61 @@ class LiveStatusSummaryScriptTest(TestCase):
         )
         self.assertEqual(top["top_match"]["wf_total_evaluation_fills"], 84)
 
+    def test_optimizer_scan_wildcard_finds_actionable_candidate_refresh(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            scan = root / "live_watch_opportunity_probe_audusd_actionable_refresh_w960.csv"
+            scan.write_text(
+                "\n".join(
+                    [
+                        (
+                            "rank,label,symbols,promotion_status,"
+                            "promotion_live_ready,promotion_reason,"
+                            "non_negative_fold_fraction,"
+                            "active_positive_fold_fraction,"
+                            "total_evaluation_fills"
+                        ),
+                        (
+                            "1,strict_aud,AUDUSD,REJECT,False,"
+                            "non-negative fold fraction 50.0% is below 70.0%,"
+                            "0.5000,0.5000,111"
+                        ),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            scans = live_status_summary.read_optimizer_scans(
+                (str(root / "live_watch_*_actionable*_w960.csv"),),
+                now_utc=live_status_summary.datetime(
+                    2026, 1, 1, tzinfo=live_status_summary.UTC
+                ),
+            )
+            evidence = live_status_summary._candidate_optimizer_evidence(
+                {
+                    "top_candidates": [
+                        {
+                            "label": "candidate_all_opportunity_probe",
+                            "actionable_symbols": ["AUDUSD"],
+                            "top_symbol": {
+                                "symbol": "AUDUSD",
+                                "strategy": "opportunity_probe",
+                                "status": "actionable_allocation",
+                                "raw_change_notional_usd": 25000.0,
+                            },
+                        }
+                    ]
+                },
+                scans,
+            )
+
+        self.assertEqual(scans["scan_count"], 1)
+        top = evidence["top_candidates"][0]
+        self.assertEqual(top["symbols"], ["AUDUSD"])
+        self.assertEqual(top["evidence_status"], "REJECTED_BY_SCAN")
+        self.assertEqual(top["top_match"]["wf_total_evaluation_fills"], 111)
+
     def test_optimizer_scans_rank_all_rows_not_only_first(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

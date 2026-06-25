@@ -280,6 +280,7 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_opportunity_probe_eurusd_gbpusd_strict_w960.csv",
     "outputs/backtests/live_watch_opportunity_probe_gbpusd_refresh_20260625_w960.csv",
     "outputs/backtests/live_watch_opportunity_probe_eurusd_usdjpy_strict_w960.csv",
+    "outputs/backtests/live_watch_*_actionable*_w960.csv",
 )
 OPTIMIZER_SCAN_STALE_MINUTES = 6 * 60
 DEFAULT_NEAR_PROMOTION_JSON = "outputs/backtests/live_watch_near_promotion_latest.json"
@@ -561,8 +562,11 @@ def read_optimizer_scans(
 ) -> dict[str, Any]:
     now = now_utc or datetime.now(UTC)
     rows: list[dict[str, Any]] = []
-    for path in paths:
-        scan_path = Path(path)
+    seen_paths: set[Path] = set()
+    for scan_path in _iter_optimizer_scan_paths(paths):
+        if scan_path in seen_paths:
+            continue
+        seen_paths.add(scan_path)
         if not scan_path.exists():
             continue
         mtime_utc = datetime.fromtimestamp(scan_path.stat().st_mtime, UTC)
@@ -585,6 +589,19 @@ def read_optimizer_scans(
         "scan_count": len(rows),
         "top_candidates": rows,
     }
+
+
+def _iter_optimizer_scan_paths(paths: list[str] | tuple[str, ...]) -> list[Path]:
+    scan_paths: list[Path] = []
+    for raw_path in paths:
+        path_text = str(raw_path)
+        if any(token in path_text for token in ("*", "?", "[")):
+            pattern_path = Path(path_text)
+            parent = pattern_path.parent if pattern_path.parent != Path("") else Path(".")
+            scan_paths.extend(sorted(parent.glob(pattern_path.name)))
+            continue
+        scan_paths.append(Path(path_text))
+    return scan_paths
 
 
 def _normalize_optimizer_scan_row(row: dict[str, Any]) -> dict[str, Any]:

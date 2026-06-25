@@ -4259,3 +4259,29 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: keep live routing unchanged. There is no tested late-session
   AUD/GBP MACD edge to unlock, and the live-visible EURGBP opportunity-probe
   request is a churn/loss candidate rather than a high-conviction trade.
+
+## 2026-06-25 AUDUSD actionable probe rejection and evidence discovery fix
+
+- Fresh 21:44 UTC candidate diagnostics shifted the actionable
+  `candidate_all_opportunity_probe` request from `EURGBP` to `AUDUSD`, with
+  small directional-probe sizing at 25,000 USD. The deployed live map still
+  requested zero gross notional and the account remained flat at equity
+  999,159.41.
+- Tested the exact current `AUDUSD` opportunity-probe family with directional
+  sizing:
+  `outputs/backtests/live_watch_opportunity_probe_audusd_actionable_refresh_20260625_w960.csv`.
+  The best strict row (`ultra_6_18_54_s3_50_f2_50_v0_75_hold24_120`) still
+  lost -0.017%, had 111 full-sample trades, 60 evaluation fills, and only 50.0%
+  positive/non-negative W960 folds. The deployed probe shape was materially
+  worse: -0.150%, 440 full-sample trades, and 16.7% positive/non-negative
+  folds.
+- Updated `scripts/live_status_summary.py` so default optimizer evidence
+  discovery expands `live_watch_*_actionable*_w960.csv` scans. This lets the
+  supervisor show fresh actionable-probe rejections automatically instead of
+  leaving `candidate_optimizer_evidence` empty after a new scan.
+- Tests:
+  `python -m unittest tests.test_live_dry_run tests.test_live_strategy_diagnostics_script tests.test_live_status_summary_script`.
+- Decision: keep live routing unchanged and treat the `AUDUSD` opportunity
+  probe as rejected by full-data evidence. The code change improves monitoring
+  clarity only; it does not relax order gates, risk limits, or live strategy
+  thresholds.
