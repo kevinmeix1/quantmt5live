@@ -4215,3 +4215,22 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: keep `USDJPY=quality_trend` unchanged and do not route USDJPY to
   `session_momentum` for late-session pressure. There is no historical
   executable session-momentum edge to promote.
+
+## 2026-06-25 non-blocked USD-pressure router rejection
+
+- Fresh 21:33 UTC diagnostics still showed no live requests, but the advisory
+  layer continued to show a broad USD-pressure pattern: negative `AUDUSD` and
+  `GBPUSD`, supportive `USDCAD` and `USDJPY`, with `EURUSD` and `USDCHF`
+  blocked by observe/spread state after the earlier small realized loss.
+- Rechecked the explicit `usd_pressure_router` only on currently non-blocked
+  USD-pressure symbols:
+  `outputs/backtests/live_watch_usd_pressure_nonblocked_refresh_20260625_w960_summary.csv`.
+- The W960 fixed-warmup scan was active, with 80 evaluation fills, but stayed
+  `REJECT`: only 33.3% of folds were positive, 66.7% were non-negative, active
+  positive folds were 50.0%, median active test return was -0.002%, and the
+  largest positive fold contributed 75.1% of gains. The current deployed map
+  remained stronger on the same live7 data: `PROMOTE`, 100.0% positive and
+  non-negative folds, 85 evaluation fills, and 0.224% median active return.
+- Decision: keep the live routing unchanged. Treat broad USD pressure as a
+  watch/regime signal only; do not deploy `usd_pressure_router` or widen
+  late-session risk while the fold stability gate fails.
