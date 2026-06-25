@@ -63,6 +63,9 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_macd_fast_refine4_w480.csv",
     "outputs/backtests/live_watch_macd_fast_refine4_w672.csv",
     "outputs/backtests/live_watch_macd_fast_refine4_w960.csv",
+    "outputs/backtests/live_watch_macd_micro_threshold_fullgrid_20260625_w480.csv",
+    "outputs/backtests/live_watch_macd_micro_threshold_fullgrid_20260625_w672.csv",
+    "outputs/backtests/live_watch_macd_micro_threshold_refresh_20260625_w960.csv",
     "outputs/backtests/live_watch_macd_current_refresh_20260625_w960.csv",
     "outputs/backtests/live_watch_macd_live_relax_h050_default_20260625_w960.csv",
     "outputs/backtests/live_watch_macd_live_micro_h025_default_20260625_w960.csv",
@@ -602,7 +605,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--parameter-consensus-csv",
-        default="outputs/backtests/live_watch_macd_aggressive_consensus.csv",
+        default="outputs/backtests/live_watch_macd_micro_threshold_consensus_20260625.csv",
     )
     parser.add_argument(
         "--basket-activity-scan-csv",

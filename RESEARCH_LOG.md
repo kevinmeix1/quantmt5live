@@ -3438,3 +3438,34 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: keep `multi_horizon_momentum` research-only for this basket and do
   not route it live or raise the position cap. The live-looking pressure is
   not stable enough across folds.
+
+## 2026-06-25 MACD micro-threshold consensus
+
+- Live pair analysis narrowed to a single heuristic `USDCAD` short pressure
+  while production MACD remained flat because the active histogram readings
+  were inside the current live exit band. To test a more active but still
+  evidence-gated path, I ran a lower-threshold MACD grid on the live MACD
+  sleeve (`AUDUSD`, `EURUSD`, `USDCAD`, `USDCHF`) using the current live7
+  full-data import:
+  `outputs/backtests/live_watch_macd_micro_threshold_refresh_20260625_w960.csv`,
+  `outputs/backtests/live_watch_macd_micro_threshold_fullgrid_20260625_w672.csv`,
+  and
+  `outputs/backtests/live_watch_macd_micro_threshold_fullgrid_20260625_w480.csv`.
+- W960 liked the micro 8/21/8 variants: the `h=0.05-0.10`, `macd=0.05-0.15`,
+  `exit=0.02-0.04`, `hold=6` rows made 1.306%, drew down 1.105%, made 134
+  trades, and reached 83.3% active-positive plus 100.0% non-negative folds.
+- Shorter windows did not confirm live readiness. W672 rejected the same micro
+  rows at 55.6% positive, 62.5% active-positive, and 66.7% non-negative folds.
+  W480 kept them `PAPER_ONLY` with 57.1% positive, 61.5% active-positive, and
+  71.4% non-negative folds.
+- Built
+  `outputs/backtests/live_watch_macd_micro_threshold_consensus_20260625.csv`.
+  The three-window consensus rejects the micro 8/21/8 rows and keeps the
+  faster 6/18 alternatives paper-only; the current live row also remains
+  rejected by consensus because shorter windows fail fold stability.
+- Added the scan files to the live status optimizer rollup and made this new
+  consensus the status summary's parameter-consensus source.
+- Decision: do not lower live MACD histogram/MACD thresholds yet. This is the
+  best current route toward a less idle MACD sleeve, but the multi-window
+  evidence says keep it in watchlist/research mode until shorter windows stop
+  failing fold stability.
