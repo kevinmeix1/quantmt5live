@@ -3388,3 +3388,27 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not route this basket to `opportunity_probe`, do not raise the
   position cap for it, and do not force the EURGBP/GBPUSD/USDCAD/USDCHF
   pressure set. The pattern is high-churn negative expectancy on full data.
+
+## 2026-06-25 AUDUSD/EURUSD/GBPUSD/USDCAD/USDCHF opportunity-probe rejection
+
+- The all-symbol `opportunity_probe` diagnostic rotated to a five-symbol
+  pressure basket: long `AUDUSD`, long `EURUSD`, long `GBPUSD`, short
+  `USDCAD`, and short `USDCHF`, with the two-position throttle allowing only
+  the first two active allocations. The live status evidence was matching the
+  older AUDUSD/EURUSD pair scan, so I refreshed the exact requested basket on
+  the current live7 W960 full-data import:
+  `outputs/backtests/live_watch_opportunity_probe_aud_eur_gbp_cad_chf_refresh_20260625_w960.csv`
+  and
+  `outputs/backtests/live_watch_opportunity_probe_aud_eur_gbp_cad_chf_default_refresh_20260625_w960.csv`.
+- Both allocation profiles rejected every row. The least-bad
+  `score3_5_hold16_64` row lost 0.115%, drew down 0.227%, made 628 trades,
+  and reached only 33.3% positive/active-positive/non-negative folds. The
+  current-style `current_pressure4` row lost 0.679% with 2,119 trades and only
+  16.7% non-negative folds.
+- Added both refresh files to the live status optimizer rollup so the current
+  `candidate_all_opportunity_probe` evidence cites exact same-day rejection
+  for the active AUD/EUR/GBP/CAD/CHF basket.
+- Decision: do not route this five-symbol basket to `opportunity_probe`, do
+  not raise the two-position cap for it, and do not force the apparent
+  long/short pressure set. The full-data test still shows high-churn negative
+  expectancy.
