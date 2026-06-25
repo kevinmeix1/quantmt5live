@@ -129,6 +129,7 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_alpha_router_top_session_w960_summary.csv",
     "outputs/backtests/live_watch_session_breakout_top_signal_w960_summary.csv",
     "outputs/backtests/live_watch_session_alpha_refresh_20260625_w960.csv",
+    "outputs/backtests/live_watch_session_router_tune_*_w960_summary.csv",
     "outputs/backtests/live_watch_fixing_reversal_live7_w480_summary.csv",
     "outputs/backtests/live_watch_trend_pullback_live7_w480_summary.csv",
     "outputs/backtests/live_watch_usd_session_momentum_fixed_w480_summary.csv",
