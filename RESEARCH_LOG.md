@@ -4008,3 +4008,38 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not add a relative-strength after-hours sleeve for the current
   non-blocked universe. It does not create usable activity on the real imported
   data.
+
+## 2026-06-25 AUDUSD/GBPUSD/USDJPY autocorrelation rejection
+
+- Production stayed flat while pair analysis showed heuristic-only pressure on
+  `AUDUSD`, `GBPUSD`, and `USDJPY`, so tested a research-only
+  `autocorrelation_regime` sleeve on the same aligned live7 15-minute import
+  with directional-probe allocation.
+- Outputs:
+  `outputs/backtests/live_watch_autocorrelation_aud_gbp_jpy_20260625_w960_summary.csv`
+  and
+  `outputs/backtests/live_watch_autocorrelation_aud_gbp_jpy_20260625_w960_folds.csv`.
+- The sleeve was active in every fold and generated 294 evaluation fills, but
+  only 11.1% of folds were positive/non-negative, median active return was
+  -0.008%, median 15-minute Sharpe was -0.109, and the promotion gate rejected
+  it for failing the 70.0% non-negative fold requirement.
+- Decision: do not add an autocorrelation after-hours/probe sleeve for the
+  current AUDUSD/GBPUSD/USDJPY pressure. It creates plenty of churn but the
+  full-data folds say that churn is mostly negative.
+
+## 2026-06-25 EURGBP direct MACD pressure rejection
+
+- After a fresh sentiment/pair-analysis refresh, `EURGBP` was the only
+  heuristic-only tiny-probe candidate, but the guarded live `champion_ensemble`
+  sleeve still requested no allocation. I tested whether a direct
+  `macd_momentum` route could justify the current 18:00 UTC pressure.
+- Output:
+  `outputs/backtests/live_watch_macd_eurgbp_pressure_20260625_w960.csv`.
+- The best row (`broad_live_hours_eurgbp`) improved raw return to +0.017% over
+  18 trades, but was only `PAPER_ONLY`: total positive folds were just 11.1%
+  and the largest positive fold contributed 86.5% of the positive
+  walk-forward return. The current 18:00-only and loose after-hours variants
+  rejected because they produced no active fixed-warmup evaluation folds.
+- Decision: keep `EURGBP=champion_ensemble`. Do not add direct EURGBP MACD or
+  after-hours relief from the live heuristic pressure; it is too sparse and
+  too concentrated to justify a live map change.

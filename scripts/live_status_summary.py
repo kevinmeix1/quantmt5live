@@ -116,6 +116,7 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_eurgbp_cross_jpy_quality_w480.csv",
     "outputs/backtests/live_watch_eurgbp_cross_jpy_quality_w672.csv",
     "outputs/backtests/live_watch_eurgbp_cross_jpy_quality_w960.csv",
+    "outputs/backtests/live_watch_macd_eurgbp_pressure_20260625_w960.csv",
     "outputs/backtests/live_watch_single_eurgbp_macd_jpy_quality_w480_summary.csv",
     "outputs/backtests/live_watch_single_gbpusd_macd_jpy_quality_w480_summary.csv",
     "outputs/backtests/live_watch_quality_trend_risk_repair_live6_w480.csv",
