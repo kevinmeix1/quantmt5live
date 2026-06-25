@@ -4285,3 +4285,25 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   probe as rejected by full-data evidence. The code change improves monitoring
   clarity only; it does not relax order gates, risk limits, or live strategy
   thresholds.
+
+## 2026-06-25 GBPUSD late-session volatility-squeeze rejection
+
+- At 21:50 UTC the live research gate still surfaced `GBPUSD` champion
+  `asset_adaptive_dual_squeeze` as an interesting watch signal, but the live
+  ensemble was correctly flat because both champion legs are outside their
+  approved UTC sessions at hour 21.
+- Started a W960 fixed-warmup GBPUSD late-session volatility-squeeze scan, then
+  stopped that research process after it exceeded the safe background window so
+  it would not compete with the live process. No CSV was produced by the stopped
+  run.
+- Ran a lighter full-data triage scan on the same live7 15-minute imports:
+  `outputs/backtests/live_watch_vol_squeeze_gbpusd_latesession_triage_20260625.csv`.
+  Every late-session candidate lost money: the best 20-22 UTC variant returned
+  -0.003% with only 2 trades and negative Sharpe, the looser 20-22 UTC variants
+  returned -0.004% with 4 trades, and the broader 17-22 UTC variant returned
+  -0.018% with 18 trades. The current 11-19 UTC control was also negative in
+  this direct volatility-squeeze-only triage.
+- Decision: do not expand GBPUSD squeeze trading into the late session and do
+  not change the live `GBPUSD=champion_ensemble` route. The current research
+  signal remains watch-only until a fixed-warmup scan can pass the normal fold
+  stability gates.
