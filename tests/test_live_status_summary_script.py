@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import TestCase
@@ -466,6 +467,56 @@ class LiveStatusSummaryScriptTest(TestCase):
         self.assertEqual(top["label"], "current_live")
         self.assertEqual(top["promotion_status"], "PROMOTE")
         self.assertEqual(top["source_row_index"], 2)
+
+    def test_optimizer_scans_prefer_fresh_promoted_rows_over_stale_rows(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            stale_scan = root / "stale_promoted.csv"
+            fresh_scan = root / "fresh_promoted.csv"
+            header = (
+                "rank,label,symbols,promotion_status,promotion_live_ready,"
+                "active_positive_fold_fraction,non_negative_fold_fraction,"
+                "median_active_test_return_pct,total_evaluation_fills"
+            )
+            stale_scan.write_text(
+                "\n".join(
+                    [
+                        header,
+                        "1,stale_better,AUDUSD EURUSD,PROMOTE,True,1.0,1.0,0.0030,44",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            fresh_scan.write_text(
+                "\n".join(
+                    [
+                        header,
+                        "1,fresh_current,AUDUSD EURUSD,PROMOTE,True,0.8333,0.8333,0.0018,47",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            now = live_status_summary.datetime(
+                2026, 1, 1, 12, 0, tzinfo=live_status_summary.UTC
+            )
+            stale_epoch = now.timestamp() - (
+                live_status_summary.OPTIMIZER_SCAN_STALE_MINUTES + 10
+            ) * 60
+            fresh_epoch = now.timestamp() - 5 * 60
+            os.utime(stale_scan, (stale_epoch, stale_epoch))
+            os.utime(fresh_scan, (fresh_epoch, fresh_epoch))
+
+            scans = live_status_summary.read_optimizer_scans(
+                (str(stale_scan), str(fresh_scan)),
+                now_utc=now,
+            )
+
+        top = scans["top_candidates"][0]
+        self.assertEqual(top["label"], "fresh_current")
+        self.assertFalse(top["source_stale"])
+        self.assertTrue(scans["top_candidates"][1]["source_stale"])
 
     def test_heuristic_evidence_matches_macd_scan_alias(self) -> None:
         evidence = live_status_summary._heuristic_optimizer_evidence(

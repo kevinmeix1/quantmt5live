@@ -62,6 +62,7 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_macd_fast_refine4_w480.csv",
     "outputs/backtests/live_watch_macd_fast_refine4_w672.csv",
     "outputs/backtests/live_watch_macd_fast_refine4_w960.csv",
+    "outputs/backtests/live_watch_macd_current_refresh_20260625_w960.csv",
     "outputs/backtests/live_watch_macd_current_threshold_retest_default_w960.csv",
     "outputs/backtests/live_watch_macd_current_threshold_retest_w960.csv",
     "outputs/backtests/live_watch_macd_current_vs_fast_live4_w960.csv",
@@ -2026,10 +2027,11 @@ def _candidate_strategy_diagnostic_rank_key(row: dict[str, Any]) -> tuple[int, f
     )
 
 
-def _optimizer_scan_rank_key(row: dict[str, Any]) -> tuple[int, float, float, float, float, str]:
+def _optimizer_scan_rank_key(row: dict[str, Any]) -> tuple[int, int, float, float, float, float, str]:
     status_rank = {"PROMOTE": 0, "PAPER_ONLY": 1, "REJECT": 2}
     return (
         status_rank.get(row.get("promotion_status", ""), 3),
+        1 if _boolish(row.get("source_stale")) else 0,
         -_float_or_zero(row.get("wf_active_positive_fold_fraction")),
         -_float_or_zero(row.get("wf_non_negative_fold_fraction")),
         -_float_or_zero(row.get("wf_median_active_test_return_pct")),

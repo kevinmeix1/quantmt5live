@@ -2666,3 +2666,24 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not expand the GBPUSD asset-squeeze session or relax its
   squeeze filters. Keep the live map unchanged and wait for tested strategy
   gates to approve risk.
+
+## 2026-06-25 MACD current-refresh W960 check
+
+- Refreshed the production MACD sleeve on the full live-seven 15-minute
+  backtest files because the monitor's top promoted MACD evidence was becoming
+  stale while the live loop remained flat:
+  `outputs/backtests/live_watch_macd_current_refresh_20260625_w960.csv`.
+- The active `8/21/8`, 0.75 bps histogram, 0.50 bps MACD, 0.00 slope,
+  0.10 efficiency, hours 6-14 plus 20-22 UTC setup still promoted: +2.400%
+  return, 86 trades, 0.605% max drawdown, 83.3% positive folds, 83.3%
+  active-positive folds, and 83.3% non-negative folds.
+- Lowering the histogram gate to 0.50 produced the exact same 86 trades, so it
+  adds no live opportunity. Micro variants reached 90 trades but reduced return
+  to +1.806% and weakened median active-fold return.
+- Faster 6/18/5 variants reached 88-102 trades, but stayed `PAPER_ONLY` because
+  total and active-positive fold fractions were only 66.7%.
+- Added the fresh scan to `scripts/live_status_summary.py` so future live
+  summaries cite the current W960 evidence instead of an older stale file.
+- Decision: keep MACD production parameters unchanged. The tested aggressive
+  variants either do not increase activity or trade activity for weaker
+  full-data payoff.
