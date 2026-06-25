@@ -3051,3 +3051,28 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not switch `AUDUSD` or `USDCHF` to the opportunity-probe sleeve
   and do not force the current buy/sell basket. The latest opportunity-probe
   basket is active but still negative-edge on full data.
+
+## 2026-06-25 MACD trend-efficiency relief promotion
+
+- Fresh production diagnostics showed `AUDUSD` blocked only by MACD trend
+  efficiency (`0.03` below the live `0.08` gate), while the other MACD symbols
+  remained histogram/exit-band gated. I tested a narrow efficiency-relief
+  ladder on the current live `8/21/8`, `hist=0.25`, `macd=0.35`, `slope=0.00`,
+  `exit=0.125`, hours `6-14` plus `20-22` setup.
+- Default live-profile scan:
+  `outputs/backtests/live_watch_macd_efficiency_relief_default_20260625_w960.csv`.
+  All rows promoted under the live allocation profile. The `eff=0.04` row
+  ranked first with 114 trades, +1.111% return, 1.176% max drawdown, 83.3%
+  positive/active-positive/non-negative folds, and 0.323% median active-fold
+  return. The current `eff=0.08` row remained stronger on total return
+  (+1.748%) and drawdown (0.457%) but only generated 94 trades.
+- Directional-probe profile:
+  `outputs/backtests/live_watch_macd_efficiency_relief_20260625_w960.csv`.
+  All rows rejected under the research sizing profile, so this is not a broad
+  sizing change or a reason to use the opportunity-probe allocation policy.
+- Decision: lower live `strategy.macd_momentum.min_trend_efficiency` from
+  `0.08` to `0.04` as a measured trade-frequency relief step under the tested
+  default live profile. Do not go to `0.03` yet because it adds more churn,
+  worsens drawdown, and degrades the directional-probe folds. Keep all live
+  risk controls, cost gates, MACD agreement, sentiment brake, cooldown throttle,
+  max-lot cap, max-position cap, and loss brakes intact.
