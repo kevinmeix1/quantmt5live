@@ -1384,7 +1384,7 @@ def _candidate_evidence_strategy(candidate: dict[str, Any]) -> str:
 def _candidate_evidence_symbol_sets(candidate: dict[str, Any]) -> list[list[str]]:
     symbol_sets: list[list[str]] = []
     seen: set[tuple[str, ...]] = set()
-    for key in ("requested_symbols", "actionable_symbols"):
+    for key in ("actionable_symbols", "requested_symbols"):
         symbols = [
             str(symbol).strip().upper()
             for symbol in candidate.get(key, [])

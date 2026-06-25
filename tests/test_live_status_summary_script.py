@@ -184,7 +184,7 @@ class LiveStatusSummaryScriptTest(TestCase):
         self.assertEqual(top["symbols"], ["AUDUSD", "EURUSD"])
         self.assertEqual(top["top_match"]["promotion_status"], "REJECT")
 
-    def test_candidate_optimizer_evidence_prefers_requested_exact_scan(self) -> None:
+    def test_candidate_optimizer_evidence_prefers_actionable_exact_scan(self) -> None:
         evidence = live_status_summary._candidate_optimizer_evidence(
             {
                 "top_candidates": [
@@ -245,15 +245,82 @@ class LiveStatusSummaryScriptTest(TestCase):
         top = evidence["top_candidates"][0]
         self.assertEqual(
             top["symbols"],
-            ["AUDUSD", "EURUSD", "GBPUSD", "USDCAD"],
+            ["AUDUSD", "EURUSD"],
         )
         self.assertEqual(
             top["top_match"]["source_label"],
-            "live_watch_opportunity_probe_aud_eur_gbp_cad_current_w960",
+            "live_watch_opportunity_probe_audusd_eurusd_w480",
         )
         self.assertEqual(
             top["top_match"]["symbols"],
-            ["AUDUSD", "EURUSD", "GBPUSD", "USDCAD"],
+            ["AUDUSD", "EURUSD"],
+        )
+
+    def test_candidate_optimizer_evidence_prefers_actionable_w960_over_requested_w480(self) -> None:
+        evidence = live_status_summary._candidate_optimizer_evidence(
+            {
+                "top_candidates": [
+                    {
+                        "label": "candidate_all_opportunity_probe",
+                        "actionable_symbols": ["AUDUSD", "EURGBP"],
+                        "requested_symbols": [
+                            "AUDUSD",
+                            "EURGBP",
+                            "EURUSD",
+                            "GBPUSD",
+                            "USDCAD",
+                            "USDCHF",
+                        ],
+                        "top_symbol": {
+                            "symbol": "AUDUSD",
+                            "strategy": "opportunity_probe",
+                        },
+                    }
+                ]
+            },
+            {
+                "top_candidates": [
+                    {
+                        "source_path": (
+                            "outputs/backtests/"
+                            "live_watch_live6_probe_candidate_maps_w480_summary.csv"
+                        ),
+                        "source_label": (
+                            "live_watch_live6_probe_candidate_maps_w480_summary"
+                        ),
+                        "label": "recent_aud_eur_probe_map",
+                        "symbols": "AUDUSD EURGBP EURUSD GBPUSD USDCAD USDCHF",
+                        "promotion_status": "REJECT",
+                        "promotion_live_ready": "False",
+                        "wf_non_negative_fold_fraction": "0.1111",
+                        "wf_active_positive_fold_fraction": "0.1111",
+                        "wf_total_evaluation_fills": "1945",
+                    },
+                    {
+                        "source_path": (
+                            "outputs/backtests/"
+                            "live_watch_opportunity_probe_audusd_eurgbp_current_w960.csv"
+                        ),
+                        "source_label": (
+                            "live_watch_opportunity_probe_audusd_eurgbp_current_w960"
+                        ),
+                        "label": "aud_eurgbp_fast",
+                        "symbols": "AUDUSD EURGBP",
+                        "promotion_status": "REJECT",
+                        "promotion_live_ready": "False",
+                        "wf_non_negative_fold_fraction": "0.2000",
+                        "wf_active_positive_fold_fraction": "0.2000",
+                        "wf_total_evaluation_fills": "144",
+                    },
+                ]
+            },
+        )
+
+        top = evidence["top_candidates"][0]
+        self.assertEqual(top["symbols"], ["AUDUSD", "EURGBP"])
+        self.assertEqual(
+            top["top_match"]["source_label"],
+            "live_watch_opportunity_probe_audusd_eurgbp_current_w960",
         )
 
     def test_candidate_optimizer_evidence_skips_inactive_top_symbol(self) -> None:
