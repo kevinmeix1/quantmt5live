@@ -4375,3 +4375,25 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not add GBPUSD late-session dual-squeeze band relief. The live
   asset-squeeze watch signal is still research-only; current late-session
   band-width relaxation creates no executable historical edge.
+
+## 2026-06-25 USDJPY actionable opportunity-probe refresh rejection
+
+- At 22:28 UTC the read-only `candidate_all_opportunity_probe` diagnostic was
+  actionable only on short `USDJPY` with a small 25,000 USD directional-probe
+  request. Production still stayed flat because `USDJPY` remains routed to the
+  guarded `quality_trend` sleeve, which is session-gated at this hour.
+- The status summary was citing an older 2026-06-23 isolated USDJPY
+  opportunity-probe rejection, so I refreshed the exact single-symbol family on
+  the current live7 W960 full-data import:
+  `outputs/backtests/live_watch_opportunity_probe_usdjpy_actionable_refresh_20260625_w960.csv`.
+- Every tested row rejected. The least-bad `fast_strict` row still lost
+  -0.174%, made 428 full-sample trades, and had 0.0% positive,
+  active-positive, and non-negative W960 folds. The deployed probe shape lost
+  -0.207% with 442 trades and the same 0.0% fold-stability profile.
+- The live status summary automatically picked up the refreshed actionable
+  scan via the actionable-scan evidence discovery and now cites this same-day
+  rejection for the active USDJPY opportunity-probe request.
+- Decision: do not force the USDJPY short, do not route USDJPY to
+  `opportunity_probe`, and keep `USDJPY=quality_trend` unchanged. The current
+  request is a high-churn negative-expectancy sleeve, not a high-conviction
+  margin opportunity.
