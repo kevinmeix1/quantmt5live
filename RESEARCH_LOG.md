@@ -2797,3 +2797,21 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not lower the live USDCAD MACD threshold for a heuristic-only
   score. Keep USDCAD on the promoted live MACD sleeve and wait for the tested
   production trigger.
+
+## 2026-06-25 GBPUSD opportunity-probe refresh
+
+- After another live refresh, the read-only `candidate_all_opportunity_probe`
+  diagnostic rotated to a single actionable long `GBPUSD` allocation. Production
+  remained flat because GBPUSD is still on the session-gated champion sleeve.
+- Ran an isolated GBPUSD opportunity-probe W960 validation on the extracted
+  full 15-minute dataset with the directional probe profile:
+  `outputs/backtests/live_watch_opportunity_probe_gbpusd_refresh_20260625_w960.csv`.
+- Every candidate rejected. The least-bad `selective_5_15_40_s2_75` line lost
+  0.020% with 187 trades and only 33.3% positive, active-positive, and
+  non-negative folds. The live-current line lost 0.122% with 412 trades.
+- Added the fresh scan to `scripts/live_status_summary.py` so future isolated
+  GBPUSD opportunity-probe pressure cites same-day evidence instead of only
+  mixed EURGBP/GBPUSD basket evidence.
+- Decision: do not route GBPUSD to `opportunity_probe` and do not force the
+  read-only allocation. Keep GBPUSD on the guarded champion sleeve until a
+  tested strategy clears live-ready fold stability.
