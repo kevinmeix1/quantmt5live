@@ -3469,3 +3469,27 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   best current route toward a less idle MACD sleeve, but the multi-window
   evidence says keep it in watchlist/research mode until shorter windows stop
   failing fold stability.
+
+## 2026-06-25 AUDUSD/EURGBP/EURUSD/GBPUSD/USDCHF opportunity-probe rejection
+
+- The live `candidate_all_opportunity_probe` diagnostic rotated to short
+  `AUDUSD`, long `EURGBP`, short `EURUSD`, short `GBPUSD`, and long `USDCHF`.
+  The live two-position throttle would allow only the first two active
+  allocations, while the status summary was still matching an older
+  `AUDUSD`/`EURGBP` pair scan. I refreshed the exact requested basket on the
+  current live7 W960 full-data import:
+  `outputs/backtests/live_watch_opportunity_probe_aud_eurgbp_eur_gbp_chf_refresh_20260625_w960.csv`
+  and
+  `outputs/backtests/live_watch_opportunity_probe_aud_eurgbp_eur_gbp_chf_default_refresh_20260625_w960.csv`.
+- Both allocation profiles rejected every row. The least-bad
+  `score3_5_hold16_64` row lost 0.090%, drew down 0.200%, made 617 trades,
+  and reached only 50.0% positive/active-positive/non-negative folds.
+- The current-style `current_pressure4` row lost 0.665%, drew down 0.708%,
+  made 2,099 trades, and reached only 16.7% positive/active-positive/
+  non-negative folds.
+- Added both refresh files to the live status optimizer rollup so future
+  `candidate_all_opportunity_probe` evidence can cite exact same-day
+  rejection for the active AUD/EUR/GBP/CHF basket.
+- Decision: do not route this basket to `opportunity_probe`, do not increase
+  the position cap for it, and do not force the AUDUSD/EURGBP pair. The exact
+  full-data test remains negative expectancy with weak fold stability.
