@@ -2998,3 +2998,21 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not relax live MACD slippage or cost-buffer gates. The optimizer
   support stays for future research, but live trading must keep the current
   cost filter because forcing these near-edge signals is historically lossy.
+
+## 2026-06-25 USDCAD opportunity-probe refresh rejection
+
+- After 11:00 UTC the guarded live map was still flat, but the research-only
+  `opportunity_probe` diagnostics showed a `USDCAD` buy allocation with score
+  4.48. I refreshed the USDCAD sleeve on the current live7 full-data import
+  before considering a live map change.
+- Directional-probe profile:
+  `outputs/backtests/live_watch_opportunity_probe_usdcad_refresh_20260625_w960.csv`.
+  All rows rejected. The best selective row was still -0.068% with only 50.0%
+  positive/active-positive/non-negative folds; the current row was -0.127% with
+  421 trades and only 16.7% non-negative folds.
+- Default profile:
+  `outputs/backtests/live_watch_opportunity_probe_usdcad_default_refresh_20260625_w960.csv`.
+  Results matched the directional scan and rejected every row.
+- Decision: do not switch `USDCAD` from the validated MACD sleeve to
+  `opportunity_probe`, and do not manually force the live USDCAD buy. The
+  current live research signal is a churn-prone pattern on full data.
