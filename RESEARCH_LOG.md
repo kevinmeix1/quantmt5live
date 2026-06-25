@@ -2590,3 +2590,29 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not lower MACD thresholds for production. The current setup is
   already aggressive enough to use the evening window, and lowering thresholds
   would add churn without improving full-data payoff.
+
+## 2026-06-25 EURGBP/GBPUSD opportunity-probe rejection refresh
+
+- Restarted the guarded Windows live stack after finding MT5 open but
+  `live_guard.ps1`, `live_supervisor.ps1`, and the live `quanthack` process
+  stopped. The relaunched command kept `--max-order-lots 0.25`, the sentiment
+  brake, symbol-state cooldown blocks, the small-only throttle, and the
+  two-position cap intact.
+- Refreshed live snapshots first. Account state was flat at `999181.58`
+  equity, day P/L `-818.42`, zero open positions, zero margin, and production
+  diagnostics reported no approved risk.
+- Read-only `candidate_all_opportunity_probe` diagnostics showed actionable
+  short `EURGBP` and long `GBPUSD` ideas, with additional raw USDCAD/USDCHF
+  probe pressure blocked behind the two-position cap. Before considering any
+  promotion, I ran the exact EURGBP/GBPUSD probe family on the extracted full
+  15-minute data with W960 fixed-warmup validation:
+  `outputs/backtests/live_watch_opportunity_probe_eurgbp_gbpusd_current_w960.csv`.
+- Every candidate rejected. The best `hyper_filtered_s3_00_hold4_20` line lost
+  0.140%, made 526 trades, and produced only 16.7% positive,
+  active-positive, and non-negative folds. The live-current line lost 0.235%
+  with 813 trades and 0.0% positive/non-negative folds.
+- Added the new W960 scan to `scripts/live_status_summary.py` so future live
+  summaries cite the fresher rejection instead of relying only on the older
+  W480 probe evidence.
+- Decision: do not route EURGBP/GBPUSD to `opportunity_probe`, do not force a
+  manual trade, and keep production on the existing guarded strategy map.
