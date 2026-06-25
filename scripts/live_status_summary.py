@@ -1742,11 +1742,61 @@ def _compact_optimizer_scans(
             }
         )
     latest_row = sorted(raw_rows, key=_optimizer_scan_recency_key)[0] if raw_rows else {}
+    latest_candidate = _compact_optimizer_scan_row(latest_row)
     return {
         "scan_count": int(_float_or_zero(scans.get("scan_count"))),
         "top_candidates": compact_rows,
-        "latest_candidate": _compact_optimizer_scan_row(latest_row),
+        "latest_candidate": latest_candidate,
+        "latest_top_conflict": _optimizer_latest_top_conflict(
+            compact_rows,
+            latest_candidate,
+        ),
     }
+
+
+def _optimizer_latest_top_conflict(
+    top_candidates: list[dict[str, Any]],
+    latest_candidate: dict[str, Any],
+) -> dict[str, Any]:
+    if not top_candidates or not latest_candidate:
+        return {}
+    top = top_candidates[0]
+    if not top.get("promotion_live_ready"):
+        return {}
+    if latest_candidate.get("promotion_live_ready"):
+        return {}
+    latest_status = str(latest_candidate.get("promotion_status", "")).upper()
+    if latest_status not in {"PAPER_ONLY", "REJECT"}:
+        return {}
+    if top.get("source_path") == latest_candidate.get("source_path"):
+        return {}
+    if _normalize_optimizer_label(top.get("label")) != _normalize_optimizer_label(
+        latest_candidate.get("label")
+    ):
+        return {}
+    if _normalize_symbol_text(top.get("symbols")) != _normalize_symbol_text(
+        latest_candidate.get("symbols")
+    ):
+        return {}
+    return {
+        "label": latest_candidate.get("label", ""),
+        "symbols": latest_candidate.get("symbols", ""),
+        "top_source_path": top.get("source_path", ""),
+        "top_status": top.get("promotion_status", ""),
+        "top_live_ready": bool(top.get("promotion_live_ready")),
+        "latest_source_path": latest_candidate.get("source_path", ""),
+        "latest_status": latest_candidate.get("promotion_status", ""),
+        "latest_live_ready": bool(latest_candidate.get("promotion_live_ready")),
+        "latest_reason": latest_candidate.get("promotion_reason", ""),
+    }
+
+
+def _normalize_optimizer_label(value: Any) -> str:
+    return re.sub(r"\s+", " ", str(value or "").strip()).lower()
+
+
+def _normalize_symbol_text(value: Any) -> tuple[str, ...]:
+    return tuple(sorted(part.upper() for part in str(value or "").split() if part))
 
 
 def _compact_optimizer_scan_row(row: dict[str, Any]) -> dict[str, Any]:
@@ -2180,6 +2230,18 @@ def _summary_text(summary: dict[str, Any]) -> str:
                 f"nonneg={latest.get('wf_non_negative_fold_fraction', 0.0):.1%} "
                 f"fills={latest.get('wf_total_evaluation_fills', 0)} "
                 f"reason={latest.get('promotion_reason', '')}"
+            )
+        conflict = optimizer_scans.get("latest_top_conflict", {})
+        if conflict:
+            lines.append(
+                "optimizer_latest_conflict "
+                f"label={conflict.get('label', '')} "
+                f"symbols={conflict.get('symbols', '')} "
+                f"top_source={Path(conflict.get('top_source_path', '')).name if conflict.get('top_source_path') else 'n/a'} "
+                f"top_status={conflict.get('top_status', '')} "
+                f"latest_source={Path(conflict.get('latest_source_path', '')).name if conflict.get('latest_source_path') else 'n/a'} "
+                f"latest_status={conflict.get('latest_status', '')} "
+                f"reason={conflict.get('latest_reason', '')}"
             )
     if near_promotion.get("candidate_count", 0) > 0:
         top = near_promotion.get("top_candidates", [{}])[0]
