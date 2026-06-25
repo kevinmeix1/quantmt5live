@@ -2616,3 +2616,37 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   W480 probe evidence.
 - Decision: do not route EURGBP/GBPUSD to `opportunity_probe`, do not force a
   manual trade, and keep production on the existing guarded strategy map.
+
+## 2026-06-25 active-pressure follow-up
+
+- Refreshed live snapshots again after the guarded loop stayed flat. Account
+  remained `999181.58` equity, day P/L `-818.42`, zero positions, zero margin,
+  and production diagnostics still showed no approved risk.
+- Candidate diagnostics shifted to opportunity-probe pressure on long `AUDUSD`,
+  short `EURGBP`, and cap-blocked long `GBPUSD`. I tested the exact current
+  three-symbol pressure set on the extracted live-seven full 15-minute data
+  with W960 fixed-warmup validation:
+  `outputs/backtests/live_watch_opportunity_probe_aud_eurgbp_gbp_current_w960.csv`.
+- Every probe variant rejected. The least-bad `hyper_filtered_s3_00_hold4_20`
+  line lost 0.170%, made 802 trades, and reached only 33.3% positive,
+  active-positive, and non-negative folds. The live-current line lost 0.385%
+  with 1,253 trades and 0.0% positive/non-negative folds.
+- Tested the promoted and micro MACD settings in-memory against the current MT5
+  snapshot without editing config. Lower thresholds still did not create a
+  guarded allocation: AUDUSD/EURUSD either had edge below estimated cost,
+  insufficient histogram slope, stale quote quality, or remained below the
+  threshold.
+- Ran a fresh research cycle and near-promotion scan. The top candidate stayed
+  `lower_6_18_h050_m035_eff07_s003_hold16` as `PAPER_ONLY`; it is more active
+  than the current live MACD but weaker and still misses the total positive
+  fold gate.
+- The opportunity-probe sleeve then shifted again to long `AUDUSD`, long
+  `EURUSD`, long `GBPUSD`, and raw `USDJPY` pressure. I ran another exact W960
+  validation:
+  `outputs/backtests/live_watch_opportunity_probe_aud_eur_gbp_jpy_current_w960.csv`.
+  Every variant rejected; the least-bad filtered line lost 0.347%, traded
+  1,099 times, and reached only 16.7% positive/active-positive/non-negative
+  folds, while the live-current line lost 0.628% with 1,731 trades.
+- Decision: keep production config unchanged for now. The live loop remains
+  enabled, but the current aggressive probe pressure is rejected by full-data
+  evidence and the apparent MACD near-signal is still below cost/quality gates.
