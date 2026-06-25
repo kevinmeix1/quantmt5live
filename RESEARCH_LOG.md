@@ -2687,3 +2687,22 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: keep MACD production parameters unchanged. The tested aggressive
   variants either do not increase activity or trade activity for weaker
   full-data payoff.
+
+## 2026-06-25 opportunity-probe five-symbol pressure rejection
+
+- Refreshed live snapshots after the guarded loop stayed flat. Production
+  diagnostics still requested no risk, while the read-only
+  `candidate_all_opportunity_probe` sleeve requested short `AUDUSD` and
+  `EURUSD`, with `GBPUSD`, `USDCHF`, and `USDJPY` also firing behind the
+  two-position diagnostic cap.
+- Ran exact full-data W960 validation on that pressure set:
+  `outputs/backtests/live_watch_opportunity_probe_aud_eur_gbp_chf_jpy_current_w960.csv`.
+- Every candidate rejected. The least-bad selective line still lost 0.234%,
+  made 912 trades, and reached only 16.7% positive, active-positive, and
+  non-negative folds. The live-current line lost 0.759% with 2,140 trades.
+- Added the scan to `scripts/live_status_summary.py` so future capped
+  AUD/EUR/GBP/CHF/JPY opportunity-probe pressure is tied to the current
+  rejection evidence.
+- Decision: do not expand the two-position cap, promote `opportunity_probe`,
+  or force manual trades for this pressure basket. Keep the guarded live map
+  unchanged.
