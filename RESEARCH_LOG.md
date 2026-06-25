@@ -3994,3 +3994,17 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not promote `opportunity_probe` for the current AUDUSD/GBPUSD
   heuristic pressure and do not force tiny manual buys. Even stricter filters
   fail the live promotion gate and still behave like unstable churn.
+
+## 2026-06-25 non-blocked relative-strength activity rejection
+
+- Production diagnostics stayed flat at 17:00 UTC, so tested whether a looser
+  cross-sectional `relative_strength` sleeve could add activity across the
+  currently non-blocked symbols `AUDUSD EURGBP GBPUSD USDCAD USDJPY`.
+- Output:
+  `outputs/backtests/live_watch_relative_strength_nonblocked_loose_20260625_w960.csv`.
+- Even loose thresholds (`lookback` 4 or 8 with entry z-scores 0.35-0.45) made
+  zero trades on the aligned live7 full-data import. The current/selective rows
+  also produced zero fills, so no walk-forward-active folds existed to promote.
+- Decision: do not add a relative-strength after-hours sleeve for the current
+  non-blocked universe. It does not create usable activity on the real imported
+  data.
