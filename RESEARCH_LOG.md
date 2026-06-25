@@ -2723,3 +2723,22 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   preopen/session-gated pressure has current rejection evidence.
 - Decision: do not add 09:00 UTC or broader early-Europe hours to
   `multi_horizon_momentum`, and do not route live symbols to this sleeve.
+
+## 2026-06-25 AUDUSD/EURUSD opportunity-probe refresh
+
+- Fresh live sentiment turned more USD-supportive, and the read-only
+  `candidate_all_opportunity_probe` diagnostic requested short `AUDUSD` and
+  short `EURUSD`. Production MACD still requested no risk: AUDUSD was inside
+  the exit band and EURUSD remained below the 0.75 bps histogram threshold.
+- Refreshed the exact two-symbol pressure sleeve on the extracted full
+  15-minute dataset:
+  `outputs/backtests/live_watch_opportunity_probe_audusd_eurusd_refresh_20260625_w960.csv`.
+- Every candidate rejected. The least-bad `ultra_pair_6_18_48_s425` still lost
+  0.022% with 169 trades and only 33.3% positive/active-positive/non-negative
+  folds. The live-current pair lost 0.299% with 877 trades.
+- Added the fresh scan to `scripts/live_status_summary.py` so current
+  AUDUSD/EURUSD probe pressure cites same-day evidence rather than the older
+  June 23 W960 file.
+- Decision: do not route AUDUSD/EURUSD to `opportunity_probe` and do not force
+  discretionary shorts. Keep production on the promoted MACD sleeve and wait
+  for its guarded thresholds to confirm an entry.
