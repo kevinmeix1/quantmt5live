@@ -4356,3 +4356,22 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: keep `USDCAD=macd_momentum` unchanged and do not force a
   heuristic tiny probe. The current USDCAD pressure is not executable by a
   tested MACD route, and live cost/edge diagnostics agree with the rejection.
+
+## 2026-06-25 GBPUSD dual-squeeze band-relief no-activity rejection
+
+- A fresh 22:20 UTC monitor pass was still flat with no requested live
+  notional. The recurring research-cycle watch item remained `GBPUSD`
+  champion `asset_adaptive_dual_squeeze`, while live diagnostics showed the
+  base squeeze leg just under the 1.0 bps band-width floor and outside the
+  approved champion session.
+- Started a W960 late-session dual-squeeze band-relief scan, then stopped that
+  research process after it exceeded the safe interactive window so it would
+  not compete with the live MT5 process.
+- Ran a lighter full-data triage on the same idea:
+  `outputs/backtests/live_watch_dual_squeeze_gbpusd_band_relief_late_triage_20260625.csv`.
+  The current late 20-22 UTC dual-squeeze shape, `min_band` relief to 0.75,
+  0.50, and 0.25 bps, looser squeeze ratios, lower prior-volatility, and
+  tighter 12-bar holding all produced zero full-sample trades.
+- Decision: do not add GBPUSD late-session dual-squeeze band relief. The live
+  asset-squeeze watch signal is still research-only; current late-session
+  band-width relaxation creates no executable historical edge.
