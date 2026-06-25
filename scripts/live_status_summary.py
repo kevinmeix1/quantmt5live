@@ -394,6 +394,9 @@ def build_summary(
         },
         "strategy_allocation": diagnostics.get("allocation", {}),
         "pairs": pair_rows,
+        "live_diagnostic_blockers": _diagnostic_blocker_summary(
+            list(pair_rows.values())
+        ),
         "reentry_queue": _reentry_queue(
             pair_rows,
             live_symbols=set(diagnostics_symbols),
@@ -764,6 +767,7 @@ def _pair_rows(
         diagnostic = diagnostic_data.get(symbol, {})
         sent = sentiment_data.get(symbol, {})
         rows[symbol] = {
+            "symbol": symbol,
             "action": pair.get("action", ""),
             "deal_state": deal.get("state", pair.get("deal_state", "")),
             "estimated_state_clear_utc": deal.get("estimated_state_clear_utc", ""),
@@ -783,6 +787,9 @@ def _pair_rows(
             "diagnostic_strategy": diagnostic.get("strategy", ""),
             "diagnostic_bucket": diagnostic.get("raw_reason_bucket", ""),
             "diagnostic_reason": diagnostic.get("raw_reason", ""),
+            "quote_wall_clock_skew_seconds": _float_or_zero(
+                diagnostic.get("quote_wall_clock_skew_seconds", 0.0)
+            ),
             "raw_change_notional_usd": _float_or_zero(
                 diagnostic.get("raw_change_notional_usd", 0.0)
             ),
@@ -906,6 +913,84 @@ def _heuristic_only_probes(
     }
 
 
+def _diagnostic_blocker_summary(
+    rows: list[dict[str, Any]],
+) -> dict[str, Any]:
+    bucket_symbols: dict[str, list[str]] = {}
+    status_symbols: dict[str, list[str]] = {}
+    stale_quote_symbols: list[dict[str, Any]] = []
+    blocked_count = 0
+    for row in rows:
+        status = str(row.get("status", row.get("diagnostic_status", ""))).strip()
+        allocation_change = _float_or_zero(row.get("allocation_change_notional_usd"))
+        if status == "actionable_allocation" or allocation_change != 0.0:
+            continue
+        symbol = str(row.get("symbol", "")).strip()
+        if not symbol:
+            continue
+        blocked_count += 1
+        bucket = _normalized_diagnostic_bucket(row)
+        bucket_symbols.setdefault(bucket, []).append(symbol)
+        status_symbols.setdefault(status or "unknown", []).append(symbol)
+        if _row_has_stale_quote(row):
+            stale_quote_symbols.append(
+                {
+                    "symbol": symbol,
+                    "bucket": bucket,
+                    "skew_seconds": _float_or_zero(
+                        row.get("quote_wall_clock_skew_seconds")
+                    ),
+                }
+            )
+    bucket_counts = {
+        bucket: len(symbols)
+        for bucket, symbols in sorted(
+            bucket_symbols.items(),
+            key=lambda item: (-len(item[1]), item[0]),
+        )
+    }
+    status_counts = {
+        status: len(symbols)
+        for status, symbols in sorted(
+            status_symbols.items(),
+            key=lambda item: (-len(item[1]), item[0]),
+        )
+    }
+    top_buckets = [
+        {"bucket": bucket, "count": count, "symbols": bucket_symbols[bucket][:7]}
+        for bucket, count in bucket_counts.items()
+    ][:5]
+    stale_quote_symbols.sort(key=lambda item: item["symbol"])
+    return {
+        "symbol_count": len(rows),
+        "blocked_count": blocked_count,
+        "bucket_counts": bucket_counts,
+        "status_counts": status_counts,
+        "top_buckets": top_buckets,
+        "stale_quote_symbols": stale_quote_symbols[:7],
+    }
+
+
+def _normalized_diagnostic_bucket(row: dict[str, Any]) -> str:
+    reason = str(
+        row.get("raw_reason", row.get("diagnostic_reason", ""))
+    ).strip().lower()
+    if "market quality hold" in reason or "quote is stale" in reason:
+        return "market_quality"
+    return str(
+        row.get("raw_reason_bucket", row.get("diagnostic_bucket", "unknown"))
+    ).strip() or "unknown"
+
+
+def _row_has_stale_quote(row: dict[str, Any]) -> bool:
+    reason = str(
+        row.get("raw_reason", row.get("diagnostic_reason", ""))
+    ).strip().lower()
+    if "quote is stale" in reason:
+        return True
+    return abs(_float_or_zero(row.get("quote_wall_clock_skew_seconds"))) > 5.0
+
+
 def _compact_candidate_watchlist(
     watchlist: dict[str, Any] | None,
 ) -> dict[str, Any]:
@@ -1018,6 +1103,7 @@ def _candidate_strategy_diagnostic_row(
             if abs(row["raw_change_notional_usd"]) > 0.0
         ],
         "top_symbol": symbol_rows[0] if symbol_rows else {},
+        "blocker_summary": _diagnostic_blocker_summary(symbol_rows),
     }
 
 
@@ -1042,6 +1128,9 @@ def _candidate_strategy_symbol_row(
         ),
         "allocation_change_notional_usd": _float_or_zero(
             item.get("allocation_change_notional_usd")
+        ),
+        "quote_wall_clock_skew_seconds": _float_or_zero(
+            item.get("quote_wall_clock_skew_seconds")
         ),
     }
 
@@ -1080,6 +1169,7 @@ def _compact_candidate_strategy_diagnostics(
                 ),
                 "actionable_symbols": list(row.get("actionable_symbols", []))[:7],
                 "requested_symbols": list(row.get("requested_symbols", []))[:7],
+                "blocker_summary": row.get("blocker_summary", {}),
                 "top_symbol": {
                     "symbol": top_symbol.get("symbol", ""),
                     "status": top_symbol.get("status", ""),
@@ -1814,6 +1904,7 @@ def _summary_text(summary: dict[str, Any]) -> str:
     research_live_gate = summary.get("research_live_gate", {})
     research_live_evidence = summary.get("research_live_optimizer_evidence", {})
     heuristic_only = summary.get("heuristic_only_probes", {})
+    live_blockers = summary.get("live_diagnostic_blockers", {})
     lines = [
         f"{summary['timestamp_utc']} status={summary['status']}",
         (
@@ -1847,6 +1938,13 @@ def _summary_text(summary: dict[str, Any]) -> str:
         f"small_only_symbols={','.join(risk.get('small_only_symbols', {})) or 'none'} "
             f"fresh_candidates={','.join(risk['fresh_risk_candidates']) or 'none'}"
     )
+    if live_blockers.get("blocked_count", 0) > 0:
+        lines.append(
+            "live_diagnostic_blockers "
+            f"symbols={live_blockers.get('blocked_count', 0)} "
+            f"buckets={_format_bucket_counts(live_blockers)} "
+            f"stale_quotes={_format_stale_quote_symbols(live_blockers)}"
+        )
     reentry_queue = summary.get("reentry_queue", {})
     if reentry_queue.get("candidate_count", 0) > 0:
         top = reentry_queue.get("top_candidates", [{}])[0]
@@ -1947,6 +2045,7 @@ def _summary_text(summary: dict[str, Any]) -> str:
         top_symbol = top.get("top_symbol", {})
         actionable_symbol_text = " ".join(top.get("actionable_symbols", [])) or "none"
         requested_symbol_text = " ".join(top.get("requested_symbols", [])) or "none"
+        blocker_summary = top.get("blocker_summary", {})
         lines.append(
             "candidate_diagnostics "
             f"candidates={candidate_diagnostics.get('candidate_count', 0)} "
@@ -1964,7 +2063,9 @@ def _summary_text(summary: dict[str, Any]) -> str:
             f"strategy={top_symbol.get('strategy', '')} "
             f"raw={top_symbol.get('raw_change_notional_usd', 0.0):.2f} "
             f"alloc={top_symbol.get('allocation_change_notional_usd', 0.0):.2f} "
-            f"bucket={top_symbol.get('raw_reason_bucket', '')}"
+            f"bucket={top_symbol.get('raw_reason_bucket', '')} "
+            f"blockers={_format_bucket_counts(blocker_summary)} "
+            f"stale_quotes={_format_stale_quote_symbols(blocker_summary)}"
         )
     if candidate_evidence.get("candidate_count", 0) > 0:
         top = candidate_evidence.get("top_candidates", [{}])[0]
@@ -2131,6 +2232,24 @@ def _format_age_minutes(raw_value: Any) -> str:
     if minutes < 60:
         return f"{minutes:.0f}m"
     return f"{minutes / 60:.1f}h"
+
+
+def _format_bucket_counts(summary: dict[str, Any]) -> str:
+    counts = summary.get("bucket_counts", {})
+    if not counts:
+        return "none"
+    return ",".join(f"{bucket}:{count}" for bucket, count in counts.items())
+
+
+def _format_stale_quote_symbols(summary: dict[str, Any]) -> str:
+    stale_rows = summary.get("stale_quote_symbols", [])
+    if not stale_rows:
+        return "none"
+    formatted = []
+    for row in stale_rows[:5]:
+        skew = _float_or_zero(row.get("skew_seconds"))
+        formatted.append(f"{row.get('symbol', '')}({skew:+.1f}s)")
+    return ",".join(formatted)
 
 
 def _candidate_map_rank_key(row: dict[str, str]) -> tuple[int, float, float, float]:

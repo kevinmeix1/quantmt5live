@@ -134,6 +134,39 @@ class LiveStatusSummaryScriptTest(TestCase):
 
         self.assertEqual(summary["status"], "LIVE_POSITIONS_OPEN")
 
+    def test_diagnostic_blocker_summary_promotes_stale_quotes_to_market_quality(self) -> None:
+        summary = live_status_summary._diagnostic_blocker_summary(
+            [
+                {
+                    "symbol": "USDCAD",
+                    "status": "strategy_no_change",
+                    "raw_reason_bucket": "strategy",
+                    "raw_reason": (
+                        "market quality hold: quote is stale: "
+                        "5.2s old > 5.0s limit"
+                    ),
+                    "quote_wall_clock_skew_seconds": -5.2,
+                },
+                {
+                    "symbol": "AUDUSD",
+                    "status": "strategy_no_change",
+                    "raw_reason_bucket": "session_gated",
+                    "raw_reason": "outside live hours",
+                },
+                {
+                    "symbol": "EURUSD",
+                    "status": "actionable_allocation",
+                    "raw_reason_bucket": "strategy",
+                    "allocation_change_notional_usd": 25000.0,
+                },
+            ]
+        )
+
+        self.assertEqual(summary["blocked_count"], 2)
+        self.assertEqual(summary["bucket_counts"]["market_quality"], 1)
+        self.assertEqual(summary["bucket_counts"]["session_gated"], 1)
+        self.assertEqual(summary["stale_quote_symbols"][0]["symbol"], "USDCAD")
+
     def test_read_json_treats_partial_optional_file_as_missing(self) -> None:
         with TemporaryDirectory() as tmpdir:
             path = Path(tmpdir) / "near_promotion.json"
