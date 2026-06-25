@@ -3942,3 +3942,23 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   sleeve lost -0.020% and produced no active fixed-warmup evaluation folds.
 - Decision: keep live MACD hours unchanged. The 17-19 UTC dead-zone expansion
   consistently adds activity without improving the current deployed schedule.
+
+## 2026-06-25 EURGBP/GBPUSD Kalman route rejection
+
+- Signal diagnostics showed EURGBP Kalman events with positive forward-return
+  diagnostics, so retested a direct `kalman_trend` route for the live
+  champion-ensemble symbols `EURGBP GBPUSD` on the full live7 15-minute import.
+- Raw optimizer output:
+  `outputs/backtests/live_watch_kalman_eurgbp_gbpusd_refresh_20260625.csv`.
+  The best loose row (`looser_edge3_l80_s025_eff15_hold24`) made +0.400% with
+  36 trades versus +0.193% and 20 trades for current Kalman parameters.
+- Fixed-warmup validation rejected the loose row:
+  `outputs/backtests/live_watch_kalman_eurgbp_gbpusd_looser_edge3_l80_s025_eff15_hold24_w960_summary.csv`.
+  It had only 16.7% positive folds, 33.3% active folds, 50.0% active-positive
+  folds, and -0.003% median active return.
+- The current Kalman row was only `PAPER_ONLY`:
+  `outputs/backtests/live_watch_kalman_eurgbp_gbpusd_current_l80_s025_eff20_edge5_hold32_w960_summary.csv`.
+  It produced just 4 evaluation fills, 16.7% positive/active folds, and all
+  positive return came from a single fold.
+- Decision: do not route EURGBP or GBPUSD directly to `kalman_trend`. The raw
+  full-run improvement is not stable enough for live routing.
