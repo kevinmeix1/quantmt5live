@@ -3682,3 +3682,19 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not route current live symbols to `relative_strength`; it is not
   an opportunity source in this window unless a future parameter-specific scan
   can produce active, fold-stable trades.
+
+## 2026-06-25 MACD hour-15 non-blocked rejection
+
+- With the live map flat at 15:00 UTC and `AUDUSD`/`USDCAD` blocked only by the
+  validated MACD session window, I tested whether adding hour 15 could create
+  evidence-backed activity without touching cost, agreement, or lot guardrails.
+- Output: `outputs/backtests/live_watch_macd_hour15_nonblocked_20260625_w960.csv`.
+  The current 10-14 UTC row stayed `PAPER_ONLY` at +0.898%, 16 trades, 50.0%
+  total positive folds, and 100.0% active-positive/non-negative folds. The
+  hour-15 current row added activity (28 trades) but weakened to +0.689%, 50.0%
+  total positive folds, 75.0% active-positive folds, and `PAPER_ONLY`. The
+  fast-6 hour-15 row also stayed `PAPER_ONLY`.
+- Added the scan to the live status optimizer rollup so future 15:00 UTC
+  session-gated pressure cites current full-data evidence.
+- Decision: do not widen the live MACD session gate to hour 15. The extra
+  trades are not live-ready and are weaker than the existing session window.

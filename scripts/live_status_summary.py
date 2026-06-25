@@ -139,6 +139,7 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_macd_late_usd_session_live4_w960.csv",
     "outputs/backtests/live_watch_macd_8_21_late_session_w960.csv",
     "outputs/backtests/live_watch_macd_micro_threshold_after_hours_w960.csv",
+    "outputs/backtests/live_watch_macd_hour15_nonblocked_20260625_w960.csv",
     "outputs/backtests/live_watch_macd_deadzone_relief_live4_w960.csv",
     "outputs/backtests/live_watch_macd_deadzone_hour_refine_live4_w960.csv",
     "outputs/backtests/live_watch_late_usd_multi_horizon_w480.csv",
