@@ -3257,3 +3257,23 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not switch live MACD to the 6/18 near-promotion family and do
   not use directional-probe sizing for MACD. Keep the current promoted MACD
   configuration active.
+
+## 2026-06-25 multi-horizon current-pressure refresh rejection
+
+- Fresh pair analysis showed broad heuristic pressure: long `AUDUSD`,
+  `EURUSD`, and `GBPUSD`, short `USDCAD` and `USDCHF`, while production stayed
+  flat because MACD edge was below estimated cost and champion/quality gates
+  were inactive. I refreshed the stale multi-horizon evidence for that exact
+  pressure set:
+  `outputs/backtests/live_watch_multi_horizon_current_pressure_refresh_20260625_w960.csv`.
+- Directional-probe sizing rejected every row. The least-bad
+  `tight_8_32_f35_s8` row still lost 0.036%, made 263 trades, and reached only
+  50.0% positive/active-positive/non-negative folds.
+- The higher-activity `current_hours_6_24` and `short_strict_4_16_hold12`
+  variants were worse, losing 0.198% and 0.333% with 727 and 780 trades and
+  only 16.7% non-negative folds.
+- Added the refresh file to the live status optimizer rollup so current
+  multi-horizon diagnostics cite same-day evidence instead of the older
+  AUD/EUR and GBP-only scans.
+- Decision: do not route the current AUD/EUR/GBP/CAD/CHF pressure basket to
+  `multi_horizon_momentum`, and do not use it to force fresh live risk.
