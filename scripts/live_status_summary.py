@@ -280,6 +280,7 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_opportunity_probe_eurusd_gbpusd_strict_w960.csv",
     "outputs/backtests/live_watch_opportunity_probe_gbpusd_refresh_20260625_w960.csv",
     "outputs/backtests/live_watch_opportunity_probe_eurusd_usdjpy_strict_w960.csv",
+    "outputs/backtests/live_watch_opportunity_probe_*_w960.csv",
     "outputs/backtests/live_watch_opportunity_probe_*_w960_summary.csv",
     "outputs/backtests/live_watch_*_actionable*_w960.csv",
 )

@@ -174,6 +174,12 @@ class LiveStatusSummaryScriptTest(TestCase):
 
             self.assertEqual(live_status_summary.read_json(path), {})
 
+    def test_default_optimizer_inputs_include_future_opportunity_probe_w960_scans(self) -> None:
+        self.assertIn(
+            "outputs/backtests/live_watch_opportunity_probe_*_w960.csv",
+            live_status_summary.DEFAULT_OPTIMIZER_SCAN_CSVS,
+        )
+
     def test_candidate_optimizer_evidence_flags_matching_rejection(self) -> None:
         evidence = live_status_summary._candidate_optimizer_evidence(
             {
