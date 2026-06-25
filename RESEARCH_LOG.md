@@ -3877,3 +3877,17 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   USDCAD sell pressure cites exact same-day evidence.
 - Decision: do not route USDCAD to `opportunity_probe`, do not force the
   heuristic sell, and keep USDCAD on the promoted MACD sleeve.
+
+## 2026-06-25 micro-MACD 17-19 UTC expansion rejection
+
+- With production flat near 17:00 UTC, retested whether the current promoted
+  micro MACD sleeve should trade the 17-19 UTC window rather than waiting for
+  the validated 20-22 UTC evening window.
+- Output:
+  `outputs/backtests/live_watch_macd_micro_17_19_refresh_20260625_w960.csv`.
+- Adding 17-19 UTC increased activity from 134 to 148 trades and still passed
+  W960 promotion gates, but it reduced return from +1.306% to +0.923%, raised
+  drawdown from 1.105% to 1.376%, and weakened Sharpe. The 17-19-only sleeve
+  lost -0.381%, and 16-19-only lost -0.942%.
+- Decision: keep live MACD hours unchanged. Extra 17-19 UTC activity is not an
+  improvement over the deployed micro MACD schedule.
