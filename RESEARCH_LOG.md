@@ -3117,3 +3117,25 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   stays on the monitored watchlist with refreshed evidence, but it is not a
   live strategy-map promotion and should only trade if future tested live logic
   earns promotion. Future watchlist builds now cite the refreshed EURGBP scan.
+
+## 2026-06-25 MACD h=0.20 same-gates rejection
+
+- Live production diagnostics showed `AUDUSD` close to the MACD histogram gate:
+  0.21 bps versus the live 0.25 bps threshold. I tested a narrow histogram
+  relief step instead of forcing the near-threshold signal.
+- Default live-profile scan:
+  `outputs/backtests/live_watch_macd_h020_same_gates_default_20260625_w960.csv`.
+  The `h=0.20` rows still promoted under default sizing, but the best
+  same-efficiency row improved return only from +1.111% to +1.123% with the
+  same 114 trades and the same 83.3% positive/active-positive/non-negative
+  folds. The `h=0.20,m=0.30,eff=0.06` row reduced drawdown but also reduced
+  fills to 102, so it is not a trade-frequency improvement.
+- Directional-probe scan:
+  `outputs/backtests/live_watch_macd_h020_same_gates_20260625_w960.csv`.
+  Every row rejected. The looser `h=0.20` and `h=0.15` rows stayed negative
+  under probe sizing with only 50.0% active-positive and 50.0% non-negative
+  folds.
+- Decision: keep live MACD histogram, MACD-line, trend-efficiency, exit-band,
+  cost, agreement, sentiment, cooldown, max-lot, max-position, and loss-brake
+  gates unchanged. The current `AUDUSD` near-hit is not enough evidence for
+  another live threshold relaxation.
