@@ -33,6 +33,7 @@ class MacdMomentumParameterSet:
     allowed_utc_hours: tuple[int, ...] | None = None
     min_histogram_slope_bps: float = 0.0
     exit_histogram_bps: float | None = None
+    require_macd_histogram_agreement: bool = True
 
     def __post_init__(self) -> None:
         if not self.label.strip():
@@ -58,6 +59,8 @@ class MacdMomentumParameterSet:
                 raise ValueError("exit_histogram_bps cannot be negative")
             if self.exit_histogram_bps >= self.min_histogram_bps:
                 raise ValueError("exit_histogram_bps must be below min_histogram_bps")
+        if not isinstance(self.require_macd_histogram_agreement, bool):
+            raise ValueError("require_macd_histogram_agreement must be a bool")
         if self.allowed_utc_hours is not None:
             if not self.allowed_utc_hours:
                 raise ValueError("allowed_utc_hours cannot be empty")
@@ -221,6 +224,7 @@ def write_macd_momentum_optimization_csv(
                 "exit_histogram_bps",
                 "min_macd_bps",
                 "min_histogram_slope_bps",
+                "require_macd_histogram_agreement",
                 "min_trend_efficiency",
                 "max_holding_period",
                 "allowed_utc_hours",
@@ -271,6 +275,9 @@ def write_macd_momentum_optimization_csv(
                     ),
                     "min_macd_bps": parameters.min_macd_bps,
                     "min_histogram_slope_bps": parameters.min_histogram_slope_bps,
+                    "require_macd_histogram_agreement": (
+                        parameters.require_macd_histogram_agreement
+                    ),
                     "min_trend_efficiency": parameters.min_trend_efficiency,
                     "max_holding_period": parameters.max_holding_period,
                     "allowed_utc_hours": _hours_text(parameters.allowed_utc_hours),
@@ -346,6 +353,9 @@ def _config_with_parameters(
         ),
         min_macd_bps=parameters.min_macd_bps,
         min_histogram_slope_bps=parameters.min_histogram_slope_bps,
+        require_macd_histogram_agreement=(
+            parameters.require_macd_histogram_agreement
+        ),
         min_trend_efficiency=parameters.min_trend_efficiency,
         max_holding_period=parameters.max_holding_period,
         forex_allowed_utc_hours=(

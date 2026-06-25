@@ -583,6 +583,7 @@ class MacdMomentumConfig:
     exit_histogram_bps: float = 0.25
     min_macd_bps: float = 0.5
     min_histogram_slope_bps: float = 0.0
+    require_macd_histogram_agreement: bool = True
     min_trend_efficiency: float = 0.10
     forex_allowed_utc_hours: tuple[int, ...] | None = (
         11, 12, 13, 14, 15, 16, 17, 18, 19
@@ -625,6 +626,8 @@ class MacdMomentumConfig:
             "min_histogram_slope_bps",
             self.min_histogram_slope_bps,
         )
+        if not isinstance(self.require_macd_histogram_agreement, bool):
+            raise ValueError("require_macd_histogram_agreement must be a bool")
         if not 0 <= self.min_trend_efficiency <= 1:
             raise ValueError("min_trend_efficiency must be between 0 and 1")
         _normalize_optional_hours(self, "forex_allowed_utc_hours")
@@ -6146,7 +6149,10 @@ class MacdMomentumStrategy:
                     f"{self.config.min_macd_bps:.2f} bps threshold"
                 ),
             )
-        if reading.histogram_bps * reading.macd_bps <= 0:
+        if (
+            self.config.require_macd_histogram_agreement
+            and reading.histogram_bps * reading.macd_bps <= 0
+        ):
             return False, "MACD line and histogram disagree on direction"
         if abs(reading.histogram_slope_bps) < self.config.min_histogram_slope_bps:
             return (

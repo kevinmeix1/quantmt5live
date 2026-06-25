@@ -29,6 +29,7 @@ from quanthack.strategies.strategy import (
     KalmanTrendStrategy,
     KalmanTrendStrategyConfig,
     MacdMomentumConfig,
+    MacdMomentumReading,
     MacdMomentumStrategy,
     MeanReversionConfig,
     MeanReversionStrategy,
@@ -82,6 +83,31 @@ def _prices_from_log_returns(log_returns: list[float]) -> list[float]:
         price *= exp(log_return)
         prices.append(price)
     return prices
+
+
+def _macd_reading(*, histogram_bps: float, macd_bps: float) -> MacdMomentumReading:
+    return MacdMomentumReading(
+        fast_ema=1.0,
+        slow_ema=1.0,
+        macd=macd_bps / 10_000,
+        signal=0.0,
+        histogram=histogram_bps / 10_000,
+        previous_histogram=0.0,
+        macd_bps=macd_bps,
+        signal_bps=0.0,
+        histogram_bps=histogram_bps,
+        previous_histogram_bps=0.0,
+        histogram_slope_bps=abs(histogram_bps),
+        crossed_direction=(
+            SignalDirection.LONG if histogram_bps > 0 else SignalDirection.SHORT
+        ),
+        last_price=1.0,
+        realized_volatility=0.001,
+        realized_volatility_bps=10.0,
+        trend_efficiency=1.0,
+        session_allowed=True,
+        utc_hour=10,
+    )
 
 
 class OpportunityProbeStrategyTest(TestCase):
@@ -2161,6 +2187,47 @@ class MacdMomentumStrategyTest(TestCase):
         )
 
         self.assertEqual(decision.action, StrategyAction.EXIT)
+
+    def test_macd_histogram_agreement_blocks_disagreement_by_default(self) -> None:
+        strategy = MacdMomentumStrategy(
+            MacdMomentumConfig(
+                min_histogram_bps=0.5,
+                exit_histogram_bps=0.1,
+                min_macd_bps=0.5,
+                min_histogram_slope_bps=0.0,
+                min_trend_efficiency=0.0,
+                slippage_bps=0.0,
+            )
+        )
+
+        passed, reason = strategy._passes_entry_filters(
+            reading=_macd_reading(histogram_bps=2.0, macd_bps=-1.0),
+            quote=quote(),
+        )
+
+        self.assertFalse(passed)
+        self.assertIn("disagree", reason)
+
+    def test_relaxed_macd_histogram_agreement_allows_research_candidate(self) -> None:
+        strategy = MacdMomentumStrategy(
+            MacdMomentumConfig(
+                min_histogram_bps=0.5,
+                exit_histogram_bps=0.1,
+                min_macd_bps=0.5,
+                min_histogram_slope_bps=0.0,
+                min_trend_efficiency=0.0,
+                slippage_bps=0.0,
+                require_macd_histogram_agreement=False,
+            )
+        )
+
+        passed, reason = strategy._passes_entry_filters(
+            reading=_macd_reading(histogram_bps=2.0, macd_bps=-1.0),
+            quote=quote(),
+        )
+
+        self.assertTrue(passed)
+        self.assertIn("MACD", reason)
 
     def test_config_rejects_fast_window_at_or_above_slow_window(self) -> None:
         with self.assertRaisesRegex(ValueError, "slow_window"):

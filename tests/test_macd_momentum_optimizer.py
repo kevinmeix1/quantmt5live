@@ -7,6 +7,7 @@ from quanthack.backtesting.macd_momentum_optimizer import (
     optimize_macd_momentum_parameters,
     write_macd_momentum_optimization_csv,
 )
+from quanthack.cli.macd_momentum_optimize import _parse_candidate
 from quanthack.backtesting.allocation_profiles import (
     ALLOCATION_PROFILE_DIRECTIONAL_PROBE,
     allocation_policy_for_strategy,
@@ -69,6 +70,7 @@ class MacdMomentumOptimizerTest(TestCase):
         self.assertIn("rank,label,symbols,fast_window", text)
         self.assertIn("min_histogram_slope_bps", text)
         self.assertIn("exit_histogram_bps", text)
+        self.assertIn("require_macd_histogram_agreement", text)
         self.assertIn("allowed_utc_hours", text)
         self.assertIn("fast", text)
         self.assertIn("wf_active_positive_fold_fraction", text)
@@ -180,6 +182,35 @@ class MacdMomentumOptimizerTest(TestCase):
         )
 
         self.assertEqual(parameters.exit_histogram_bps, 0.5)
+
+    def test_parameter_set_accepts_relaxed_macd_histogram_agreement(self) -> None:
+        parameters = MacdMomentumParameterSet(
+            "relaxed_agreement",
+            6,
+            18,
+            5,
+            2.0,
+            1.0,
+            0.2,
+            12,
+            require_macd_histogram_agreement=False,
+        )
+
+        self.assertFalse(parameters.require_macd_histogram_agreement)
+
+    def test_cli_candidate_accepts_relaxed_agreement_token(self) -> None:
+        parameters = _parse_candidate(
+            "relaxed,8,21,8,0.25,0.35,0.08,10,"
+            "6|7|8|9|10|11|12|13|14|20|21|22,"
+            "slope=0.0,exit=0.125,agree=false"
+        )
+
+        self.assertEqual(
+            parameters.allowed_utc_hours,
+            (6, 7, 8, 9, 10, 11, 12, 13, 14, 20, 21, 22),
+        )
+        self.assertEqual(parameters.exit_histogram_bps, 0.125)
+        self.assertFalse(parameters.require_macd_histogram_agreement)
 
     def test_parameter_set_rejects_negative_histogram_slope(self) -> None:
         with self.assertRaisesRegex(ValueError, "min_histogram_slope_bps"):

@@ -67,6 +67,8 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_macd_live_micro_h025_default_20260625_w960.csv",
     "outputs/backtests/live_watch_macd_slope_relief_default_20260625_w960.csv",
     "outputs/backtests/live_watch_macd_exit_band_relief_20260625_w960.csv",
+    "outputs/backtests/live_watch_macd_agreement_relief_default_20260625_w960.csv",
+    "outputs/backtests/live_watch_macd_agreement_relief_20260625_w960.csv",
     "outputs/backtests/live_watch_macd_eurusd_gbpusd_map_probe_20260625_w960.csv",
     "outputs/backtests/live_watch_macd_current_threshold_retest_default_w960.csv",
     "outputs/backtests/live_watch_macd_current_threshold_retest_w960.csv",

@@ -36,7 +36,7 @@ def build_parser() -> argparse.ArgumentParser:
             "Candidate as label,fast_window,slow_window,signal_window,"
             "min_histogram_bps,min_macd_bps,min_trend_efficiency,"
             "max_holding_period[,allowed_utc_hours][,min_histogram_slope_bps]"
-            "[,exit=exit_histogram_bps]. "
+            "[,exit=exit_histogram_bps][,agree=true|false]. "
             "Use hours like 11|12|13."
         ),
     )
@@ -129,6 +129,7 @@ def run(args: argparse.Namespace) -> None:
             f"exit={_format_optional_float(params.exit_histogram_bps)}, "
             f"macd={params.min_macd_bps:.2f}, "
             f"slope={params.min_histogram_slope_bps:.2f}, "
+            f"agree={'yes' if params.require_macd_histogram_agreement else 'no'}, "
             f"eff={params.min_trend_efficiency:.2f}, "
             f"hold={params.max_holding_period}, "
             f"hours={_format_hours(params.allowed_utc_hours)}, "
@@ -149,12 +150,12 @@ def main(argv: Sequence[str] | None = None) -> None:
 
 def _parse_candidate(raw: str) -> MacdMomentumParameterSet:
     parts = [part.strip() for part in raw.split(",")]
-    if len(parts) < 8 or len(parts) > 11:
+    if len(parts) < 8 or len(parts) > 12:
         raise argparse.ArgumentTypeError(
             "candidate must be label,fast_window,slow_window,signal_window,"
             "min_histogram_bps,min_macd_bps,min_trend_efficiency,"
             "max_holding_period[,allowed_utc_hours][,min_histogram_slope_bps]"
-            "[,exit=exit_histogram_bps]"
+            "[,exit=exit_histogram_bps][,agree=true|false]"
         )
     (
         label,
@@ -169,12 +170,15 @@ def _parse_candidate(raw: str) -> MacdMomentumParameterSet:
     allowed_utc_hours: tuple[int, ...] | None = None
     min_histogram_slope_bps = 0.0
     exit_histogram_bps: float | None = None
+    require_macd_histogram_agreement = True
     numeric_tokens_seen = 0
     for token in parts[8:]:
         if _looks_like_exit(token):
             exit_histogram_bps = _parse_named_float(token)
         elif _looks_like_slope(token):
             min_histogram_slope_bps = _parse_named_float(token)
+        elif _looks_like_agreement(token):
+            require_macd_histogram_agreement = _parse_named_bool(token)
         elif _looks_like_hours(token) and allowed_utc_hours is None:
             allowed_utc_hours = _parse_hours(token)
         elif numeric_tokens_seen == 0:
@@ -198,6 +202,7 @@ def _parse_candidate(raw: str) -> MacdMomentumParameterSet:
             allowed_utc_hours=allowed_utc_hours,
             min_histogram_slope_bps=min_histogram_slope_bps,
             exit_histogram_bps=exit_histogram_bps,
+            require_macd_histogram_agreement=require_macd_histogram_agreement,
         )
     except ValueError as exc:
         raise argparse.ArgumentTypeError(str(exc)) from exc
@@ -247,9 +252,29 @@ def _looks_like_slope(raw: str) -> bool:
     return normalized.startswith("slope=") or normalized.startswith("min_histogram_slope_bps=")
 
 
+def _looks_like_agreement(raw: str) -> bool:
+    normalized = raw.strip().lower()
+    return normalized.startswith("agree=") or normalized.startswith(
+        "require_macd_histogram_agreement="
+    )
+
+
 def _parse_named_float(raw: str) -> float:
     try:
         _, value = raw.split("=", 1)
     except ValueError as exc:
         raise argparse.ArgumentTypeError(f"expected name=value token: {raw}") from exc
     return float(value)
+
+
+def _parse_named_bool(raw: str) -> bool:
+    try:
+        _, value = raw.split("=", 1)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(f"expected name=value token: {raw}") from exc
+    normalized = value.strip().lower()
+    if normalized in {"1", "true", "yes", "y", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "n", "off"}:
+        return False
+    raise argparse.ArgumentTypeError(f"expected boolean name=value token: {raw}")

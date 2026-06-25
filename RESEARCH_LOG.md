@@ -2955,3 +2955,24 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not promote a champion ensemble entry-score or weight change for
   `GBPUSD`/`EURGBP`. Let the live sleeve wait for its tested 11:00 UTC
   underlying signal window rather than adding an untested pre-session shortcut.
+
+## 2026-06-25 MACD agreement-relief rejection
+
+- Live MACD symbols were still near but not through the gate, so I added an
+  explicit optimizer switch for `require_macd_histogram_agreement` and tested
+  whether allowing MACD line/histogram disagreement would safely add activity.
+- Default live-profile scan:
+  `outputs/backtests/live_watch_macd_agreement_relief_default_20260625_w960.csv`.
+  Relaxing agreement increased fills but degraded quality. The strict promoted
+  row stayed best at +2.453% over 86 fills; the strict relaxed row promoted but
+  slipped to +2.284% over 110 fills with higher drawdown. The live micro row
+  stayed promoted at +1.748% over 94 fills, while the relaxed micro row produced
+  122 fills but rejected on 66.7% non-negative folds.
+- Directional-probe allocation scan:
+  `outputs/backtests/live_watch_macd_agreement_relief_20260625_w960.csv`.
+  Every row rejected, and both relaxed rows were worse than their
+  agreement-required counterparts.
+- Decision: keep live MACD line/histogram agreement required. More fills here
+  are not evidence-backed; they add churn and weaker fold stability. The new
+  optimizer switch remains for future research, but no live config change is
+  justified.
