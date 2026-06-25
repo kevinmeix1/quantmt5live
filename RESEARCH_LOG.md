@@ -4043,3 +4043,17 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: keep `EURGBP=champion_ensemble`. Do not add direct EURGBP MACD or
   after-hours relief from the live heuristic pressure; it is too sparse and
   too concentrated to justify a live map change.
+
+## 2026-06-25 EURGBP session-momentum no-activity rejection
+
+- With `EURGBP` still the only heuristic tiny-probe candidate after the fresh
+  diagnostics pass, tested a distinct `session_momentum` route rather than
+  rerunning rejected MACD, cross-rate, Kalman, or opportunity-probe sleeves.
+- Output:
+  `outputs/backtests/live_watch_session_momentum_eurgbp_pressure_20260625_w960.csv`.
+- All tested 18:00 UTC, 17-19 UTC, 17-22 UTC, current live-hours, and broad
+  live-hours candidates produced zero historical trades and zero active
+  fixed-warmup evaluation fills on the aligned live7 import.
+- Decision: do not route `EURGBP` to `session_momentum` and do not add
+  after-hours session relief. The current heuristic EURGBP strength has no
+  tested session-momentum implementation to hand to the guarded live process.
