@@ -2742,3 +2742,58 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not route AUDUSD/EURUSD to `opportunity_probe` and do not force
   discretionary shorts. Keep production on the promoted MACD sleeve and wait
   for its guarded thresholds to confirm an entry.
+
+## 2026-06-25 EURGBP opportunity-probe refresh
+
+- The next live read-only `candidate_all_opportunity_probe` diagnostic stopped
+  pointing at AUDUSD/EURUSD and isolated a long `EURGBP` allocation. Production
+  remained flat because EURGBP is still on the session-gated champion sleeve.
+- Ran a pure EURGBP opportunity-probe W960 validation on the extracted full
+  15-minute dataset with the directional probe profile:
+  `outputs/backtests/live_watch_opportunity_probe_eurgbp_refresh_20260625_w960.csv`.
+- Every candidate rejected. The least-bad `selective_5_15_40_s2_75` line lost
+  0.029% with 171 trades and only 16.7% positive, active-positive, and
+  non-negative folds. The live-current line lost 0.114% with 401 trades.
+- Added the fresh scan to `scripts/live_status_summary.py` so future EURGBP
+  opportunity-probe pressure cites same-day isolated evidence.
+- Decision: do not route EURGBP to `opportunity_probe` and do not force the
+  diagnostic allocation. Keep EURGBP on the guarded production map until a
+  strategy passes fold stability instead of only a momentary live pulse.
+
+## 2026-06-25 USDCHF opportunity-probe refresh
+
+- After refreshing sentiment and live diagnostics, the read-only
+  `candidate_all_opportunity_probe` sleeve rotated to a single actionable
+  `USDCHF` allocation. Production MACD still requested no risk.
+- Ran an isolated USDCHF opportunity-probe W960 validation on the extracted
+  full 15-minute dataset with the directional probe profile:
+  `outputs/backtests/live_watch_opportunity_probe_usdchf_refresh_20260625_w960.csv`.
+- Every candidate rejected. The least-bad selective line still lost 0.039%,
+  while the top-ranked strict line lost 0.043%; both reached only 33.3%
+  positive, active-positive, and non-negative folds. The live-current line lost
+  0.131% with 409 trades.
+- Added the fresh scan to `scripts/live_status_summary.py` so future USDCHF
+  opportunity-probe pressure cites same-day isolated evidence.
+- Decision: do not route USDCHF to `opportunity_probe`, do not increase risk,
+  and do not force a manual USDCHF trade. Keep USDCHF on the promoted MACD
+  sleeve until the tested live threshold clears.
+
+## 2026-06-25 USDCAD heuristic-probe MACD refresh
+
+- Refreshed live pair analysis after the opportunity-probe checks. The only
+  advisory `eligible_tiny_probe_buy` was `USDCAD`, but production MACD still
+  requested no risk because the histogram was only 0.07 bps, inside the
+  0.25 bps exit band.
+- Ran an isolated USDCAD MACD W960 validation on the extracted full 15-minute
+  dataset with the directional probe profile:
+  `outputs/backtests/live_watch_macd_usdcad_refresh_20260625_w960.csv`.
+- The best line was small-positive (+0.008%) with 10 trades, 50.0% positive
+  folds, 75.0% active-positive folds, and 83.3% non-negative folds, but it
+  still rejected because total fold stability is too weak. Other lines were
+  sparse or weaker.
+- Added the fresh scan to `scripts/live_status_summary.py` so future USDCAD
+  heuristic-only pressure cites same-day full-data evidence rather than the
+  older W480 symbol scan.
+- Decision: do not lower the live USDCAD MACD threshold for a heuristic-only
+  score. Keep USDCAD on the promoted live MACD sleeve and wait for the tested
+  production trigger.
