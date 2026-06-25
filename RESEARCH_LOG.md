@@ -3365,3 +3365,26 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: keep `multi_horizon_momentum` in watchlist/research mode for this
   basket. The default row is interesting enough to monitor, but not stable
   enough to promote or to raise the live two-position cap.
+
+## 2026-06-25 EURGBP/GBPUSD/USDCAD/USDCHF opportunity-probe rejection
+
+- The fresh all-symbol `opportunity_probe` diagnostic rotated again, this time
+  requesting short `EURGBP`, long `GBPUSD`, short `USDCAD`, and short
+  `USDCHF`; the live throttle would have allowed only the first two active
+  allocations. The status summary was still matching the older
+  `EURGBP`/`GBPUSD` scan, so I refreshed the exact requested basket on the
+  current live7 W960 full-data import:
+  `outputs/backtests/live_watch_opportunity_probe_eurgbp_gbp_cad_chf_refresh_20260625_w960.csv`
+  and
+  `outputs/backtests/live_watch_opportunity_probe_eurgbp_gbp_cad_chf_default_refresh_20260625_w960.csv`.
+- Both allocation profiles rejected every row. The least-bad
+  `hyper_filtered_s3_00_hold4_20` row lost 0.302%, drew down 0.317%, made
+  1,099 trades, and reached only 16.7% positive/active-positive/non-negative
+  folds. The current-style rows were worse, losing about 0.48% to 0.49% with
+  more than 1,600 trades.
+- Added both refresh files to the live status optimizer rollup so the current
+  `candidate_all_opportunity_probe` evidence cites exact same-day rejection
+  for the active EUR/GBP/CAD/CHF basket.
+- Decision: do not route this basket to `opportunity_probe`, do not raise the
+  position cap for it, and do not force the EURGBP/GBPUSD/USDCAD/USDCHF
+  pressure set. The pattern is high-churn negative expectancy on full data.

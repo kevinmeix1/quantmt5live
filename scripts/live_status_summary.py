@@ -219,6 +219,8 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_opportunity_probe_aud_eur_gbp_chf_default_refresh_20260625_w960.csv",
     "outputs/backtests/live_watch_opportunity_probe_aud_eur_gbp_chf_jpy_current_w960.csv",
     "outputs/backtests/live_watch_opportunity_probe_eurgbp_gbp_cad_jpy_current_w960.csv",
+    "outputs/backtests/live_watch_opportunity_probe_eurgbp_gbp_cad_chf_refresh_20260625_w960.csv",
+    "outputs/backtests/live_watch_opportunity_probe_eurgbp_gbp_cad_chf_default_refresh_20260625_w960.csv",
     "outputs/backtests/live_watch_opportunity_probe_audusd_eurusd_w480.csv",
     "outputs/backtests/live_watch_opportunity_probe_audusd_eurusd_strict_w960.csv",
     "outputs/backtests/live_watch_opportunity_probe_audusd_eurusd_refresh_20260625_w960.csv",
