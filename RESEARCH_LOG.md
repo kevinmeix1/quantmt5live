@@ -3825,3 +3825,19 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   active-positive folds, 66.7% non-negative folds, and `REJECT` status.
 - Decision: keep MACD live hours unchanged. The current 16:00 UTC USDCAD and
   AUDUSD pressure is not a validated micro-MACD expansion signal.
+
+## 2026-06-25 EURGBP cross-rate watchlist recheck
+
+- The live watchlist continued to surface EURGBP `cross_rate_reversion` rows
+  with raw signal quality near 1.6 and 69-71% hit rates, but these rows assume
+  raw diagnostic settings rather than proving the live strategy can place and
+  manage orders.
+- Refreshed fast cross-rate diagnostics in
+  `outputs/backtests/live_watch_cross_rate_eurgbp_refresh2_20260625.csv`; raw
+  EURGBP rows remained eligible as signals.
+- Ran exact live-config fixed-warmup validation in
+  `outputs/backtests/live_watch_eurgbp_cross_rate_fixed_warmup_refresh_20260625_summary.csv`.
+  Result: 0 evaluation fills across 6 folds, 0.0% active folds, and `REJECT`
+  because the strategy produced no active fixed-warmup evaluation folds.
+- Decision: keep EURGBP on `champion_ensemble`; do not route live EURGBP to
+  `cross_rate_reversion` from raw watchlist diagnostics alone.
