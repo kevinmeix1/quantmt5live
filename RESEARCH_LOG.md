@@ -4057,3 +4057,21 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not route `EURGBP` to `session_momentum` and do not add
   after-hours session relief. The current heuristic EURGBP strength has no
   tested session-momentum implementation to hand to the guarded live process.
+
+## 2026-06-25 MACD hour-18 live expansion
+
+- Fresh pair analysis at 18:28 UTC showed heuristic-only pressure on
+  `GBPUSD` and `USDCAD`, while production stayed flat because `macd_momentum`
+  was outside its configured FX hours.
+- Existing full-data W960 evidence in
+  `outputs/backtests/live_watch_macd_micro_hour18_refresh_20260625_w960.csv`
+  supports adding UTC hour 18 to the promoted MACD sleeve:
+  `micro_add_h18` is `PROMOTE`/live-ready with 83.3% positive folds, 100.0%
+  non-negative folds, 83.3% active-positive folds, 75 evaluation fills, and
+  risk discipline 100. The variant has lower total return and slightly higher
+  drawdown than the current hour set, but it is still inside the promotion
+  gates and adds six historical fills.
+- Decision: add hour 18 to `strategy.macd_momentum.forex_allowed_utc_hours`
+  only. Keep max-lot, sentiment, observe/cooldown, small-only, and loss brakes
+  unchanged; this is an evidence-backed activity expansion, not a risk-control
+  removal.
