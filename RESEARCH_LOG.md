@@ -3841,3 +3841,23 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   because the strategy produced no active fixed-warmup evaluation folds.
 - Decision: keep EURGBP on `champion_ensemble`; do not route live EURGBP to
   `cross_rate_reversion` from raw watchlist diagnostics alone.
+
+## 2026-06-25 6/18 MACD retest rejection
+
+- Retested the higher-return `near_lower_6_18_h050_m035_eff07_s003_hold16`
+  MACD candidate against the current promoted micro MACD row on the full
+  `AUDUSD EURUSD USDCAD USDCHF` sleeve using
+  `data/live7_full_backtest_prices_15m.csv` and
+  `data/live7_full_backtest_quotes_15m.csv`.
+- Outputs:
+  `outputs/backtests/live_watch_macd_6_18_retest_20260625_w480.csv`,
+  `outputs/backtests/live_watch_macd_6_18_retest_20260625_w672.csv`,
+  `outputs/backtests/live_watch_macd_6_18_retest_20260625_w960.csv`, and
+  `outputs/backtests/live_watch_macd_6_18_retest_consensus_20260625.csv`.
+- The 6/18 row still looked attractive on headline return (+1.965% with 0.603%
+  drawdown and 96 trades), but consensus stayed `PAPER_ONLY`: W480=`PAPER_ONLY`,
+  W672=`PROMOTE`, W960=`PAPER_ONLY`, with only 55.6% minimum positive folds.
+- Added the retest CSVs to the live status optimizer scan list so future
+  summaries cite this fresh evidence.
+- Decision: do not switch live MACD from the current micro 8/21/8 shape to the
+  6/18 family; the extra return is not stable enough across validation windows.
