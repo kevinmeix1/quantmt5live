@@ -177,7 +177,7 @@ while ((Get-Date) -lt $Deadline) {
   )
   Invoke-And-Log "candidate_watchlist" @(
     "scripts\live_candidate_watchlist.py",
-    "--candidates-csv", "outputs\backtests\live_watch_cross_rate_refine_h4.csv",
+    "--candidates-csv", "outputs\backtests\live_watch_cross_rate_eurgbp_refresh_h4_20260625.csv",
     "--candidates-csv", "outputs\backtests\live_watch_cross_rate_live6_h4_strict.csv",
     "--candidate-strategy", "cross_rate_reversion",
     "--default-live-strategy", "champion_ensemble",

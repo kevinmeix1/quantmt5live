@@ -221,3 +221,21 @@ class LiveCandidateWatchlistScriptTest(TestCase):
         )
         self.assertIn("source=first.csv", text)
         self.assertIn("source=second.csv", text)
+
+    def test_skips_missing_candidate_files(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            existing = root / "existing.csv"
+            missing = root / "missing.csv"
+            existing.write_text(
+                "eligible,quality_score,symbol,label,active_count,hit_rate,"
+                "average_signed_forward_return_bps,average_edge_after_cost_bps\n"
+                "True,1.10,EURGBP,ok,12,0.60,0.7,0.2\n",
+                encoding="utf-8",
+            )
+
+            rows = read_candidate_files((str(missing), str(existing)))
+
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["label"], "ok")
+        self.assertEqual(rows[0]["_source_path"], str(existing))

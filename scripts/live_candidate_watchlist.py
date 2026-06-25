@@ -163,7 +163,10 @@ def read_candidate_rows(path: str | Path) -> list[dict[str, str]]:
 def read_candidate_files(paths: list[str] | tuple[str, ...]) -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
     for path in paths:
-        for row in read_candidate_rows(path):
+        candidate_path = Path(path)
+        if not candidate_path.exists():
+            continue
+        for row in read_candidate_rows(candidate_path):
             row = dict(row)
             row["_source_path"] = str(path)
             rows.append(row)

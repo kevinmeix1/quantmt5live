@@ -3094,3 +3094,26 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not route `EURUSD` to `opportunity_probe` and do not force the
   current research-only short. Keep `EURUSD` on the promoted MACD sleeve and
   let the cost/histogram gates decide entries.
+
+## 2026-06-25 EURGBP cross-rate refresh, no live promotion
+
+- The live watchlist was still citing stale EURGBP cross-rate candidates from
+  `outputs/backtests/live_watch_cross_rate_refine_h4.csv`, while production
+  diagnostics kept the live `EURGBP` champion sleeve flat. I refreshed the
+  EURGBP cross-rate signal family on `data/live7_full_backtest_prices_15m.csv`
+  and `data/live7_full_backtest_quotes_15m.csv`.
+- Signal diagnostic refresh:
+  `outputs/backtests/live_watch_cross_rate_eurgbp_refresh_h4_20260625.csv`.
+  The raw lookback-12 candidates remained eligible as research signals; the top
+  row had 31 active samples, a 71.0% hit rate, +1.50 bps average signed forward
+  return, and +0.31 bps average edge after cost.
+- Full map validation:
+  `outputs/backtests/live_watch_eurgbp_cross_strategy_map_refresh_qualify_20260625_w960.csv`.
+  Swapping only `EURGBP` from `champion_ensemble` to `cross_rate_reversion`
+  reduced the current live-map return from +1.022% to +0.917%, increased trade
+  churn only modestly, and still failed live promotion because non-negative
+  folds were 66.7%, below the 70.0% threshold.
+- Decision: keep `EURGBP` on the live champion sleeve. The cross-rate setup
+  stays on the monitored watchlist with refreshed evidence, but it is not a
+  live strategy-map promotion and should only trade if future tested live logic
+  earns promotion. Future watchlist builds now cite the refreshed EURGBP scan.
