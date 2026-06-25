@@ -4197,3 +4197,21 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: keep `EURGBP=champion_ensemble` and `GBPUSD=champion_ensemble`
   unchanged. The late-session MACD diversifier is not stable enough to promote
   and would be a churn-prone way to force trades.
+
+## 2026-06-25 USDJPY late-session momentum rejection
+
+- After refreshing sentiment at 21:27 UTC, `USDJPY` became the strongest
+  non-blocked advisory read: pair score 1.20, supportive sentiment, low spread,
+  and no closed-sample drag. Production still requested zero notional because
+  the live `USDJPY=quality_trend` sleeve is outside its 10-14 UTC confirmation
+  window at hour 21.
+- Tested whether a distinct `session_momentum` route could turn that 21 UTC
+  pressure into validated activity without removing risk controls:
+  `outputs/backtests/live_watch_session_momentum_usdjpy_latesession_20260625_w960.csv`.
+- Current live hours, 20-22 UTC loose/medium/strict variants, broader 17-22 UTC
+  variants, and a 21-22 UTC micro-threshold variant all produced zero
+  full-sample trades and zero active W960 walk-forward folds on the full live7
+  15-minute import.
+- Decision: keep `USDJPY=quality_trend` unchanged and do not route USDJPY to
+  `session_momentum` for late-session pressure. There is no historical
+  executable session-momentum edge to promote.
