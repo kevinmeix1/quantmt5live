@@ -3640,3 +3640,23 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not lower `champion_ensemble` entry scores or push an
   asset-heavy squeeze variant live. The signal is interesting for monitoring,
   but it is not broad enough across folds to justify increased live risk.
+
+## 2026-06-25 alpha-router current-pressure rejection
+
+- Because the research cycle continued to surface alpha-router/session-breakout
+  rows while production stayed flat, I refreshed a fixed-warmup W960 validation
+  for the currently non-blocked pressure set:
+  `AUDUSD`, `EURGBP`, `GBPUSD`, and `USDCAD`.
+- Output files:
+  `outputs/backtests/live_watch_alpha_router_current_pressure_20260625_w960_summary.csv`
+  and
+  `outputs/backtests/live_watch_alpha_router_current_pressure_20260625_w960_folds.csv`.
+- The slice rejected: 132 evaluation fills, 33.3% positive folds, 33.3% active
+  positive folds, 33.3% non-negative folds, -0.025% median active test return,
+  and 0.335% worst test drawdown. Average risk discipline remained 100/100,
+  so the problem is expectancy/fold stability rather than limit handling.
+- Added the W960 summary to the live status optimizer rollup so current
+  alpha-router pressure is blocked by fresh full-window evidence.
+- Decision: do not route `GBPUSD`, `AUDUSD`, `EURGBP`, or `USDCAD` to
+  `alpha_router` from this setup. Keep alpha-router monitor-only until a
+  narrower candidate passes fixed-warmup promotion gates.
