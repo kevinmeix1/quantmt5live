@@ -3076,3 +3076,21 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   worsens drawdown, and degrades the directional-probe folds. Keep all live
   risk controls, cost gates, MACD agreement, sentiment brake, cooldown throttle,
   max-lot cap, max-position cap, and loss brakes intact.
+
+## 2026-06-25 EURUSD opportunity-probe refresh rejection
+
+- After the MACD efficiency relief reload, production remained flat while the
+  research-only `opportunity_probe` diagnostic rotated to an isolated `EURUSD`
+  short. I refreshed the exact EURUSD sleeve on the current live7 full-data
+  import before considering any live map change.
+- Directional-probe profile:
+  `outputs/backtests/live_watch_opportunity_probe_eurusd_refresh_20260625_w960.csv`.
+  All rows rejected. The top-ranked strict row lost 0.078% with 252 trades and
+  only 50.0% positive/active-positive/non-negative folds; the live-current row
+  lost 0.149% across 437 trades.
+- Default profile:
+  `outputs/backtests/live_watch_opportunity_probe_eurusd_default_refresh_20260625_w960.csv`.
+  Results matched the directional scan and rejected every row.
+- Decision: do not route `EURUSD` to `opportunity_probe` and do not force the
+  current research-only short. Keep `EURUSD` on the promoted MACD sleeve and
+  let the cost/histogram gates decide entries.
