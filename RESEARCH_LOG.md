@@ -2871,3 +2871,21 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   0.50 in live config. This is a narrow activity increase on the validated
   default live profile; keep the MACD-line, cost, sentiment, cooldown, max-lot,
   position-cap, and loss-brake gates unchanged.
+
+## 2026-06-25 MACD micro-entry live profile
+
+- After the 10:00 UTC session opened, production was still flat but several
+  MACD symbols were close to entry, with weak ticks still blocked by the
+  estimated-cost gate. I tested whether the live MACD sleeve could move from
+  the 0.50 bps relaxed row into a micro-entry profile without losing fold
+  stability.
+- Default live-profile W960 refresh on `AUDUSD EURUSD USDCAD USDCHF`:
+  `outputs/backtests/live_watch_macd_live_micro_h025_default_20260625_w960.csv`.
+- The current 0.50 bps row remained strongest at +2.400% over 86 trades. The
+  micro-entry row `hist=0.25`, `macd=0.35`, `slope=0.05`, `eff=0.08`,
+  `hold=10` also promoted: +1.806% return, 90 trades, 83.3% positive folds,
+  83.3% active-positive folds, 83.3% non-negative folds, and lower max
+  drawdown of 0.456%.
+- Decision: promote the micro-entry row to live MACD config to increase trade
+  opportunity while leaving the cost gate, sentiment brake, cooldown throttle,
+  max-lot cap, max-position cap, and loss brakes intact.
