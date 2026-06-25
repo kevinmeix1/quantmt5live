@@ -4335,3 +4335,24 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   performance, but it has no historical executable fills in this scan, so
   adding it would be an unproven gate removal rather than an evidence-backed
   activity expansion.
+
+## 2026-06-25 USDCAD micro-MACD relief rejection
+
+- A fresh 22:16 UTC monitor pass showed the only live-visible pressure as
+  heuristic-only `USDCAD` buy. Production MACD still requested zero notional
+  because its estimated edge was only 0.1 bps versus roughly 2.1 bps of
+  estimated costs.
+- Tested a constrained isolated USDCAD MACD relief ladder on the full live7
+  import:
+  `outputs/backtests/live_watch_macd_usdcad_micro_relief_20260625_w960.csv`.
+  The live micro control, lower histogram/MACD thresholds, lower trend
+  efficiency, shorter holding, fast 6/18/5, night-only, and hour-22-only
+  variants all produced zero full-sample trades and zero active W960
+  evaluation fills.
+- Added the fresh scan to the default live status optimizer evidence list so
+  the monitor cites this exact same-session rejection for `USDCAD` heuristic
+  pressure instead of older broader USDCAD MACD scans.
+- Tests: `python -m unittest tests.test_live_status_summary_script`.
+- Decision: keep `USDCAD=macd_momentum` unchanged and do not force a
+  heuristic tiny probe. The current USDCAD pressure is not executable by a
+  tested MACD route, and live cost/edge diagnostics agree with the rejection.
