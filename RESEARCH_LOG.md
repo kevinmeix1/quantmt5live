@@ -3493,3 +3493,27 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not route this basket to `opportunity_probe`, do not increase
   the position cap for it, and do not force the AUDUSD/EURGBP pair. The exact
   full-data test remains negative expectancy with weak fold stability.
+
+## 2026-06-25 AUDUSD/EURGBP/USDCHF/USDJPY opportunity-probe rejection
+
+- The next live `candidate_all_opportunity_probe` diagnostic narrowed to short
+  `AUDUSD`, long `EURGBP`, short `USDCHF`, and short `USDJPY`, with the
+  two-position live throttle allowing `AUDUSD` and `EURGBP` first. The status
+  summary still had only the older AUDUSD/EURGBP pair evidence, so I refreshed
+  the exact four-symbol requested basket on the current live7 W960 full-data
+  import:
+  `outputs/backtests/live_watch_opportunity_probe_aud_eurgbp_chf_jpy_refresh_20260625_w960.csv`
+  and
+  `outputs/backtests/live_watch_opportunity_probe_aud_eurgbp_chf_jpy_default_refresh_20260625_w960.csv`.
+- Both allocation profiles rejected every row. The least-bad
+  `score4_hyper_filter` row lost 0.093%, drew down 0.128%, made 368 trades,
+  and reached only 50.0% positive/active-positive/non-negative folds.
+- The current-style `current_pressure4` row lost 0.602%, drew down 0.612%,
+  made 1,692 trades, and reached 0.0% positive/active-positive/non-negative
+  folds.
+- Added both refresh files to the live status optimizer rollup so the active
+  AUD/EURGBP/CHF/JPY pressure set is blocked by fresh same-day evidence rather
+  than by stale pair-only evidence.
+- Decision: do not route this basket to `opportunity_probe`, do not raise the
+  live position cap, and do not force the AUDUSD/EURGBP pair. The apparent
+  live pressure is still high-turnover negative expectancy on full data.
