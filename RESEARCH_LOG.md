@@ -3715,3 +3715,21 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   research-only basket cites same-day exact evidence.
 - Decision: do not route EURGBP/GBPUSD to `opportunity_probe`, do not force a
   manual basket trade, and do not relax live gates for this churn-prone sleeve.
+
+## 2026-06-25 USDCAD/USDJPY opportunity-probe refresh rejection
+
+- The read-only `candidate_all_opportunity_probe` sleeve later rotated to a
+  live-sized USDCAD long plus USDJPY long basket while production stayed flat.
+  I refreshed that exact two-symbol basket under the directional-probe
+  allocation profile before considering any live routing change.
+- Output:
+  `outputs/backtests/live_watch_opportunity_probe_usdcad_usdjpy_refresh_20260625_w960.csv`.
+  Every row rejected. The best row lost 0.171% with 359 trades, 0.0% positive
+  folds, 0.0% active-positive folds, and 0.0% non-negative folds. The current
+  live-shape row was worse: -0.335%, 863 trades, 0.0% positive folds, 0.0%
+  non-negative folds, and 426 evaluation fills.
+- Added the scan to the live status optimizer rollup so this current
+  research-only basket cites same-day exact evidence.
+- Decision: do not route USDCAD/USDJPY to `opportunity_probe`, do not force a
+  manual basket trade, and do not relax live gates for this negative-expectancy
+  sleeve.
