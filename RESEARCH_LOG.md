@@ -2815,3 +2815,21 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not route GBPUSD to `opportunity_probe` and do not force the
   read-only allocation. Keep GBPUSD on the guarded champion sleeve until a
   tested strategy clears live-ready fold stability.
+
+## 2026-06-25 USDCHF MACD single-symbol refresh
+
+- Fresh sentiment and pair analysis kept USDCHF constructive, but production
+  MACD still requested no risk because the histogram was inside the 0.25 bps
+  exit band. The live summary also only had older single-symbol USDCHF MACD
+  evidence.
+- Ran an isolated USDCHF MACD W960 validation on the extracted full 15-minute
+  dataset with the directional probe profile:
+  `outputs/backtests/live_watch_macd_usdchf_refresh_20260625_w960.csv`.
+- The best return line was small-positive (+0.031%) with 40 trades, but only
+  50.0% positive folds and 50.0% non-negative folds. The top-ranked
+  `fast_strict_6_18_5_h2_m1_eff20_hold12` line made +0.022% with 32 trades,
+  but only 50.0% positive and 66.7% non-negative folds.
+- Added the fresh scan to `scripts/live_status_summary.py` so USDCHF MACD
+  pressure no longer relies on the older W480 evidence.
+- Decision: keep USDCHF on the existing promoted MACD map, but do not lower its
+  threshold or add single-symbol USDCHF overrides until fold stability improves.

@@ -75,6 +75,7 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_macd_symbol_usdcad_w480.csv",
     "outputs/backtests/live_watch_macd_usdcad_refresh_20260625_w960.csv",
     "outputs/backtests/live_watch_macd_symbol_usdchf_w480.csv",
+    "outputs/backtests/live_watch_macd_usdchf_refresh_20260625_w960.csv",
     "outputs/backtests/live_watch_macd_audusd_refine_w480.csv",
     "outputs/backtests/live_watch_usdjpy_quality_preopen_w480.csv",
     "outputs/backtests/live_watch_usdcad_macd_intraday_w480.csv",
