@@ -3978,3 +3978,19 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: keep `GBPUSD=champion_ensemble`. The override reduces return and
   activity on the fresh live7 recheck and does not provide a safer way to force
   more trades.
+
+## 2026-06-25 AUDUSD/GBPUSD high-conviction opportunity-probe rejection
+
+- Pair analysis showed heuristic-only tiny-probe pressure on `AUDUSD` and
+  `GBPUSD`, so tested stricter high-conviction `opportunity_probe` variants on
+  the aligned live7 full-data import with directional-probe allocation.
+- Output:
+  `outputs/backtests/live_watch_opportunity_probe_aud_gbp_highconviction_20260625_w960.csv`.
+- The best row (`ultra_strict_6_18_54_s4_00_f3_00_v0_80_hold32_160`) nearly
+  broke even at +$1.00 over 160 trades, but had only 44.4% positive,
+  active-positive, and non-negative folds, with negative median active fold
+  return. The shorter burst variant made +0.045% in-sample but had the same
+  44.4% fold stability and was also rejected.
+- Decision: do not promote `opportunity_probe` for the current AUDUSD/GBPUSD
+  heuristic pressure and do not force tiny manual buys. Even stricter filters
+  fail the live promotion gate and still behave like unstable churn.
