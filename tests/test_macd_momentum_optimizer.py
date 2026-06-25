@@ -71,6 +71,8 @@ class MacdMomentumOptimizerTest(TestCase):
         self.assertIn("min_histogram_slope_bps", text)
         self.assertIn("exit_histogram_bps", text)
         self.assertIn("require_macd_histogram_agreement", text)
+        self.assertIn("slippage_bps", text)
+        self.assertIn("cost_buffer", text)
         self.assertIn("allowed_utc_hours", text)
         self.assertIn("fast", text)
         self.assertIn("wf_active_positive_fold_fraction", text)
@@ -198,11 +200,28 @@ class MacdMomentumOptimizerTest(TestCase):
 
         self.assertFalse(parameters.require_macd_histogram_agreement)
 
+    def test_parameter_set_accepts_cost_gate_overrides(self) -> None:
+        parameters = MacdMomentumParameterSet(
+            "cost_relief",
+            6,
+            18,
+            5,
+            2.0,
+            1.0,
+            0.2,
+            12,
+            slippage_bps=0.5,
+            cost_buffer=0.75,
+        )
+
+        self.assertEqual(parameters.slippage_bps, 0.5)
+        self.assertEqual(parameters.cost_buffer, 0.75)
+
     def test_cli_candidate_accepts_relaxed_agreement_token(self) -> None:
         parameters = _parse_candidate(
             "relaxed,8,21,8,0.25,0.35,0.08,10,"
             "6|7|8|9|10|11|12|13|14|20|21|22,"
-            "slope=0.0,exit=0.125,agree=false"
+            "slope=0.0,exit=0.125,agree=false,slip=0.5,cost=0.75"
         )
 
         self.assertEqual(
@@ -211,6 +230,34 @@ class MacdMomentumOptimizerTest(TestCase):
         )
         self.assertEqual(parameters.exit_histogram_bps, 0.125)
         self.assertFalse(parameters.require_macd_histogram_agreement)
+        self.assertEqual(parameters.slippage_bps, 0.5)
+        self.assertEqual(parameters.cost_buffer, 0.75)
+
+    def test_parameter_set_rejects_invalid_cost_gate_overrides(self) -> None:
+        with self.assertRaisesRegex(ValueError, "slippage_bps"):
+            MacdMomentumParameterSet(
+                "bad_slippage",
+                6,
+                18,
+                5,
+                2.0,
+                1.0,
+                0.2,
+                12,
+                slippage_bps=-0.1,
+            )
+        with self.assertRaisesRegex(ValueError, "cost_buffer"):
+            MacdMomentumParameterSet(
+                "bad_cost",
+                6,
+                18,
+                5,
+                2.0,
+                1.0,
+                0.2,
+                12,
+                cost_buffer=0.0,
+            )
 
     def test_parameter_set_rejects_negative_histogram_slope(self) -> None:
         with self.assertRaisesRegex(ValueError, "min_histogram_slope_bps"):

@@ -2976,3 +2976,25 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   are not evidence-backed; they add churn and weaker fold stability. The new
   optimizer switch remains for future research, but no live config change is
   justified.
+
+## 2026-06-25 MACD cost-gate relief rejection
+
+- Live diagnostics showed `AUDUSD`, `EURUSD`, and `USDCHF` close to MACD entry,
+  but blocked because 0.4-0.5 bps signal edge did not clear the estimated
+  2.1-2.4 bps round-trip cost. I added explicit MACD optimizer overrides for
+  `slippage_bps` and `cost_buffer` so cost-gate relief can be tested without
+  changing production assumptions first.
+- Default live-profile scan:
+  `outputs/backtests/live_watch_macd_cost_relief_default_20260625_w960.csv`.
+  The current cost gate remained best: +1.748% over 94 trades, 83.3% positive
+  folds, 83.3% active-positive folds, and 83.3% non-negative folds. All relaxed
+  cost rows rejected; the mildest `slip=0.50,cost=1.00` row jumped to 274
+  trades but fell to -1.737% with only 33.3% active-positive folds, while more
+  aggressive rows lost 3.964% to 5.118%.
+- Directional-probe allocation scan:
+  `outputs/backtests/live_watch_macd_cost_relief_20260625_w960.csv`. Every row
+  rejected, and cost relief increased churn from 200 fills to as many as 1,072
+  while keeping returns negative and fold stability weak.
+- Decision: do not relax live MACD slippage or cost-buffer gates. The optimizer
+  support stays for future research, but live trading must keep the current
+  cost filter because forcing these near-edge signals is historically lossy.

@@ -34,6 +34,8 @@ class MacdMomentumParameterSet:
     min_histogram_slope_bps: float = 0.0
     exit_histogram_bps: float | None = None
     require_macd_histogram_agreement: bool = True
+    slippage_bps: float | None = None
+    cost_buffer: float | None = None
 
     def __post_init__(self) -> None:
         if not self.label.strip():
@@ -61,6 +63,10 @@ class MacdMomentumParameterSet:
                 raise ValueError("exit_histogram_bps must be below min_histogram_bps")
         if not isinstance(self.require_macd_histogram_agreement, bool):
             raise ValueError("require_macd_histogram_agreement must be a bool")
+        if self.slippage_bps is not None and self.slippage_bps < 0:
+            raise ValueError("slippage_bps cannot be negative")
+        if self.cost_buffer is not None and self.cost_buffer <= 0:
+            raise ValueError("cost_buffer must be positive")
         if self.allowed_utc_hours is not None:
             if not self.allowed_utc_hours:
                 raise ValueError("allowed_utc_hours cannot be empty")
@@ -225,6 +231,8 @@ def write_macd_momentum_optimization_csv(
                 "min_macd_bps",
                 "min_histogram_slope_bps",
                 "require_macd_histogram_agreement",
+                "slippage_bps",
+                "cost_buffer",
                 "min_trend_efficiency",
                 "max_holding_period",
                 "allowed_utc_hours",
@@ -277,6 +285,14 @@ def write_macd_momentum_optimization_csv(
                     "min_histogram_slope_bps": parameters.min_histogram_slope_bps,
                     "require_macd_histogram_agreement": (
                         parameters.require_macd_histogram_agreement
+                    ),
+                    "slippage_bps": (
+                        ""
+                        if parameters.slippage_bps is None
+                        else parameters.slippage_bps
+                    ),
+                    "cost_buffer": (
+                        "" if parameters.cost_buffer is None else parameters.cost_buffer
                     ),
                     "min_trend_efficiency": parameters.min_trend_efficiency,
                     "max_holding_period": parameters.max_holding_period,
@@ -355,6 +371,16 @@ def _config_with_parameters(
         min_histogram_slope_bps=parameters.min_histogram_slope_bps,
         require_macd_histogram_agreement=(
             parameters.require_macd_histogram_agreement
+        ),
+        slippage_bps=(
+            config.macd_momentum.slippage_bps
+            if parameters.slippage_bps is None
+            else parameters.slippage_bps
+        ),
+        cost_buffer=(
+            config.macd_momentum.cost_buffer
+            if parameters.cost_buffer is None
+            else parameters.cost_buffer
         ),
         min_trend_efficiency=parameters.min_trend_efficiency,
         max_holding_period=parameters.max_holding_period,

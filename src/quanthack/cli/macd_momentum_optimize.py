@@ -36,7 +36,8 @@ def build_parser() -> argparse.ArgumentParser:
             "Candidate as label,fast_window,slow_window,signal_window,"
             "min_histogram_bps,min_macd_bps,min_trend_efficiency,"
             "max_holding_period[,allowed_utc_hours][,min_histogram_slope_bps]"
-            "[,exit=exit_histogram_bps][,agree=true|false]. "
+            "[,exit=exit_histogram_bps][,agree=true|false]"
+            "[,slip=slippage_bps][,cost=cost_buffer]. "
             "Use hours like 11|12|13."
         ),
     )
@@ -130,6 +131,8 @@ def run(args: argparse.Namespace) -> None:
             f"macd={params.min_macd_bps:.2f}, "
             f"slope={params.min_histogram_slope_bps:.2f}, "
             f"agree={'yes' if params.require_macd_histogram_agreement else 'no'}, "
+            f"slip={_format_optional_float(params.slippage_bps)}, "
+            f"cost={_format_optional_float(params.cost_buffer)}, "
             f"eff={params.min_trend_efficiency:.2f}, "
             f"hold={params.max_holding_period}, "
             f"hours={_format_hours(params.allowed_utc_hours)}, "
@@ -150,12 +153,13 @@ def main(argv: Sequence[str] | None = None) -> None:
 
 def _parse_candidate(raw: str) -> MacdMomentumParameterSet:
     parts = [part.strip() for part in raw.split(",")]
-    if len(parts) < 8 or len(parts) > 12:
+    if len(parts) < 8 or len(parts) > 14:
         raise argparse.ArgumentTypeError(
             "candidate must be label,fast_window,slow_window,signal_window,"
             "min_histogram_bps,min_macd_bps,min_trend_efficiency,"
             "max_holding_period[,allowed_utc_hours][,min_histogram_slope_bps]"
             "[,exit=exit_histogram_bps][,agree=true|false]"
+            "[,slip=slippage_bps][,cost=cost_buffer]"
         )
     (
         label,
@@ -171,6 +175,8 @@ def _parse_candidate(raw: str) -> MacdMomentumParameterSet:
     min_histogram_slope_bps = 0.0
     exit_histogram_bps: float | None = None
     require_macd_histogram_agreement = True
+    slippage_bps: float | None = None
+    cost_buffer: float | None = None
     numeric_tokens_seen = 0
     for token in parts[8:]:
         if _looks_like_exit(token):
@@ -179,6 +185,10 @@ def _parse_candidate(raw: str) -> MacdMomentumParameterSet:
             min_histogram_slope_bps = _parse_named_float(token)
         elif _looks_like_agreement(token):
             require_macd_histogram_agreement = _parse_named_bool(token)
+        elif _looks_like_slippage(token):
+            slippage_bps = _parse_named_float(token)
+        elif _looks_like_cost_buffer(token):
+            cost_buffer = _parse_named_float(token)
         elif _looks_like_hours(token) and allowed_utc_hours is None:
             allowed_utc_hours = _parse_hours(token)
         elif numeric_tokens_seen == 0:
@@ -203,6 +213,8 @@ def _parse_candidate(raw: str) -> MacdMomentumParameterSet:
             min_histogram_slope_bps=min_histogram_slope_bps,
             exit_histogram_bps=exit_histogram_bps,
             require_macd_histogram_agreement=require_macd_histogram_agreement,
+            slippage_bps=slippage_bps,
+            cost_buffer=cost_buffer,
         )
     except ValueError as exc:
         raise argparse.ArgumentTypeError(str(exc)) from exc
@@ -257,6 +269,18 @@ def _looks_like_agreement(raw: str) -> bool:
     return normalized.startswith("agree=") or normalized.startswith(
         "require_macd_histogram_agreement="
     )
+
+
+def _looks_like_slippage(raw: str) -> bool:
+    normalized = raw.strip().lower()
+    return normalized.startswith("slip=") or normalized.startswith(
+        "slippage_bps="
+    ) or normalized.startswith("slippage=")
+
+
+def _looks_like_cost_buffer(raw: str) -> bool:
+    normalized = raw.strip().lower()
+    return normalized.startswith("cost=") or normalized.startswith("cost_buffer=")
 
 
 def _parse_named_float(raw: str) -> float:
