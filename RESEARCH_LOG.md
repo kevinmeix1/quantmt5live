@@ -3297,3 +3297,25 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not route `EURGBP` and `EURUSD` to `opportunity_probe` and do
   not force the current short basket. The live research signal remains
   negative-edge churn on full data.
+
+## 2026-06-25 AUDUSD/EURUSD/GBPUSD/USDCHF opportunity-probe rejection
+
+- After the sentiment refresh, the read-only all-symbol `opportunity_probe`
+  diagnostic rotated to short `AUDUSD`, short `EURUSD`, short `GBPUSD`, and
+  long `USDCHF`, while production still had no approved fresh risk. The status
+  summary was citing the older W480 pressure-four scan, so I refreshed the
+  exact active basket on the current live7 W960 full-data import:
+  `outputs/backtests/live_watch_opportunity_probe_aud_eur_gbp_chf_refresh_20260625_w960.csv`
+  and
+  `outputs/backtests/live_watch_opportunity_probe_aud_eur_gbp_chf_default_refresh_20260625_w960.csv`.
+- Both allocation profiles rejected every row. The least-bad
+  `score3_5_hold16_64` row lost 0.082%, made 505 trades, drew down 0.196%,
+  and reached only 33.3% positive/active-positive/non-negative folds. The
+  live-current `current_pressure4` row lost 0.551% with 1,698 trades and only
+  16.7% non-negative folds.
+- Added the fresh files to the live status optimizer rollup so the current
+  `candidate_all_opportunity_probe` evidence cites same-day W960 rejection.
+- Decision: do not route this four-symbol basket to `opportunity_probe`, do
+  not raise the two-position cap for it, and do not manually force the
+  short/long pressure set. The latest active opportunity-probe read still looks
+  like high-churn negative expectancy.
