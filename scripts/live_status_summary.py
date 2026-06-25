@@ -186,6 +186,7 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_multi_horizon_gbpusd_current_pressure_w960.csv",
     "outputs/backtests/live_watch_multi_horizon_current_pressure_refresh_20260625_w960.csv",
     "outputs/backtests/live_watch_multi_horizon_usdjpy_current_w960.csv",
+    "outputs/backtests/live_watch_multi_horizon_*_w960.csv",
     "outputs/backtests/live_watch_quality_eurusd_gbpusd_pressure_w960.csv",
     "outputs/backtests/live_watch_usdcad_usdchf_macd_aggressive_w480.csv",
     "outputs/backtests/live_watch_audusd_macd_aggressive_w480.csv",

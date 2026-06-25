@@ -180,6 +180,12 @@ class LiveStatusSummaryScriptTest(TestCase):
             live_status_summary.DEFAULT_OPTIMIZER_SCAN_CSVS,
         )
 
+    def test_default_optimizer_inputs_include_future_multi_horizon_w960_scans(self) -> None:
+        self.assertIn(
+            "outputs/backtests/live_watch_multi_horizon_*_w960.csv",
+            live_status_summary.DEFAULT_OPTIMIZER_SCAN_CSVS,
+        )
+
     def test_candidate_optimizer_evidence_flags_matching_rejection(self) -> None:
         evidence = live_status_summary._candidate_optimizer_evidence(
             {
