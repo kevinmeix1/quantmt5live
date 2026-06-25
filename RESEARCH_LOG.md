@@ -3603,3 +3603,21 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   MACD gates, force an AUDUSD short, or route AUDUSD to `opportunity_probe`;
   both the AUDUSD/USDJPY opportunity-probe sleeve and the AUDUSD-only MACD W960
   evidence reject live promotion.
+
+## 2026-06-25 non-blocked MACD refresh
+
+- With `EURUSD` and `USDCHF` observe-blocked after the 14:11 UTC exits, I
+  refreshed a non-blocked MACD sleeve for `USDCAD`, `AUDUSD`, and `USDJPY`:
+  `outputs/backtests/live_watch_macd_nonblocked_refresh_20260625_w960.csv`.
+- The best row, `fast6_h025_m035_eff04_hold10`, made 0.722% with 0.145%
+  drawdown and 22 trades on the full W960 import, but stayed `PAPER_ONLY`:
+  66.7% total positive folds missed the live-promotion threshold even though
+  active-positive and non-negative folds were both 100.0%.
+- The running `live_current_h025_m035_eff04_hold10` row was also `PAPER_ONLY`
+  at 50.0% positive folds. Looser micro variants traded more often but failed
+  the active-positive gate at 60.0%.
+- Added the W960 scan to the live status optimizer rollup so non-blocked MACD
+  pressure is tracked alongside the older AUD/EUR/CHF and AUDUSD-only evidence.
+- Decision: do not switch `USDJPY` to MACD or loosen live MACD parameters from
+  this scan. Keep it on the near-promotion watchlist and require another
+  confirming full-window pass before changing live configuration.
