@@ -2706,3 +2706,20 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not expand the two-position cap, promote `opportunity_probe`,
   or force manual trades for this pressure basket. Keep the guarded live map
   unchanged.
+
+## 2026-06-25 multi-horizon preopen session rejection
+
+- The latest read-only `candidate_all_multi_horizon` diagnostic was fully
+  session-gated at 09:00 UTC because multi-horizon momentum only trades
+  10-14 UTC in production. I tested whether opening that sleeve one hour
+  earlier could add evidence-backed activity.
+- Fresh full-data W960 validation on all live-seven symbols:
+  `outputs/backtests/live_watch_multi_horizon_preopen_refresh_20260625_w960.csv`.
+- Every tested session variant lost money. The strict 9-14 UTC line was least
+  bad at -0.111% with 250 trades and 50.0% positive/non-negative folds, while
+  the current 10-14 UTC line lost 0.182% with only 16.7% positive and
+  non-negative folds. Broader 9-14 and 7-12 variants were worse.
+- Added the scan to `scripts/live_status_summary.py` so future multi-horizon
+  preopen/session-gated pressure has current rejection evidence.
+- Decision: do not add 09:00 UTC or broader early-Europe hours to
+  `multi_horizon_momentum`, and do not route live symbols to this sleeve.
