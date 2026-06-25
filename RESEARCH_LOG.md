@@ -3771,3 +3771,21 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not route GBPUSD/USDJPY to `opportunity_probe`, do not force a
   manual basket trade, and do not relax live gates for this negative-expectancy
   sleeve.
+
+## 2026-06-25 promoted MACD micro-threshold live update
+
+- Refreshed the promoted top-four MACD shape against
+  `data/live7_full_backtest_prices_15m.csv` and
+  `data/live7_full_backtest_quotes_15m.csv` with W960 fixed-warmup folds.
+- Output:
+  `outputs/backtests/live_watch_macd_micro_vs_current_refresh2_20260625_w960.csv`.
+  The top `micro_h005_m005_eff04_hold6` row stayed `PROMOTE`/live-ready at
+  +1.306% return, 1.105% drawdown, 134 trades, 83.3% positive folds, 83.3%
+  active-positive folds, 100.0% non-negative folds, and 75 evaluation fills.
+  The previous live-current row also stayed `PROMOTE`, but was less active
+  with 114 trades and had weaker non-negative fold coverage at 83.3%.
+- Decision: update live MACD parameters to the promoted micro row
+  (`min_histogram_bps=0.05`, `exit_histogram_bps=0.02`,
+  `min_macd_bps=0.05`, `max_holding_period=6`) while keeping the same
+  validated session hours, lot cap, loss brakes, sentiment brake, and
+  symbol-state throttle intact.
