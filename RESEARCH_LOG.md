@@ -2856,12 +2856,18 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Live diagnostics showed several MACD symbols close to the entry gate, so I
   tested whether lowering the live histogram threshold from 0.75 bps to
   0.50 bps would safely make the promoted live MACD sleeve more active.
-- Exact live-four W960 refresh on `AUDUSD EURUSD USDCAD USDCHF`:
+- First checked the lower-risk `directional_probe` allocation profile:
   `outputs/backtests/live_watch_macd_live_relax_h050_20260625_w960.csv`.
-- The relaxed 0.50 bps row was identical to the current 0.75 bps row on this
-  reproducible scan, but both rejected: -0.052% return, 193 trades, 33.3%
-  positive/active-positive/non-negative folds. The 0.35 bps micro row was
-  weaker at -0.059% and also rejected.
-- Decision: do not lower `strategy.macd_momentum.min_histogram_bps` in live
-  config. Keep the 0.75 bps gate and let production trade only after the tested
-  MACD, cost, sentiment, and cooldown gates clear.
+  That profile rejected the current and relaxed rows, so it is not a safe
+  research-sizing override.
+- Then ran the exact live/default allocation profile used by the guarded MT5
+  process:
+  `outputs/backtests/live_watch_macd_live_relax_h050_default_20260625_w960.csv`.
+  The relaxed 0.50 bps row was identical to the current 0.75 bps row and both
+  promoted: +2.400% return, 86 trades, 83.3% positive folds, 83.3%
+  active-positive folds, and 83.3% non-negative folds. The 0.35 bps micro row
+  also promoted but was weaker at +2.198%.
+- Decision: lower `strategy.macd_momentum.min_histogram_bps` from 0.75 to
+  0.50 in live config. This is a narrow activity increase on the validated
+  default live profile; keep the MACD-line, cost, sentiment, cooldown, max-lot,
+  position-cap, and loss-brake gates unchanged.
