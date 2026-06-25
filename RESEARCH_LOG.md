@@ -3016,3 +3016,38 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not switch `USDCAD` from the validated MACD sleeve to
   `opportunity_probe`, and do not manually force the live USDCAD buy. The
   current live research signal is a churn-prone pattern on full data.
+
+## 2026-06-25 AUDUSD/GBPUSD opportunity-probe refresh rejection
+
+- At 11:03 UTC the research-only `opportunity_probe` diagnostics showed a
+  narrow two-symbol basket: `AUDUSD` buy and `GBPUSD` sell. I refreshed that
+  exact basket on the current live7 full-data import before considering a live
+  map change.
+- Directional-probe profile:
+  `outputs/backtests/live_watch_opportunity_probe_audusd_gbpusd_refresh_20260625_w960.csv`.
+  All rows rejected. The least-bad selective row still lost 0.042% with only
+  33.3% positive/active-positive/non-negative folds; the current row lost
+  0.271% across 852 trades with only 16.7% non-negative folds.
+- Default profile:
+  `outputs/backtests/live_watch_opportunity_probe_audusd_gbpusd_default_refresh_20260625_w960.csv`.
+  Results matched the directional scan and rejected every row.
+- Decision: do not switch `AUDUSD` or `GBPUSD` to the opportunity-probe sleeve
+  and do not force the current buy/sell basket. It adds activity, but the
+  full-data evidence says the activity is negative-edge churn.
+
+## 2026-06-25 AUDUSD/USDCHF opportunity-probe refresh rejection
+
+- A later supervisor refresh rotated the research-only `opportunity_probe`
+  basket to `AUDUSD` buy and `USDCHF` sell. I refreshed that exact two-symbol
+  basket on the current live7 full-data import as well.
+- Directional-probe profile:
+  `outputs/backtests/live_watch_opportunity_probe_audusd_usdchf_refresh_20260625_w960.csv`.
+  All rows rejected. The least-bad selective row lost 0.062% with only 33.3%
+  positive/active-positive/non-negative folds; the current row lost 0.281%
+  across 849 trades with only 16.7% non-negative folds.
+- Default profile:
+  `outputs/backtests/live_watch_opportunity_probe_audusd_usdchf_default_refresh_20260625_w960.csv`.
+  Results matched the directional scan and rejected every row.
+- Decision: do not switch `AUDUSD` or `USDCHF` to the opportunity-probe sleeve
+  and do not force the current buy/sell basket. The latest opportunity-probe
+  basket is active but still negative-edge on full data.

@@ -181,6 +181,10 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_opportunity_probe_usdcad_refresh_20260625_w960.csv",
     "outputs/backtests/live_watch_opportunity_probe_usdcad_default_refresh_20260625_w960.csv",
     "outputs/backtests/live_watch_opportunity_probe_audusd_current_w960.csv",
+    "outputs/backtests/live_watch_opportunity_probe_audusd_gbpusd_refresh_20260625_w960.csv",
+    "outputs/backtests/live_watch_opportunity_probe_audusd_gbpusd_default_refresh_20260625_w960.csv",
+    "outputs/backtests/live_watch_opportunity_probe_audusd_usdchf_refresh_20260625_w960.csv",
+    "outputs/backtests/live_watch_opportunity_probe_audusd_usdchf_default_refresh_20260625_w960.csv",
     "outputs/backtests/live_watch_opportunity_probe_audusd_eurgbp_w480.csv",
     "outputs/backtests/live_watch_opportunity_probe_audusd_eurgbp_current_w960.csv",
     "outputs/backtests/live_watch_opportunity_probe_aud_eurgbp_cad_chf_current_w960.csv",
@@ -1847,6 +1851,8 @@ def _summary_text(summary: dict[str, Any]) -> str:
     if candidate_diagnostics.get("candidate_count", 0) > 0:
         top = candidate_diagnostics.get("top_candidates", [{}])[0]
         top_symbol = top.get("top_symbol", {})
+        actionable_symbol_text = " ".join(top.get("actionable_symbols", [])) or "none"
+        requested_symbol_text = " ".join(top.get("requested_symbols", [])) or "none"
         lines.append(
             "candidate_diagnostics "
             f"candidates={candidate_diagnostics.get('candidate_count', 0)} "
@@ -1857,6 +1863,8 @@ def _summary_text(summary: dict[str, Any]) -> str:
             f"adjusted={top.get('adjusted_gross_notional_usd', 0.0):.2f} "
             f"actionable={top.get('actionable_symbol_count', 0)} "
             f"requested_symbols={top.get('requested_symbol_count', 0)} "
+            f"actionable_list={actionable_symbol_text} "
+            f"requested_list={requested_symbol_text} "
             f"focus={top_symbol.get('symbol', '')} "
             f"status={top_symbol.get('status', '')} "
             f"strategy={top_symbol.get('strategy', '')} "
