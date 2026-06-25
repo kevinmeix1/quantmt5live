@@ -53,6 +53,7 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_sentiment_pressure_maps_w480_summary.csv",
     "outputs/backtests/live_watch_sentiment_pressure_maps_w672_refresh_summary.csv",
     "outputs/backtests/live_watch_sentiment_pressure_maps_w960_refresh_summary.csv",
+    "outputs/backtests/live_watch_sentiment_pressure_maps_20260625_refresh_w960_summary.csv",
     "outputs/backtests/live_watch_macd_threshold_pressure_w480.csv",
     "outputs/backtests/live_watch_macd_near_promotion_refine_w480.csv",
     "outputs/backtests/live_watch_macd_pressure5_refine_w480.csv",

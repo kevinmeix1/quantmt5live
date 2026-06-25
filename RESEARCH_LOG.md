@@ -3212,3 +3212,24 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not lower live MACD histogram/exit-band thresholds or disable
   agreement for the current USDCHF pressure. The tested relaxation adds churn,
   not a stronger live-ready opportunity.
+
+## 2026-06-25 sentiment-pressure map refresh rejection
+
+- Refreshed the stale sentiment-pressure strategy maps against the current
+  live7 W960 full-data import because live sentiment remains USD-supportive and
+  the read-only pressure probes were rotating between EURGBP, USDCHF, EURUSD,
+  and GBPUSD:
+  `outputs/backtests/live_watch_sentiment_pressure_maps_20260625_refresh_w960_summary.csv`
+  and
+  `outputs/backtests/live_watch_sentiment_pressure_maps_20260625_refresh_w960_scores.csv`.
+- The best row was `all_quality_trend` across `AUDUSD`, `GBPUSD`, `USDCAD`,
+  and `USDCHF`: 20 trades, +0.018% full-sample return, 0.022% drawdown, 100%
+  active-positive and non-negative folds, but only 33.3% total positive folds,
+  so it stayed `PAPER_ONLY`.
+- The higher-activity pressure maps rejected. `best_per_symbol_all` and the
+  generated `top_3_best_symbol_strategies` reached only 66.7% non-negative
+  folds, while the explicit `sentiment_macd_core` and `sentiment_no_jpy_mix`
+  rows lost money with 33.3% non-negative folds.
+- Decision: keep the current live map. The refresh confirms useful watchlist
+  pressure, but not a live-ready replacement for the guarded MACD/champion/
+  quality-trend command.
