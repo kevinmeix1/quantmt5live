@@ -1697,10 +1697,12 @@ def _compact_optimizer_scans(
 ) -> dict[str, Any]:
     if not scans:
         return {}
+    raw_rows = [
+        row for row in scans.get("top_candidates", [])
+        if isinstance(row, dict)
+    ]
     compact_rows = []
-    for row in scans.get("top_candidates", [])[:5]:
-        if not isinstance(row, dict):
-            continue
+    for row in raw_rows[:5]:
         compact_rows.append(
             {
                 "source_path": row.get("source_path", ""),
@@ -1737,10 +1739,60 @@ def _compact_optimizer_scans(
                 ),
             }
         )
+    latest_row = sorted(raw_rows, key=_optimizer_scan_recency_key)[0] if raw_rows else {}
     return {
         "scan_count": int(_float_or_zero(scans.get("scan_count"))),
         "top_candidates": compact_rows,
+        "latest_candidate": _compact_optimizer_scan_row(latest_row),
     }
+
+
+def _compact_optimizer_scan_row(row: dict[str, Any]) -> dict[str, Any]:
+    if not row:
+        return {}
+    return {
+        "source_path": row.get("source_path", ""),
+        "source_label": row.get("source_label", ""),
+        "source_mtime_utc": row.get("source_mtime_utc", ""),
+        "source_age_minutes": _float_or_zero(row.get("source_age_minutes")),
+        "source_stale": _boolish(row.get("source_stale")),
+        "source_row_index": int(_float_or_zero(row.get("source_row_index"))),
+        "label": row.get("label", ""),
+        "symbols": row.get("symbols", ""),
+        "promotion_status": row.get("promotion_status", ""),
+        "promotion_live_ready": _boolish(row.get("promotion_live_ready")),
+        "promotion_reason": row.get("promotion_reason", ""),
+        "return_pct": _float_or_zero(row.get("return_pct")),
+        "max_drawdown_pct": _float_or_zero(row.get("max_drawdown_pct")),
+        "wf_active_fold_fraction": _float_or_zero(
+            row.get("wf_active_fold_fraction")
+        ),
+        "wf_active_positive_fold_fraction": _float_or_zero(
+            row.get("wf_active_positive_fold_fraction")
+        ),
+        "wf_non_negative_fold_fraction": _float_or_zero(
+            row.get("wf_non_negative_fold_fraction")
+        ),
+        "wf_median_active_test_return_pct": _float_or_zero(
+            row.get("wf_median_active_test_return_pct")
+        ),
+        "wf_total_evaluation_fills": int(
+            _float_or_zero(row.get("wf_total_evaluation_fills"))
+        ),
+    }
+
+
+def _optimizer_scan_recency_key(row: dict[str, Any]) -> tuple[float, int, str]:
+    source_mtime = str(row.get("source_mtime_utc", "")).strip()
+    try:
+        timestamp = datetime.fromisoformat(source_mtime).timestamp()
+    except ValueError:
+        timestamp = 0.0
+    return (
+        -timestamp,
+        int(_float_or_zero(row.get("source_row_index"))) or 999999,
+        str(row.get("source_label", "")),
+    )
 
 
 def _compact_near_promotion(summary: dict[str, Any] | None) -> dict[str, Any]:
@@ -2110,6 +2162,23 @@ def _summary_text(summary: dict[str, Any]) -> str:
             f"fills={top.get('wf_total_evaluation_fills', 0)} "
             f"reason={top.get('promotion_reason', '')}"
         )
+        latest = optimizer_scans.get("latest_candidate", {})
+        if latest:
+            lines.append(
+                "latest_optimizer_scan "
+                f"source={Path(latest.get('source_path', '')).name if latest.get('source_path') else 'n/a'} "
+                f"row={latest.get('source_row_index', 0)} "
+                f"age={_format_age_minutes(latest.get('source_age_minutes'))} "
+                f"stale={'yes' if latest.get('source_stale') else 'no'} "
+                f"label={latest.get('label', '')} "
+                f"symbols={latest.get('symbols', '')} "
+                f"status={latest.get('promotion_status', '')} "
+                f"live_ready={'yes' if latest.get('promotion_live_ready') else 'no'} "
+                f"active_pos={latest.get('wf_active_positive_fold_fraction', 0.0):.1%} "
+                f"nonneg={latest.get('wf_non_negative_fold_fraction', 0.0):.1%} "
+                f"fills={latest.get('wf_total_evaluation_fills', 0)} "
+                f"reason={latest.get('promotion_reason', '')}"
+            )
     if near_promotion.get("candidate_count", 0) > 0:
         top = near_promotion.get("top_candidates", [{}])[0]
         blockers = top.get("failed_gates", [])

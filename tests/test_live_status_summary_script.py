@@ -685,6 +685,77 @@ class LiveStatusSummaryScriptTest(TestCase):
         self.assertFalse(top["source_stale"])
         self.assertTrue(scans["top_candidates"][1]["source_stale"])
 
+    def test_optimizer_summary_surfaces_latest_scan_separately_from_top_rank(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            promoted_scan = root / "older_promoted.csv"
+            latest_scan = root / "latest_rejected.csv"
+            header = (
+                "rank,label,symbols,promotion_status,promotion_live_ready,"
+                "active_positive_fold_fraction,non_negative_fold_fraction,"
+                "median_active_test_return_pct,total_evaluation_fills,"
+                "promotion_reason"
+            )
+            promoted_scan.write_text(
+                "\n".join(
+                    [
+                        header,
+                        (
+                            "1,current_live,AUDUSD EURUSD,PROMOTE,True,"
+                            "1.0,1.0,0.0020,85,passed"
+                        ),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            latest_scan.write_text(
+                "\n".join(
+                    [
+                        header,
+                        (
+                            "1,aggressive_probe,AUDUSD GBPUSD,REJECT,False,"
+                            "0.1667,0.1667,-0.0002,434,"
+                            "non-negative fold fraction 16.7% is below 70.0%"
+                        ),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            now = live_status_summary.datetime(
+                2026, 1, 1, 12, 0, tzinfo=live_status_summary.UTC
+            )
+            older_epoch = now.timestamp() - 30 * 60
+            latest_epoch = now.timestamp() - 2 * 60
+            os.utime(promoted_scan, (older_epoch, older_epoch))
+            os.utime(latest_scan, (latest_epoch, latest_epoch))
+
+            scans = live_status_summary.read_optimizer_scans(
+                (str(promoted_scan), str(latest_scan)),
+                now_utc=now,
+            )
+            summary = live_status_summary.build_summary(
+                metrics=_metrics_row(positions_count="0"),
+                live_loop={"iteration": 4, "timestamp_utc": "2026-01-01T12:00:00Z"},
+                latest_order=None,
+                pair_analysis={"pairs": {}},
+                attribution={"symbols": {}},
+                diagnostics={"symbols": {}},
+                sentiment={"pairs": {}},
+                research_consensus=None,
+                optimizer_scans=scans,
+                generated_at_utc="2026-01-01T12:01:00+00:00",
+            )
+
+        optimizer = summary["optimizer_scans"]
+        self.assertEqual(optimizer["top_candidates"][0]["label"], "current_live")
+        self.assertEqual(optimizer["latest_candidate"]["label"], "aggressive_probe")
+        text = live_status_summary._summary_text(summary)
+        self.assertIn("latest_optimizer_scan", text)
+        self.assertIn("source=latest_rejected.csv", text)
+        self.assertIn("label=aggressive_probe", text)
+
     def test_heuristic_evidence_matches_macd_scan_alias(self) -> None:
         evidence = live_status_summary._heuristic_optimizer_evidence(
             {
