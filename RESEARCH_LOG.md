@@ -3191,3 +3191,24 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   symbols, and do not force the current USDCHF long pressure. Keep the current
   guarded live map and let only promoted MACD/champion/quality logic place
   orders.
+
+## 2026-06-25 MACD micro-trigger rejection
+
+- Live pair analysis showed `USDCHF` as an `eligible_tiny_probe_buy`, but
+  production MACD was flat because the histogram was inside the live exit band.
+  I tested a deliberately aggressive MACD micro-trigger ladder on
+  `AUDUSD`/`EURUSD`/`USDCAD`/`USDCHF` using the current live hours and full
+  live7 W960 data:
+  `outputs/backtests/live_watch_macd_micro_trigger_default_20260625_w960.csv`
+  and
+  `outputs/backtests/live_watch_macd_micro_trigger_directional_20260625_w960.csv`.
+- Default sizing promoted the guarded micro rows, but they produced the same
+  114 fills as the current live MACD sleeve and lower return than the current
+  `h=0.25,m=0.35,eff=0.04` row. The only row that actually increased activity
+  disabled MACD/histogram agreement, jumped to 154 trades, and rejected at
+  66.7% non-negative folds with worse drawdown.
+- Directional-probe sizing rejected every row. The micro-trigger rows stayed
+  negative with only 50.0% positive/active-positive/non-negative folds.
+- Decision: do not lower live MACD histogram/exit-band thresholds or disable
+  agreement for the current USDCHF pressure. The tested relaxation adds churn,
+  not a stronger live-ready opportunity.
