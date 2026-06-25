@@ -216,6 +216,7 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_opportunity_probe_usdcad_current_w960.csv",
     "outputs/backtests/live_watch_opportunity_probe_usdcad_refresh_20260625_w960.csv",
     "outputs/backtests/live_watch_opportunity_probe_usdcad_default_refresh_20260625_w960.csv",
+    "outputs/backtests/live_watch_opportunity_probe_usdcad_sell_refresh_20260625_w960.csv",
     "outputs/backtests/live_watch_opportunity_probe_eurusd_refresh_20260625_w960.csv",
     "outputs/backtests/live_watch_opportunity_probe_eurusd_default_refresh_20260625_w960.csv",
     "outputs/backtests/live_watch_opportunity_probe_audusd_current_w960.csv",

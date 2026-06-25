@@ -3861,3 +3861,19 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   summaries cite this fresh evidence.
 - Decision: do not switch live MACD from the current micro 8/21/8 shape to the
   6/18 family; the extra return is not stable enough across validation windows.
+
+## 2026-06-25 USDCAD sell-probe rejection
+
+- A refreshed live pair read showed `USDCAD` as an `eligible_tiny_probe_sell`
+  while production MACD remained flat because the quote was stale and the
+  current MACD session window was closed.
+- Refreshed an isolated USDCAD opportunity-probe scan on the full live7
+  15-minute import:
+  `outputs/backtests/live_watch_opportunity_probe_usdcad_sell_refresh_20260625_w960.csv`.
+- The best selective row remained negative: -0.068% return, 187 trades,
+  50.0% positive folds, 50.0% active-positive folds, and 50.0% non-negative
+  folds. Looser rows lost more and increased churn.
+- Added the refresh to the live status optimizer scan list so future heuristic
+  USDCAD sell pressure cites exact same-day evidence.
+- Decision: do not route USDCAD to `opportunity_probe`, do not force the
+  heuristic sell, and keep USDCAD on the promoted MACD sleeve.
