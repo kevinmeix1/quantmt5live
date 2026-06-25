@@ -3910,3 +3910,17 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   evaluation fold.
 - Decision: keep `GBPUSD=champion_ensemble` in live routing. The asset-squeeze
   swap is valid research, but it is not better than the current map.
+
+## 2026-06-25 micro-MACD hour-17 refresh rejection
+
+- Retested the current promoted micro MACD sleeve against a narrower hour-17
+  expansion after live diagnostics showed the production map flat during the
+  17:00 UTC dead zone.
+- Output:
+  `outputs/backtests/live_watch_macd_micro_hour17_refresh_20260625_w960.csv`.
+- Adding only 17:00 UTC passed W960 promotion gates and increased activity
+  from 134 to 144 trades, but it reduced return from +1.306% to +0.943%,
+  raised drawdown from 1.105% to 1.376%, and weakened Sharpe. The hour-17-only
+  sleeve lost -0.361% and produced no active fixed-warmup evaluation folds.
+- Decision: keep live MACD hours unchanged. The narrower hour-17 expansion
+  adds churn without improving the deployed micro MACD schedule.
