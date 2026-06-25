@@ -3698,3 +3698,20 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   session-gated pressure cites current full-data evidence.
 - Decision: do not widen the live MACD session gate to hour 15. The extra
   trades are not live-ready and are weaker than the existing session window.
+
+## 2026-06-25 EURGBP/GBPUSD opportunity-probe refresh rejection
+
+- The latest read-only `candidate_all_opportunity_probe` sleeve rotated to a
+  live-sized EURGBP short plus GBPUSD long basket. I refreshed that exact
+  two-symbol basket under the directional-probe allocation profile before
+  considering any live routing change.
+- Output:
+  `outputs/backtests/live_watch_opportunity_probe_eurgbp_gbpusd_refresh2_20260625_w960.csv`.
+  Every row rejected. The best row still lost 0.137% with 491 trades and only
+  33.3% positive/active-positive/non-negative folds. The current live-shape row
+  was worse: -0.235%, 813 trades, 0.0% positive folds, 0.0% non-negative folds,
+  and 418 evaluation fills.
+- Added the scan to the live status optimizer rollup so this current
+  research-only basket cites same-day exact evidence.
+- Decision: do not route EURGBP/GBPUSD to `opportunity_probe`, do not force a
+  manual basket trade, and do not relax live gates for this churn-prone sleeve.
