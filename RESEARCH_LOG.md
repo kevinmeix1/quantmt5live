@@ -3891,3 +3891,22 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   lost -0.381%, and 16-19-only lost -0.942%.
 - Decision: keep live MACD hours unchanged. Extra 17-19 UTC activity is not an
   improvement over the deployed micro MACD schedule.
+
+## 2026-06-25 GBPUSD asset-squeeze map refresh rejection
+
+- The older `promoted_best_per_symbol` map swaps `GBPUSD` from
+  `champion_ensemble` to `asset_adaptive_dual_squeeze`, while the current live
+  research cycle still surfaces GBPUSD squeeze pressure. Retested the exact
+  current live map against that GBPUSD asset-squeeze variant under the current
+  micro MACD configuration.
+- Outputs:
+  `outputs/backtests/live_watch_current_map_micro_refresh_20260625_w960_summary.csv`
+  and
+  `outputs/backtests/live_watch_gbpusd_asset_map_refresh_20260625_w960_summary.csv`.
+- The current live map was stronger: 100.0% positive folds, 100.0%
+  active-positive folds, 100.0% non-negative folds, and 85 evaluation fills.
+  The GBPUSD asset-squeeze variant still passed W960 promotion gates, but it
+  fell to 83.3% positive/active-positive folds, 79 fills, and a flat first
+  evaluation fold.
+- Decision: keep `GBPUSD=champion_ensemble` in live routing. The asset-squeeze
+  swap is valid research, but it is not better than the current map.
