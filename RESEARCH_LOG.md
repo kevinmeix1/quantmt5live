@@ -4094,3 +4094,27 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: roll back the hour-18 config expansion and remove the hour-18 scan
   from the default status-summary source list. Keep the promoted old MACD
   hours live; do not loosen efficiency just to create churn.
+
+## 2026-06-25 EURGBP/GBPUSD pressure-map refresh
+
+- Late-session live analysis showed heuristic pressure on `EURGBP` buy and
+  `GBPUSD` sell, while production diagnostics still requested zero notional:
+  `EURGBP=cross_rate_reversion` saw only a -0.6 bps deviation versus the 1.0
+  bps minimum, and `GBPUSD=asset_adaptive_dual_squeeze` remained below the
+  0.5 bps prior-volatility gate.
+- Revalidated the current live map against the two obvious pressure-routing
+  variants and the combined variant on the full live7 15-minute import:
+  `outputs/backtests/live_watch_pressure_map_refresh_20260625_current_w960_summary.csv`,
+  `outputs/backtests/live_watch_pressure_map_refresh_20260625_eurgbp_cross_w960_summary.csv`,
+  `outputs/backtests/live_watch_pressure_map_refresh_20260625_gbpusd_asset_w960_summary.csv`,
+  and
+  `outputs/backtests/live_watch_pressure_map_refresh_20260625_eurgbp_cross_gbpusd_asset_w960_summary.csv`.
+- All variants passed fixed-warmup gates, but the current map remained strongest
+  for live routing: 100.0% positive folds, 100.0% active-positive folds,
+  100.0% non-negative folds, and 85 evaluation fills. The pressure variants
+  dropped to 83.3% positive/active-positive folds and 77-79 evaluation fills,
+  despite similar median active returns.
+- Decision: keep production routing unchanged. Added the fresh pressure-map
+  summaries to the live status optimizer scan list so future monitoring cites
+  same-session evidence before considering EURGBP cross-rate or GBPUSD
+  asset-squeeze overrides.
