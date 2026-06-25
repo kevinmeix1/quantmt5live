@@ -3924,3 +3924,21 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   sleeve lost -0.361% and produced no active fixed-warmup evaluation folds.
 - Decision: keep live MACD hours unchanged. The narrower hour-17 expansion
   adds churn without improving the deployed micro MACD schedule.
+
+## 2026-06-25 micro-MACD hour-18/19 refresh rejection
+
+- Retested the next two dead-zone hours separately on the full live7 15-minute
+  import after production remained flat around 18:00 London / 17:00 UTC.
+- Outputs:
+  `outputs/backtests/live_watch_macd_micro_hour18_refresh_20260625_w960.csv`
+  and
+  `outputs/backtests/live_watch_macd_micro_hour19_refresh_20260625_w960.csv`.
+- Adding 18:00 UTC increased activity from 134 to 140 trades and still passed
+  W960 promotion gates, but reduced return from +1.306% to +1.133%, raised
+  drawdown from 1.105% to 1.276%, and weakened Sharpe. The 18:00-only sleeve
+  lost -0.172% and produced no active fixed-warmup evaluation folds.
+- Adding 19:00 UTC increased activity from 134 to 138 trades and still passed
+  promotion gates, but reduced return from +1.306% to +1.286%; the 19:00-only
+  sleeve lost -0.020% and produced no active fixed-warmup evaluation folds.
+- Decision: keep live MACD hours unchanged. The 17-19 UTC dead-zone expansion
+  consistently adds activity without improving the current deployed schedule.
