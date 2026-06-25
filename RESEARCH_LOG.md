@@ -4118,3 +4118,30 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   summaries to the live status optimizer scan list so future monitoring cites
   same-session evidence before considering EURGBP cross-rate or GBPUSD
   asset-squeeze overrides.
+
+## 2026-06-25 USDCAD alternative route refresh
+
+- A fresh 21:03 UTC live pass had no eligible production entries. Most symbols
+  were blocked by stale quotes, rollover-width spreads, observe state, or
+  session gates; `USDCAD` was the only non-blocked symbol with mildly positive
+  pair pressure, but production MACD still sat below the histogram threshold.
+- Revalidated the current live map against `USDCAD=quality_trend`,
+  `USDCAD=volatility_squeeze`, and `USDCAD=opportunity_probe` on the full
+  live7 15-minute import:
+  `outputs/backtests/live_watch_usdcad_alt_map_refresh_20260625_current_w960_summary.csv`,
+  `outputs/backtests/live_watch_usdcad_alt_map_refresh_20260625_usdcad_quality_w960_summary.csv`,
+  `outputs/backtests/live_watch_usdcad_alt_map_refresh_20260625_usdcad_volsqueeze_w960_summary.csv`,
+  and
+  `outputs/backtests/live_watch_usdcad_alt_map_refresh_20260625_usdcad_opportunity_w960_summary.csv`.
+- The current map remained stronger: 100.0% positive folds, 100.0%
+  active-positive folds, 100.0% non-negative folds, 0.224% median active test
+  return, 0.250% worst drawdown, and 85 evaluation fills. `USDCAD=quality_trend`
+  also promoted, but dropped median active return to 0.186%, raised worst
+  drawdown to 0.282%, and reduced evaluation fills to 77. `USDCAD=volatility_squeeze`
+  promoted with only 83.3% positive/non-negative folds, and
+  `USDCAD=opportunity_probe` rejected despite 178 fills because non-negative
+  folds were only 66.7%.
+- Decision: keep `USDCAD=macd_momentum` in live routing. Do not force the
+  mildly supportive USDCAD read during rollover-quality conditions; the
+  aggressive route adds churn and the safer alternatives are inferior to the
+  current promoted map.
