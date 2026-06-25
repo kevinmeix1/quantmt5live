@@ -4145,3 +4145,21 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   mildly supportive USDCAD read during rollover-quality conditions; the
   aggressive route adds churn and the safer alternatives are inferior to the
   current promoted map.
+
+## 2026-06-25 live quote freshness ordering fix
+
+- Repeated live diagnostics around 21:08 UTC showed several symbols blocked by
+  stale quotes even though a read-only MT5 probe confirmed the connection was
+  healthy and quotes were available. The live loop and diagnostics fetched
+  quotes before fetching recent bars, then applied the wall-clock quote-age
+  gate after the slower history reads. That can age otherwise usable quotes
+  without changing the actual market-quality limit.
+- Updated the live engine and diagnostics to fetch recent bars first and quotes
+  last. The 5-second quote-age guard remains intact; the change only avoids
+  self-inflicted quote aging from history collection latency.
+- Tests:
+  `python -m unittest tests.test_live_dry_run tests.test_live_strategy_diagnostics_script tests.test_live_status_summary_script`.
+- After restart, the guarded live worker relaunched with the same live command
+  and risk controls. Fresh diagnostics showed mostly real blockers
+  (MACD disagreement, spread/session gates, observe states) rather than broad
+  stale-quote artifacts, and no live route/config threshold change was made.

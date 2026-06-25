@@ -313,16 +313,18 @@ class LiveDryRunEngine:
             return False
 
     def run_once(self) -> LiveDryRunIteration:
-        quotes = {
-            symbol: self.market_data.get_latest_quote(symbol)
-            for symbol in self.settings.symbols
-        }
         histories = {
             symbol: self.market_data.get_recent_bars(
                 symbol,
                 timeframe=self.settings.timeframe,
                 count=self.settings.bars,
             )
+            for symbol in self.settings.symbols
+        }
+        # Quotes are the freshest data in the decision; fetch them after slower
+        # history reads so live wall-clock age checks do not penalize collection time.
+        quotes = {
+            symbol: self.market_data.get_latest_quote(symbol)
             for symbol in self.settings.symbols
         }
         self._update_strategy_context(histories=histories, quotes=quotes)

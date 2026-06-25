@@ -261,6 +261,39 @@ class LiveDryRunTest(TestCase):
         self.assertEqual(result.records, ())
         self.assertEqual(result.iterations[0].allocation.requested_gross_notional_usd, 0.0)
 
+    def test_live_run_fetches_bars_before_quotes_to_keep_quotes_fresh(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            journal = Path(tmpdir) / "journal.jsonl"
+            config = load_config("configs/default.toml")
+            settings = LiveDryRunSettings(
+                symbols=("EURUSD", "USDJPY"),
+                strategy_name="simple_momentum",
+                bars=5,
+                iterations=1,
+                journal_path=str(journal),
+            )
+            market = _RecordingBalancedMomentumMarket()
+            engine = LiveDryRunEngine(
+                config=config,
+                settings=settings,
+                market_data=market,
+                account_adapter=_StaticAccount(),
+                executor=DryRunExecutor(journal),
+                validate_quote_age_against_wall_clock=True,
+            )
+
+            engine.run()
+
+        self.assertEqual(
+            market.events[:4],
+            [
+                ("bars", "EURUSD"),
+                ("bars", "USDJPY"),
+                ("quote", "EURUSD"),
+                ("quote", "USDJPY"),
+            ],
+        )
+
     def test_live_iteration_timestamp_uses_wall_clock_when_quote_age_is_live_checked(self) -> None:
         wall_clock = datetime(2026, 6, 22, 20, 45, tzinfo=UTC)
         broker_future_quote = QuoteSnapshot(
@@ -895,6 +928,26 @@ class _StaleBalancedMomentumMarket(_BalancedMomentumMarket):
             )
             for symbol, quote in self._quotes.items()
         }
+
+
+class _RecordingBalancedMomentumMarket(_BalancedMomentumMarket):
+    def __init__(self) -> None:
+        super().__init__()
+        self.events: list[tuple[str, str]] = []
+
+    def get_latest_quote(self, symbol: str) -> QuoteSnapshot:
+        self.events.append(("quote", symbol))
+        return super().get_latest_quote(symbol)
+
+    def get_recent_bars(
+        self,
+        symbol: str,
+        *,
+        timeframe: str,
+        count: int,
+    ) -> tuple[PriceBar, ...]:
+        self.events.append(("bars", symbol))
+        return super().get_recent_bars(symbol, timeframe=timeframe, count=count)
 
 
 class _FlatMarket:

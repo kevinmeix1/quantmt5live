@@ -175,8 +175,6 @@ def _diagnose_engine(
     settings: LiveDryRunSettings,
     allocation_profile: str = "default",
 ) -> dict:
-    quotes = {symbol: engine.market_data.get_latest_quote(symbol) for symbol in settings.symbols}
-    wall_clock_utc = datetime.now(timezone.utc)
     histories = {
         symbol: engine.market_data.get_recent_bars(
             symbol,
@@ -185,6 +183,8 @@ def _diagnose_engine(
         )
         for symbol in settings.symbols
     }
+    quotes = {symbol: engine.market_data.get_latest_quote(symbol) for symbol in settings.symbols}
+    wall_clock_utc = datetime.now(timezone.utc)
     engine._update_strategy_context(histories=histories, quotes=quotes)
     timestamp = _iteration_timestamp(
         quotes,
