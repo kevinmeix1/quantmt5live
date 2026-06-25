@@ -4234,3 +4234,28 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: keep the live routing unchanged. Treat broad USD pressure as a
   watch/regime signal only; do not deploy `usd_pressure_router` or widen
   late-session risk while the fold stability gate fails.
+
+## 2026-06-25 late-session AUD/GBP and EURGBP probe rejection
+
+- At 21:37 UTC the live account was flat with equity 999,159.41, day P/L
+  -840.59, zero margin, and no open positions. Sentiment and pair analysis
+  still leaned negative `AUDUSD`/`GBPUSD`, supportive `EURGBP`, and supportive
+  `USDJPY`, while `EURUSD` and `USDCHF` remained observe-blocked after the
+  earlier realized loss.
+- Tested whether current AUD/GBP pressure could justify a more aggressive
+  late-session MACD sleeve without changing live brakes:
+  `outputs/backtests/live_watch_macd_aud_gbp_latesession_pressure_20260625_w960.csv`
+  and
+  `outputs/backtests/live_watch_macd_aud_gbp_agreement_relief_20260625_w960.csv`.
+  Current, loose, fast, near-promote, bridge, and MACD agreement-relief
+  candidates all produced zero full-sample trades and zero active W960
+  walk-forward folds on `AUDUSD`/`GBPUSD`.
+- Rechecked the actionable `candidate_all_opportunity_probe` idea on `EURGBP`
+  using small directional-probe sizing:
+  `outputs/backtests/live_watch_opportunity_probe_eurgbp_actionable_refresh2_20260625_w960.csv`.
+  The strictest variant still lost -0.016% with 101 trades, and all variants
+  were `REJECT` with only 16.7% positive/non-negative folds. The current
+  deployed probe shape was worse: -0.114% with 401 trades.
+- Decision: keep live routing unchanged. There is no tested late-session
+  AUD/GBP MACD edge to unlock, and the live-visible EURGBP opportunity-probe
+  request is a churn/loss candidate rather than a high-conviction trade.
