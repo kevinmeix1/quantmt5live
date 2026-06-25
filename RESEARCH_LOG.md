@@ -4163,3 +4163,18 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   and risk controls. Fresh diagnostics showed mostly real blockers
   (MACD disagreement, spread/session gates, observe states) rather than broad
   stale-quote artifacts, and no live route/config threshold change was made.
+
+## 2026-06-25 USDJPY quality-trend after-hours rejection
+
+- Late-session sentiment was supportive for `USDJPY`, but production remained
+  flat because the live route uses the guarded `quality_trend` sleeve and its
+  MACD confirmation hours are 10-14 UTC.
+- Tested whether hours 20-22 UTC could be added without changing the strategy
+  family or bypassing live brakes:
+  `outputs/backtests/live_watch_quality_trend_usdjpy_afterhours_refresh_20260625_w960.csv`.
+- Current, 20-22, 17-22, 10-22, loose 20-22, and strict 20-22 candidates all
+  generated zero full-sample trades and zero active walk-forward folds on the
+  full live7 15-minute import. Each after-hours candidate was `REJECT`.
+- Decision: keep `USDJPY=quality_trend` unchanged and do not widen USDJPY
+  hours for the current late-session pressure. The full-data scan found no
+  executable after-hours quality-trend edge to promote.
