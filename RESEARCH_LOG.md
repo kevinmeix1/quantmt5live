@@ -3962,3 +3962,19 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   positive return came from a single fold.
 - Decision: do not route EURGBP or GBPUSD directly to `kalman_trend`. The raw
   full-run improvement is not stable enough for live routing.
+
+## 2026-06-25 live7 GBPUSD asset-map recheck rejection
+
+- Re-ran the current live seven-symbol strategy map against a GBPUSD
+  `asset_adaptive_dual_squeeze` override on the explicit aligned live7 full-data
+  import after the live research cycle kept surfacing GBPUSD squeeze pressure.
+- Output:
+  `outputs/backtests/live_watch_strategy_maps_gbpusd_asset_recheck_20260625_w960_summary.csv`.
+- The current map ranked ahead of the GBPUSD asset override on the aligned
+  recheck: +1.400% return, 162 trades, and 146 evaluation fills versus +1.214%,
+  144 trades, and 134 evaluation fills for the override. Both failed this
+  stricter recheck because non-negative fold fraction was 66.7%, below the
+  70.0% promotion gate.
+- Decision: keep `GBPUSD=champion_ensemble`. The override reduces return and
+  activity on the fresh live7 recheck and does not provide a safer way to force
+  more trades.

@@ -149,6 +149,7 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_live7_active_pressure_maps_w480_summary.csv",
     "outputs/backtests/live_watch_strategy_maps_live7_pressure_w960_summary.csv",
     "outputs/backtests/live_watch_strategy_maps_after_macd_hours_w960_summary.csv",
+    "outputs/backtests/live_watch_strategy_maps_gbpusd_asset_recheck_20260625_w960_summary.csv",
     "outputs/backtests/live_watch_eurgbp_cross_strategy_map_refresh_qualify_20260625_w960.csv",
     "outputs/backtests/live_watch_eurgbp_isolated_strategy_refresh_20260625_w960.csv",
     "outputs/backtests/live_watch_live6_positive_subset_maps_w480_summary.csv",
