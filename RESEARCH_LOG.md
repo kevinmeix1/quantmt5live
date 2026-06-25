@@ -2935,3 +2935,23 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: keep live MACD exit band and thresholds unchanged. The new optimizer
   support stays because it improves future evidence gathering, but no live
   config promotion is justified from this scan.
+
+## 2026-06-25 Champion ensemble session-relief rejection
+
+- At 10:28 UTC the live process was still flat. The only small-only candidates
+  under the 96-hour attribution view were `EURUSD` and `GBPUSD`; `EURGBP` was
+  cooldown-blocked, but it remained a tempting watchlist name because of
+  supportive sentiment and cross-rate candidates.
+- Tested whether the `GBPUSD` and `EURGBP` champion ensemble sleeves could be
+  made more active before the 11:00 UTC session window by lowering entry
+  thresholds, changing Kalman/asset-squeeze weights, and adding a small MACD
+  vote:
+  `outputs/backtests/live_watch_champion_gbpusd_session_relief_20260625_w960.csv`
+  and
+  `outputs/backtests/live_watch_champion_eurgbp_session_relief_20260625_w960.csv`.
+- Both scans rejected every row. Current, entry-0.35, Kalman-heavy,
+  squeeze-heavy, MACD-assisted, and entry-0.25 variants all produced zero
+  trades and zero active fixed-warmup folds.
+- Decision: do not promote a champion ensemble entry-score or weight change for
+  `GBPUSD`/`EURGBP`. Let the live sleeve wait for its tested 11:00 UTC
+  underlying signal window rather than adding an untested pre-session shortcut.
