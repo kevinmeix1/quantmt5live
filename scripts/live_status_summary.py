@@ -131,6 +131,7 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_mean_reversion_live7_w480_summary.csv",
     "outputs/backtests/live_watch_usdjpy_mean_reversion_signal_w960_summary.csv",
     "outputs/backtests/live_watch_relative_strength_live7_w480_summary.csv",
+    "outputs/backtests/live_watch_relative_strength_current_pressure_20260625_w960_summary.csv",
     "outputs/backtests/live_watch_breakout_live7_w480_summary.csv",
     "outputs/backtests/live_watch_regime_switch_live7_w480_summary.csv",
     "outputs/backtests/live_watch_kalman_trend_live7_w480_summary.csv",

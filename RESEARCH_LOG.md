@@ -3660,3 +3660,25 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not route `GBPUSD`, `AUDUSD`, `EURGBP`, or `USDCAD` to
   `alpha_router` from this setup. Keep alpha-router monitor-only until a
   narrower candidate passes fixed-warmup promotion gates.
+
+## 2026-06-25 relative-strength current-pressure rejection
+
+- I attempted a broad relative-strength optimizer pass on the non-blocked
+  pressure set (`AUDUSD`, `EURGBP`, `GBPUSD`, `USDCAD`, `USDJPY`) with W960
+  walk-forward windows, but the parameter-grid run exceeded ten minutes before
+  writing an artifact. I stopped only that research process and replaced it
+  with a narrower fixed-warmup validation of the configured `relative_strength`
+  strategy.
+- Output files:
+  `outputs/backtests/live_watch_relative_strength_current_pressure_20260625_w960_summary.csv`
+  and
+  `outputs/backtests/live_watch_relative_strength_current_pressure_20260625_w960_folds.csv`.
+- The configured relative-strength slice rejected cleanly: 0 evaluation fills,
+  0.0% active folds, and `REJECT` with reason "strategy produced no active
+  fixed-warmup evaluation folds." Risk discipline was 100/100 because the
+  strategy stayed flat.
+- Added the W960 summary to the live status optimizer rollup so relative
+  strength remains blocked by fresh current-pressure evidence.
+- Decision: do not route current live symbols to `relative_strength`; it is not
+  an opportunity source in this window unless a future parameter-specific scan
+  can produce active, fold-stable trades.
