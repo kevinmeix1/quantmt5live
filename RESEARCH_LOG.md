@@ -3733,3 +3733,41 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not route USDCAD/USDJPY to `opportunity_probe`, do not force a
   manual basket trade, and do not relax live gates for this negative-expectancy
   sleeve.
+
+## 2026-06-25 AUDUSD/GBPUSD/USDJPY champion asset-squeeze rejection
+
+- The live research cycle kept surfacing `champion_ensemble`
+  `asset_adaptive_dual_squeeze` rows on GBPUSD and AUDUSD, with USDJPY also
+  qualifying on the same signal family. I refreshed the exact
+  AUDUSD/GBPUSD/USDJPY cluster with a narrow champion-weight scan under the
+  directional-probe allocation profile.
+- Output:
+  `outputs/backtests/live_watch_champion_asset_squeeze_aud_gbp_jpy_refresh_20260625_w960.csv`.
+  Every row rejected. The best `asset_only` row was slightly positive
+  (+0.007%, 44 trades) but missed fold stability with 50.0% positive folds,
+  60.0% active-positive folds, and 66.7% non-negative folds. The production-like
+  `live_current` row was weaker at -0.087%, 90 trades, 16.7% positive folds,
+  and 16.7% non-negative folds.
+- Added the scan to the live status optimizer rollup so this current research
+  cluster cites same-day exact evidence.
+- Decision: do not route AUDUSD/GBPUSD/USDJPY to an asset-heavy champion
+  sleeve, and do not increase live risk for this signal until it clears
+  fixed-warmup fold stability rather than isolated positive folds.
+
+## 2026-06-25 GBPUSD/USDJPY opportunity-probe refresh rejection
+
+- The read-only `candidate_all_opportunity_probe` sleeve rotated again to a
+  GBPUSD short plus USDJPY long basket. I refreshed that exact two-symbol
+  basket under the directional-probe allocation profile before considering any
+  live routing change.
+- Output:
+  `outputs/backtests/live_watch_opportunity_probe_gbpusd_usdjpy_refresh_20260625_w960.csv`.
+  Every row rejected. The best row still lost 0.175% with 474 trades and only
+  33.3% positive/active-positive/non-negative folds. The current live-shape row
+  was worse: -0.329%, 854 trades, 0.0% positive folds, 0.0% active-positive
+  folds, and 0.0% non-negative folds.
+- Added the scan to the live status optimizer rollup so this current
+  research-only basket cites same-day exact evidence.
+- Decision: do not route GBPUSD/USDJPY to `opportunity_probe`, do not force a
+  manual basket trade, and do not relax live gates for this negative-expectancy
+  sleeve.
