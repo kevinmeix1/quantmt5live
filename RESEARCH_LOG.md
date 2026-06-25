@@ -3581,3 +3581,25 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   MACD parameters after the EURUSD/USDCHF loss. Keep AUD/EUR/CHF MACD cap
   relief on the near-promotion watchlist and retest only if W960 improves and
   the observe cooldown clears.
+
+## 2026-06-25 AUDUSD heuristic tiny-probe rejection
+
+- A fresh monitor pass marked `AUDUSD` as `eligible_tiny_probe_sell`, but the
+  production `macd_momentum` sleeve still requested zero notional because the
+  current trend-efficiency gate was not cleanly cleared. I refreshed the exact
+  AUDUSD-only MACD question on the current W960 full-data imports:
+  `outputs/backtests/live_watch_macd_audusd_current_full_20260625_w960.csv`
+  and
+  `outputs/backtests/live_watch_macd_audusd_promoted_shape_20260625_w960.csv`.
+- The live-threshold ladder (`8/21/8`, `hist=0.25`, `macd=0.35`, `eff=0.04`)
+  and slightly looser variants produced no AUDUSD-only fills on W960. Replaying
+  the previously promoted multi-symbol MACD shapes against isolated `AUDUSD`
+  also produced zero fills, confirming the earlier MACD edge was not AUDUSD
+  specific.
+- Added both W960 AUDUSD scans to the live status optimizer rollup ahead of the
+  older AUDUSD W480 artifacts so future heuristic-only AUDUSD warnings cite
+  current full-window evidence.
+- Decision: keep `AUDUSD` monitor-only for this pressure burst. Do not lower
+  MACD gates, force an AUDUSD short, or route AUDUSD to `opportunity_probe`;
+  both the AUDUSD/USDJPY opportunity-probe sleeve and the AUDUSD-only MACD W960
+  evidence reject live promotion.
