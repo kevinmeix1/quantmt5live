@@ -3340,3 +3340,28 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: keep `EURGBP` on the champion sleeve and keep cross-rate in
   watchlist/research-only mode until it clears a portfolio-level live map,
   rather than promoting an isolated zero-fill setup.
+
+## 2026-06-25 EURUSD/USDCAD/USDCHF multi-horizon refresh
+
+- The all-symbol `multi_horizon_momentum` diagnostic became the top actionable
+  research sleeve: short `EURUSD`, long `USDCAD`, and long `USDCHF`, with the
+  live throttle limiting the basket to two active positions. The status summary
+  had only isolated `EURUSD` evidence, so I refreshed the exact active basket
+  on the current live7 W960 full-data import:
+  `outputs/backtests/live_watch_multi_horizon_eur_cad_chf_refresh_20260625_w960.csv`
+  and
+  `outputs/backtests/live_watch_multi_horizon_eur_cad_chf_default_refresh_20260625_w960.csv`.
+- Directional-probe sizing rejected every row. The least-bad
+  `gbp_10_40_strict` row still lost 0.016% and failed the 95/100 risk
+  discipline gate at 76.7/100.
+- Default sizing surfaced a watchlist-quality row: `gbp_10_40_strict` made
+  0.222% with 12 trades, 0.107% drawdown, and 100% active-positive/non-negative
+  folds, but it stayed `PAPER_ONLY` because activity was concentrated in only
+  33.3% of folds and the largest positive fold contributed 96.3% of positive
+  walk-forward return.
+- Added both refresh files to the live status optimizer rollup so
+  `candidate_all_multi_horizon` cites exact same-day evidence for the active
+  EUR/USD/CAD/CHF basket.
+- Decision: keep `multi_horizon_momentum` in watchlist/research mode for this
+  basket. The default row is interesting enough to monitor, but not stable
+  enough to promote or to raise the live two-position cap.
