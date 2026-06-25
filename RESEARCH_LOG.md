@@ -3412,3 +3412,29 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   not raise the two-position cap for it, and do not force the apparent
   long/short pressure set. The full-data test still shows high-churn negative
   expectancy.
+
+## 2026-06-25 GBPUSD/USDCAD/USDCHF multi-horizon rejection
+
+- The refreshed live diagnostics showed `multi_horizon_momentum` wanting long
+  `GBPUSD`, short `USDCAD`, and short `USDCHF`, with the live two-position cap
+  allowing the first two active allocations. Because the status summary was
+  still falling back to older single-symbol GBPUSD evidence, I refreshed the
+  exact active basket on the current live7 W960 full-data import:
+  `outputs/backtests/live_watch_multi_horizon_gbp_cad_chf_refresh_20260625_w960.csv`
+  and
+  `outputs/backtests/live_watch_multi_horizon_gbp_cad_chf_default_refresh_20260625_w960.csv`.
+- Directional-probe sizing rejected every row. The least-bad
+  `prod_6_24_current` row still lost 0.017%, drew down 0.050%, made 196
+  trades, and reached only 50.0% positive/active-positive/non-negative folds.
+- Default sizing produced positive headline P/L in the current-style rows, but
+  fold stability stayed below the live gate: `prod_6_24_hold12` made 0.352%,
+  drew down 0.564%, made 96 trades, and reached only 50.0% positive,
+  active-positive, and non-negative folds. The stricter `gbp_10_40_strict`
+  row had 83.3% non-negative folds but lost money overall and had negative
+  median active test return.
+- Added both refresh files to the live status optimizer rollup so
+  `candidate_all_multi_horizon` cites exact same-day evidence for the active
+  GBP/CAD/CHF basket.
+- Decision: keep `multi_horizon_momentum` research-only for this basket and do
+  not route it live or raise the position cap. The live-looking pressure is
+  not stable enough across folds.
