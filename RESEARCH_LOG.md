@@ -3517,3 +3517,31 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not route this basket to `opportunity_probe`, do not raise the
   live position cap, and do not force the AUDUSD/EURGBP pair. The apparent
   live pressure is still high-turnover negative expectancy on full data.
+
+## 2026-06-25 AUDUSD/EURUSD opportunity-probe cap-relief rejection
+
+- After refreshing sentiment and live diagnostics, production stayed flat, but
+  the read-only `candidate_all_opportunity_probe` sleeve requested long
+  `AUDUSD` and long `EURUSD`; it also showed long `GBPUSD`, short `USDCAD`,
+  short `USDCHF`, and short `USDJPY` blocked by the two-position live throttle.
+  I refreshed the exact capped basket and the broader cap-relief basket on the
+  current live7 W960 full-data import:
+  `outputs/backtests/live_watch_opportunity_probe_audusd_eurusd_refresh2_20260625_w960.csv`,
+  `outputs/backtests/live_watch_opportunity_probe_audusd_eurusd_default_refresh2_20260625_w960.csv`,
+  `outputs/backtests/live_watch_opportunity_probe_aud_eur_gbp_cad_chf_jpy_refresh_20260625_w960.csv`,
+  and
+  `outputs/backtests/live_watch_opportunity_probe_aud_eur_gbp_cad_chf_jpy_default_refresh_20260625_w960.csv`.
+- The capped AUDUSD/EURUSD sleeve rejected every row under both allocation
+  profiles. The least-bad `selective_5_15_40_s2_75_f2_00_v0_50_hold24_120`
+  row still lost 0.072%, drew down 0.126%, made 368 trades, and reached only
+  33.3% positive/active-positive/non-negative folds.
+- The broader six-symbol cap-relief sleeve was worse: the least-bad
+  `selective_5_15_40_s2_75_f2_00_v0_50_hold24_120` row lost 0.302%, drew down
+  0.367%, made 1,099 trades, and reached only 16.7% positive/active-positive/
+  non-negative folds. The current-style row lost about 0.885% with 2,561
+  trades.
+- Added all four refresh files to the live status optimizer rollup so the
+  current opportunity-probe pressure is blocked by fresh same-day evidence.
+- Decision: do not route this sleeve live, do not relax the two-position cap
+  for the throttled names, and do not force these trades manually. More slots
+  increased churn and worsened expectancy instead of improving survival odds.
