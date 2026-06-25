@@ -2833,3 +2833,20 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   pressure no longer relies on the older W480 evidence.
 - Decision: keep USDCHF on the existing promoted MACD map, but do not lower its
   threshold or add single-symbol USDCHF overrides until fold stability improves.
+
+## 2026-06-25 USDJPY quality-trend same-day refresh
+
+- Before the 10-14 UTC USDJPY quality-trend window, refreshed the isolated
+  USDJPY sleeve on the extracted full 15-minute dataset with the directional
+  probe profile:
+  `outputs/backtests/live_watch_quality_trend_usdjpy_refresh_20260625_w960.csv`.
+- Every candidate rejected. The strict 14-19 and 10-19 variants produced no
+  active fixed-warmup folds, and the current 10-14 UTC live row lost a small
+  0.001% with only 2 trades, 16.7% active folds, and 0.0% active-positive
+  folds.
+- Added the fresh scan to `scripts/live_status_summary.py` so USDJPY
+  quality-trend pressure uses same-day evidence rather than the older W480
+  preopen check.
+- Decision: keep USDJPY on the guarded quality-trend sleeve, but do not widen
+  hours, reduce thresholds, or force any discretionary USDJPY trade. Let the
+  live process trade only if the tested production gates actually clear.
