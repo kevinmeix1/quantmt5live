@@ -3545,3 +3545,39 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not route this sleeve live, do not relax the two-position cap
   for the throttled names, and do not force these trades manually. More slots
   increased churn and worsened expectancy instead of improving survival odds.
+
+## 2026-06-25 AUDUSD/EURUSD/USDCHF MACD cap-relief watchlist
+
+- After the guarded live process opened `EURUSD` long and `USDCHF` short at
+  the 0.25-lot cap, production diagnostics showed `AUDUSD` as the only fresh
+  MACD add-on candidate blocked by the two-position live cap. The same guarded
+  loop then exited both positions at 14:11:47 UTC; attribution moved `EURUSD`
+  and `USDCHF` to `observe` after about -$22 realized combined. I refreshed the
+  exact open-pair sleeve and the cap-relief trio on the current live7 full-data
+  import:
+  `outputs/backtests/live_watch_macd_open_pair_refresh_20260625_w960.csv`,
+  `outputs/backtests/live_watch_macd_aud_eur_chf_cap_relief_20260625_w960.csv`,
+  `outputs/backtests/live_watch_macd_aud_eur_chf_cap_relief_20260625_w672.csv`,
+  and
+  `outputs/backtests/live_watch_macd_aud_eur_chf_cap_relief_20260625_w480.csv`.
+- The open `EURUSD`/`USDCHF` pair is positive but not promotable at W960:
+  the best `fast_6_18_5_h1_m0_5_eff10_hold16` row made 0.827%, drew down
+  0.188%, made 44 trades, and stayed `PAPER_ONLY`; the currently live smooth
+  `8/21/8` row made 0.871% but was rejected by fold stability.
+- The cap-relief `AUDUSD`/`EURUSD`/`USDCHF` trio is the strongest current
+  MACD watchlist candidate, but still not enough to change live risk. W960
+  kept every row `PAPER_ONLY` or `REJECT`; the smooth `8/21/8` row made
+  2.401% with 0.406% drawdown but only 66.7% positive folds. W672 and W480
+  promoted the fast `6/18/5` variants, but W960 kept them paper-only due fold
+  concentration/positive-fold gates.
+- Built
+  `outputs/backtests/live_watch_macd_aud_eur_chf_cap_relief_consensus_20260625.csv`.
+  Consensus ranks `fast_6_18_5_h1_m0_5_eff10_hold16` first, but only as
+  `PAPER_ONLY` with statuses `PROMOTE|PROMOTE|PAPER_ONLY`.
+- Added the W960 scan and cross-window consensus file to the live status
+  optimizer rollup; W672/W480 remain research artifacts so their standalone
+  `PROMOTE` rows do not overstate live readiness.
+- Decision: do not relax the live two-position cap, force a re-entry, or switch
+  MACD parameters after the EURUSD/USDCHF loss. Keep AUD/EUR/CHF MACD cap
+  relief on the near-promotion watchlist and retest only if W960 improves and
+  the observe cooldown clears.

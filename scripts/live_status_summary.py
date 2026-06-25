@@ -66,6 +66,9 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_macd_micro_threshold_fullgrid_20260625_w480.csv",
     "outputs/backtests/live_watch_macd_micro_threshold_fullgrid_20260625_w672.csv",
     "outputs/backtests/live_watch_macd_micro_threshold_refresh_20260625_w960.csv",
+    "outputs/backtests/live_watch_macd_open_pair_refresh_20260625_w960.csv",
+    "outputs/backtests/live_watch_macd_aud_eur_chf_cap_relief_20260625_w960.csv",
+    "outputs/backtests/live_watch_macd_aud_eur_chf_cap_relief_consensus_20260625.csv",
     "outputs/backtests/live_watch_macd_current_refresh_20260625_w960.csv",
     "outputs/backtests/live_watch_macd_live_relax_h050_default_20260625_w960.csv",
     "outputs/backtests/live_watch_macd_live_micro_h025_default_20260625_w960.csv",
@@ -572,6 +575,13 @@ def _normalize_optimizer_scan_row(row: dict[str, Any]) -> dict[str, Any]:
         "worst_test_drawdown_pct": "wf_worst_test_drawdown_pct",
         "total_evaluation_fills": "wf_total_evaluation_fills",
         "average_risk_discipline_score": "risk_discipline_score",
+        "consensus_status": "promotion_status",
+        "all_live_ready": "promotion_live_ready",
+        "min_return_pct": "return_pct",
+        "min_wf_positive_fold_fraction": "wf_positive_fold_fraction",
+        "min_wf_active_positive_fold_fraction": "wf_active_positive_fold_fraction",
+        "min_wf_non_negative_fold_fraction": "wf_non_negative_fold_fraction",
+        "min_median_active_test_return_pct": "wf_median_active_test_return_pct",
     }
     for source, target in field_aliases.items():
         if target not in normalized and source in normalized:
