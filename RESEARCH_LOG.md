@@ -2650,3 +2650,19 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: keep production config unchanged for now. The live loop remains
   enabled, but the current aggressive probe pressure is rejected by full-data
   evidence and the apparent MACD near-signal is still below cost/quality gates.
+
+## 2026-06-25 GBPUSD asset-squeeze session check
+
+- GBPUSD champion ensemble remained session-gated at the 08:00 UTC hour, so I
+  tested whether the `asset_adaptive_dual_squeeze` sleeve could responsibly
+  open earlier instead of waiting for the existing 11-19 UTC window.
+- Fresh full-data W960 validation:
+  `outputs/backtests/live_watch_gbpusd_asset_squeeze_early_session_w960_summary.csv`.
+- All five variants rejected, including the current 11-19 UTC session, an
+  08-19 UTC expansion, and modestly relaxed squeeze/prior-volatility settings.
+  Every line produced zero active fixed-warmup evaluation fills.
+- Added the scan to `scripts/live_status_summary.py` so future GBPUSD
+  session-gated diagnostics cite the exact rejection evidence.
+- Decision: do not expand the GBPUSD asset-squeeze session or relax its
+  squeeze filters. Keep the live map unchanged and wait for tested strategy
+  gates to approve risk.

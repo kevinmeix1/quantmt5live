@@ -118,6 +118,7 @@ DEFAULT_OPTIMIZER_SCAN_CSVS = (
     "outputs/backtests/live_watch_live6_probe_candidate_maps_w480_summary.csv",
     "outputs/backtests/live_watch_live6_exact_candidate_maps_w480_summary.csv",
     "outputs/backtests/live_watch_gbpusd_asset_squeeze_w480_summary.csv",
+    "outputs/backtests/live_watch_gbpusd_asset_squeeze_early_session_w960_summary.csv",
     "outputs/backtests/live_watch_audusd_asset_squeeze_w480_summary.csv",
     "outputs/backtests/live_watch_asset_squeeze_research_signals_w480_summary.csv",
     "outputs/backtests/live_watch_multi_horizon_momentum_corrected.csv",
