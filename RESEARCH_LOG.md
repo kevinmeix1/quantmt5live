@@ -4453,3 +4453,27 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: no trading/risk-control change. This is a visibility refinement
   that protects live readiness by keeping broader confirmation failures next
   to attractive one-window optimizer rows.
+
+## 2026-06-26 AUDUSD opportunity-probe highscore rejection
+
+- A 00:41 UTC monitor pass remained flat with equity 999,159.41, day P/L
+  -840.59, zero margin, and no open positions. The guarded live command still
+  had the sentiment brake, symbol-state blocks, small-only throttle, and
+  `--max-order-lots 0.25` intact.
+- The latest read-only opportunity-probe diagnostics had no requested notional:
+  all seven live pairs were threshold-gated or session-gated. An earlier
+  AUDUSD read-only probe was therefore treated as research evidence only, not a
+  discretionary live order trigger.
+- Refreshed the AUDUSD W960 highscore scan in
+  `outputs/backtests/live_watch_opportunity_probe_audusd_highscore_20260626_w960.csv`.
+  The best row, `aud_highscore_4_12_32_s5_move35_hold32`, produced 83.3%
+  active-positive folds, 83.3% non-negative folds, and 32 evaluation fills, but
+  rejected because average risk discipline was only 46.7/100 versus the 95/100
+  floor.
+- Added the optimizer rejection reason to the live-status `candidate_evidence`
+  line so an actionable candidate's accepted/rejected evidence explains itself
+  in `outputs/live_status_summary_latest.txt`. Tests:
+  `.venv\Scripts\python.exe -m unittest tests.test_live_status_summary_script`.
+- Decision: do not route AUDUSD to `opportunity_probe`, do not force a manual
+  trade, and keep the current guarded live map unchanged until a candidate
+  clears the full fold, fill, risk-discipline, sentiment, and attribution gates.

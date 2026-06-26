@@ -587,21 +587,22 @@ class LiveStatusSummaryScriptTest(TestCase):
                     2026, 1, 1, tzinfo=live_status_summary.UTC
                 ),
             )
+            candidate_diagnostics = {
+                "top_candidates": [
+                    {
+                        "label": "candidate_all_opportunity_probe",
+                        "actionable_symbols": ["AUDUSD"],
+                        "top_symbol": {
+                            "symbol": "AUDUSD",
+                            "strategy": "opportunity_probe",
+                            "status": "actionable_allocation",
+                            "raw_change_notional_usd": 25000.0,
+                        },
+                    }
+                ]
+            }
             evidence = live_status_summary._candidate_optimizer_evidence(
-                {
-                    "top_candidates": [
-                        {
-                            "label": "candidate_all_opportunity_probe",
-                            "actionable_symbols": ["AUDUSD"],
-                            "top_symbol": {
-                                "symbol": "AUDUSD",
-                                "strategy": "opportunity_probe",
-                                "status": "actionable_allocation",
-                                "raw_change_notional_usd": 25000.0,
-                            },
-                        }
-                    ]
-                },
+                candidate_diagnostics,
                 scans,
             )
 
@@ -610,6 +611,25 @@ class LiveStatusSummaryScriptTest(TestCase):
         self.assertEqual(top["symbols"], ["AUDUSD"])
         self.assertEqual(top["evidence_status"], "REJECTED_BY_SCAN")
         self.assertEqual(top["top_match"]["wf_total_evaluation_fills"], 111)
+        summary = live_status_summary.build_summary(
+            metrics=_metrics_row(positions_count="0"),
+            live_loop={"iteration": 4, "timestamp_utc": "2026-01-01T00:04:00Z"},
+            latest_order=None,
+            pair_analysis={"pairs": {}},
+            attribution={"symbols": {}},
+            diagnostics={"symbols": {}},
+            sentiment={"pairs": {}},
+            research_consensus=None,
+            candidate_strategy_diagnostics=candidate_diagnostics,
+            optimizer_scans=scans,
+            generated_at_utc="2026-01-01T00:05:00+00:00",
+        )
+        text = live_status_summary._summary_text(summary)
+        self.assertIn("candidate_evidence", text)
+        self.assertIn(
+            "reason=non-negative fold fraction 50.0% is below 70.0%",
+            text,
+        )
 
     def test_optimizer_scans_rank_all_rows_not_only_first(self) -> None:
         with TemporaryDirectory() as tmpdir:

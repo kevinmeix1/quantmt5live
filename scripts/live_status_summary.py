@@ -2228,7 +2228,8 @@ def _summary_text(summary: dict[str, Any]) -> str:
             f"status={match.get('promotion_status', '')} "
             f"nonneg={match.get('wf_non_negative_fold_fraction', 0.0):.1%} "
             f"active_pos={match.get('wf_active_positive_fold_fraction', 0.0):.1%} "
-            f"fills={match.get('wf_total_evaluation_fills', 0)}"
+            f"fills={match.get('wf_total_evaluation_fills', 0)} "
+            f"reason={_format_reason(match.get('promotion_reason'))}"
         )
     if research:
         lines.append(
@@ -2511,6 +2512,13 @@ def _format_pct(raw_value: Any) -> str:
         return f"{float(raw_value):.1%}"
     except (TypeError, ValueError):
         return ""
+
+
+def _format_reason(raw_value: Any, max_length: int = 160) -> str:
+    text = re.sub(r"\s+", " ", str(raw_value or "").strip())
+    if len(text) <= max_length:
+        return text
+    return text[: max_length - 3].rstrip() + "..."
 
 
 def _format_age_minutes(raw_value: Any) -> str:
