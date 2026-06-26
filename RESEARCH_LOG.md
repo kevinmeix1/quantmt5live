@@ -4397,3 +4397,29 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   `opportunity_probe`, and keep `USDJPY=quality_trend` unchanged. The current
   request is a high-churn negative-expectancy sleeve, not a high-conviction
   margin opportunity.
+
+## 2026-06-26 EURGBP pressure map refresh
+
+- A 00:05 UTC monitor pass was flat with equity 999,159.41, no margin, no open
+  positions, and fresh-risk blocked on `EURUSD`/`USDCHF` until their attribution
+  observe state clears. Heuristic pressure pointed short on `AUDUSD` and
+  `EURGBP`, while the guarded live map requested zero notional.
+- Refreshed a W960 full-data strategy-map comparison on the live7 import:
+  `outputs/backtests/live_watch_strategy_maps_eurgbp_pressure_refresh_20260626_w960_summary.csv`
+  with the default allocator and forced QUALIFY clock. The current live map
+  remained PROMOTE/live-ready with 100.0% positive, active-positive, and
+  non-negative folds, 85 evaluation fills, and 0.224% median active return.
+- The scan's best row was a six-symbol positive-only variant that drops
+  `USDJPY` while keeping `EURGBP=champion_ensemble`: 100.0% positive,
+  active-positive, and non-negative folds, 83 evaluation fills, and 0.231%
+  median active return. This is slightly stronger on this W960 slice, but it
+  reduces the live universe and has not yet cleared the existing multi-window
+  consensus evidence that supports the current live7 map.
+- EURGBP switch candidates were live-ready but weaker on fold quality than the
+  current route: `EURGBP=volatility_squeeze`, `cross_rate_reversion`,
+  `quality_trend`, `macd_momentum`, and `asset_adaptive_dual_squeeze` all had
+  83.3% active-positive folds versus 100.0% for current.
+- Decision: keep the live command unchanged. The scan improves the evidence
+  set and flags a possible no-USDJPY defensive variant for future W480/W672
+  confirmation, but it does not justify changing live routing or disabling
+  attribution/cost/session brakes.
