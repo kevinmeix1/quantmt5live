@@ -807,6 +807,7 @@ def _pair_rows(
         pair = pair_data.get(symbol, {})
         deal = attribution_data.get(symbol, {})
         diagnostic = diagnostic_data.get(symbol, {})
+        session_gate = _session_gate_info(diagnostic)
         sent = sentiment_data.get(symbol, {})
         rows[symbol] = {
             "symbol": symbol,
@@ -829,6 +830,13 @@ def _pair_rows(
             "diagnostic_strategy": diagnostic.get("strategy", ""),
             "diagnostic_bucket": diagnostic.get("raw_reason_bucket", ""),
             "diagnostic_reason": diagnostic.get("raw_reason", ""),
+            "session_gate_hours": session_gate.get("hours", []),
+            "session_gate_current_utc_hour": session_gate.get("current_utc_hour"),
+            "next_session_open_utc_hour": session_gate.get("next_utc_hour"),
+            "next_session_hours_until_open": session_gate.get("hours_until_open"),
+            "next_session_rolls_to_next_day": session_gate.get(
+                "rolls_to_next_day", False
+            ),
             "quote_wall_clock_skew_seconds": _float_or_zero(
                 diagnostic.get("quote_wall_clock_skew_seconds", 0.0)
             ),
@@ -961,6 +969,7 @@ def _diagnostic_blocker_summary(
     bucket_symbols: dict[str, list[str]] = {}
     status_symbols: dict[str, list[str]] = {}
     stale_quote_symbols: list[dict[str, Any]] = []
+    session_gate_schedule: dict[int, dict[str, Any]] = {}
     blocked_count = 0
     for row in rows:
         status = str(row.get("status", row.get("diagnostic_status", ""))).strip()
@@ -974,6 +983,32 @@ def _diagnostic_blocker_summary(
         bucket = _normalized_diagnostic_bucket(row)
         bucket_symbols.setdefault(bucket, []).append(symbol)
         status_symbols.setdefault(status or "unknown", []).append(symbol)
+        if bucket == "session_gated":
+            session_gate = _session_gate_info(row)
+            next_hour = session_gate.get("next_utc_hour")
+            if next_hour is not None:
+                schedule = session_gate_schedule.setdefault(
+                    int(next_hour),
+                    {
+                        "utc_hour": int(next_hour),
+                        "hours_until_open": int(
+                            session_gate.get("hours_until_open", 0)
+                        ),
+                        "rolls_to_next_day": bool(
+                            session_gate.get("rolls_to_next_day", False)
+                        ),
+                        "symbols": [],
+                    },
+                )
+                schedule["hours_until_open"] = min(
+                    int(schedule["hours_until_open"]),
+                    int(session_gate.get("hours_until_open", 0)),
+                )
+                schedule["rolls_to_next_day"] = bool(
+                    schedule["rolls_to_next_day"]
+                    and session_gate.get("rolls_to_next_day", False)
+                )
+                schedule["symbols"].append(symbol)
         if _row_has_stale_quote(row):
             stale_quote_symbols.append(
                 {
@@ -1003,6 +1038,20 @@ def _diagnostic_blocker_summary(
         for bucket, count in bucket_counts.items()
     ][:5]
     stale_quote_symbols.sort(key=lambda item: item["symbol"])
+    session_schedule = sorted(
+        (
+            {
+                **item,
+                "symbols": sorted(set(item["symbols"]))[:7],
+                "symbol_count": len(set(item["symbols"])),
+            }
+            for item in session_gate_schedule.values()
+        ),
+        key=lambda item: (
+            int(item.get("hours_until_open", 0)),
+            int(item.get("utc_hour", 0)),
+        ),
+    )[:5]
     return {
         "symbol_count": len(rows),
         "blocked_count": blocked_count,
@@ -1010,6 +1059,13 @@ def _diagnostic_blocker_summary(
         "status_counts": status_counts,
         "top_buckets": top_buckets,
         "stale_quote_symbols": stale_quote_symbols[:7],
+        "session_gate_schedule": session_schedule,
+        "next_session_open_utc_hour": (
+            session_schedule[0]["utc_hour"] if session_schedule else None
+        ),
+        "next_session_symbols": (
+            session_schedule[0]["symbols"] if session_schedule else []
+        ),
     }
 
 
@@ -1022,6 +1078,46 @@ def _normalized_diagnostic_bucket(row: dict[str, Any]) -> str:
     return str(
         row.get("raw_reason_bucket", row.get("diagnostic_bucket", "unknown"))
     ).strip() or "unknown"
+
+
+def _session_gate_info(row: dict[str, Any]) -> dict[str, Any]:
+    reason = str(row.get("raw_reason") or row.get("diagnostic_reason") or "")
+    if "utc hours" not in reason.lower():
+        return {}
+    hours_match = re.search(
+        r"UTC hours\s*\(\s*\(?\s*([0-9,\s]+?)\s*\)?\s*\)",
+        reason,
+        flags=re.IGNORECASE,
+    )
+    current_match = re.search(
+        r"current hour\s*=\s*(\d{1,2})",
+        reason,
+        flags=re.IGNORECASE,
+    )
+    if not hours_match or not current_match:
+        return {}
+    hours = sorted(
+        {
+            int(hour_text)
+            for hour_text in re.findall(r"\d{1,2}", hours_match.group(1))
+            if 0 <= int(hour_text) <= 23
+        }
+    )
+    if not hours:
+        return {}
+    current_hour = int(current_match.group(1))
+    if current_hour < 0 or current_hour > 23:
+        return {}
+    upcoming_hours = [hour for hour in hours if hour >= current_hour]
+    next_hour = upcoming_hours[0] if upcoming_hours else hours[0]
+    hours_until_open = (next_hour - current_hour) % 24
+    return {
+        "hours": hours,
+        "current_utc_hour": current_hour,
+        "next_utc_hour": next_hour,
+        "hours_until_open": hours_until_open,
+        "rolls_to_next_day": not upcoming_hours,
+    }
 
 
 def _row_has_stale_quote(row: dict[str, Any]) -> bool:
@@ -2217,7 +2313,8 @@ def _summary_text(summary: dict[str, Any]) -> str:
             "live_diagnostic_blockers "
             f"symbols={live_blockers.get('blocked_count', 0)} "
             f"buckets={_format_bucket_counts(live_blockers)} "
-            f"stale_quotes={_format_stale_quote_symbols(live_blockers)}"
+            f"stale_quotes={_format_stale_quote_symbols(live_blockers)} "
+            f"next_session={_format_next_session_open(live_blockers)}"
         )
     reentry_queue = summary.get("reentry_queue", {})
     if reentry_queue.get("candidate_count", 0) > 0:
@@ -2545,12 +2642,14 @@ def _summary_text(summary: dict[str, Any]) -> str:
             f"fills={match.get('wf_total_evaluation_fills', 0)}"
         )
     for symbol, row in summary["pairs"].items():
+        session_text = _format_pair_next_session(row)
         lines.append(
             f"{symbol}: action={row['action']} state={row['deal_state']} "
             f"score={row['combined_score']:.2f} "
             f"diag={row['diagnostic_status']} "
             f"bucket={row['diagnostic_bucket']} "
             f"clear={row['estimated_state_clear_utc'] or 'n/a'}"
+            f"{session_text}"
         )
     return "\n".join(lines) + "\n"
 
@@ -2596,6 +2695,27 @@ def _format_stale_quote_symbols(summary: dict[str, Any]) -> str:
         skew = _float_or_zero(row.get("skew_seconds"))
         formatted.append(f"{row.get('symbol', '')}({skew:+.1f}s)")
     return ",".join(formatted)
+
+
+def _format_next_session_open(summary: dict[str, Any]) -> str:
+    schedule = summary.get("session_gate_schedule", [])
+    if not schedule:
+        return "n/a"
+    top = schedule[0]
+    hour = top.get("utc_hour")
+    if hour is None:
+        return "n/a"
+    symbols = ",".join(top.get("symbols", [])[:5]) or "symbols"
+    next_day = "+1d" if top.get("rolls_to_next_day") else ""
+    return f"{int(hour):02d}Z{next_day}:{symbols}"
+
+
+def _format_pair_next_session(row: dict[str, Any]) -> str:
+    hour = row.get("next_session_open_utc_hour")
+    if hour is None:
+        return ""
+    next_day = "+1d" if row.get("next_session_rolls_to_next_day") else ""
+    return f" next_session={int(hour):02d}Z{next_day}"
 
 
 def _first_present(row: dict[str, Any], *keys: str) -> Any:

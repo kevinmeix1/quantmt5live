@@ -167,6 +167,80 @@ class LiveStatusSummaryScriptTest(TestCase):
         self.assertEqual(summary["bucket_counts"]["session_gated"], 1)
         self.assertEqual(summary["stale_quote_symbols"][0]["symbol"], "USDCAD")
 
+    def test_session_gated_blockers_report_next_open_hour(self) -> None:
+        summary = live_status_summary._diagnostic_blocker_summary(
+            [
+                {
+                    "symbol": "AUDUSD",
+                    "status": "strategy_no_change",
+                    "raw_reason_bucket": "session_gated",
+                    "raw_reason": (
+                        "outside MACD momentum UTC hours "
+                        "((6, 7, 8, 20)); current hour=4"
+                    ),
+                },
+                {
+                    "symbol": "EURUSD",
+                    "status": "strategy_no_change",
+                    "raw_reason_bucket": "session_gated",
+                    "raw_reason": (
+                        "MACD gate failed: outside MACD momentum UTC hours "
+                        "((6, 7, 8)); current hour=4"
+                    ),
+                },
+                {
+                    "symbol": "USDJPY",
+                    "status": "strategy_no_change",
+                    "raw_reason_bucket": "session_gated",
+                    "raw_reason": (
+                        "outside Kalman trend UTC hours "
+                        "(10,11,12); current hour=23"
+                    ),
+                },
+            ]
+        )
+
+        self.assertEqual(summary["next_session_open_utc_hour"], 6)
+        self.assertEqual(summary["next_session_symbols"], ["AUDUSD", "EURUSD"])
+        self.assertEqual(summary["session_gate_schedule"][0]["hours_until_open"], 2)
+        self.assertFalse(summary["session_gate_schedule"][0]["rolls_to_next_day"])
+        self.assertEqual(summary["session_gate_schedule"][1]["utc_hour"], 10)
+        self.assertTrue(summary["session_gate_schedule"][1]["rolls_to_next_day"])
+
+    def test_summary_text_includes_session_gate_next_open_hour(self) -> None:
+        summary = live_status_summary.build_summary(
+            metrics=_metrics_row(positions_count="0"),
+            live_loop={"iteration": 4, "timestamp_utc": "2026-01-01T04:04:00Z"},
+            latest_order=None,
+            pair_analysis={"pairs": {}},
+            attribution={"symbols": {}},
+            diagnostics={
+                "symbols": {
+                    "AUDUSD": {
+                        "status": "strategy_no_change",
+                        "raw_reason_bucket": "session_gated",
+                        "raw_reason": (
+                            "outside MACD momentum UTC hours "
+                            "((6, 7, 8, 20)); current hour=4"
+                        ),
+                    }
+                }
+            },
+            sentiment={"pairs": {}},
+            research_consensus=None,
+            generated_at_utc="2026-01-01T04:05:00+00:00",
+        )
+
+        self.assertEqual(summary["pairs"]["AUDUSD"]["session_gate_hours"], [6, 7, 8, 20])
+        text = live_status_summary._summary_text(summary)
+        self.assertIn(
+            "live_diagnostic_blockers symbols=1 buckets=session_gated:1 "
+            "stale_quotes=none next_session=06Z:AUDUSD",
+            text,
+        )
+        self.assertIn("AUDUSD: action= state= score=0.00", text)
+        self.assertIn("next_session=06Z", text)
+
     def test_read_json_treats_partial_optional_file_as_missing(self) -> None:
         with TemporaryDirectory() as tmpdir:
             path = Path(tmpdir) / "near_promotion.json"
