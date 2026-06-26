@@ -387,11 +387,59 @@ def _label_for(raw_row: dict[str, str], source_path: Path) -> str:
 
 
 def _candidate_signature(raw_row: dict[str, str]) -> str:
+    parameter_signature = _parameter_signature(raw_row)
+    if parameter_signature:
+        return parameter_signature
     for key in ("candidate_signature", "strategy_map", "strategy", "label"):
         value = raw_row.get(key, "").strip()
         if value:
             return value
     return ""
+
+
+def _parameter_signature(raw_row: dict[str, str]) -> str:
+    fast = raw_row.get("fast_window", "").strip()
+    slow = raw_row.get("slow_window", "").strip()
+    signal = raw_row.get("signal_window", "").strip()
+    if not (fast and slow and signal):
+        return ""
+    fields = (
+        ("fast", fast),
+        ("slow", slow),
+        ("signal", signal),
+        ("hist", _normalized_value(raw_row.get("min_histogram_bps"))),
+        ("exit", _normalized_value(raw_row.get("exit_histogram_bps"))),
+        ("macd", _normalized_value(raw_row.get("min_macd_bps"))),
+        ("slope", _normalized_value(raw_row.get("min_histogram_slope_bps"))),
+        ("agree", _normalized_value(raw_row.get("require_macd_histogram_agreement") or "true")),
+        ("slip", _normalized_value(raw_row.get("slippage_bps"))),
+        ("cost", _normalized_value(raw_row.get("cost_buffer"))),
+        ("eff", _normalized_value(raw_row.get("min_trend_efficiency"))),
+        ("hold", _normalized_value(raw_row.get("max_holding_period"))),
+        ("hours", _normalized_hours(raw_row.get("allowed_utc_hours", ""))),
+    )
+    return "macd:" + ";".join(f"{key}={value}" for key, value in fields)
+
+
+def _normalized_value(raw_value: Any) -> str:
+    value = str(raw_value or "").strip()
+    if not value:
+        return "auto"
+    try:
+        parsed = float(value)
+    except ValueError:
+        return value.lower()
+    return f"{parsed:.8g}"
+
+
+def _normalized_hours(raw_hours: str) -> str:
+    hours = [token.strip() for token in str(raw_hours or "").split("|") if token.strip()]
+    if not hours:
+        return "all"
+    try:
+        return "|".join(str(int(float(hour))) for hour in hours)
+    except ValueError:
+        return "|".join(hours)
 
 
 def _metric(raw_row: dict[str, str], *keys: str) -> float:

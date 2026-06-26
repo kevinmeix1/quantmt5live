@@ -305,6 +305,68 @@ class LiveNearPromotionTest(TestCase):
             0.6154,
         )
 
+    def test_newer_parameterized_macd_alias_suppresses_stale_label_alias(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            older = root / "older.csv"
+            newer = root / "newer.csv"
+            older_header = (
+                "rank,label,symbols,fast_window,slow_window,signal_window,"
+                "min_histogram_bps,min_macd_bps,min_histogram_slope_bps,"
+                "min_trend_efficiency,max_holding_period,allowed_utc_hours,"
+                "promotion_status,promotion_live_ready,promotion_reason,"
+                "wf_positive_fold_fraction,wf_active_positive_fold_fraction,"
+                "wf_non_negative_fold_fraction,wf_total_evaluation_fills"
+            )
+            newer_header = (
+                "rank,label,symbols,fast_window,slow_window,signal_window,"
+                "min_histogram_bps,min_macd_bps,min_histogram_slope_bps,"
+                "require_macd_histogram_agreement,min_trend_efficiency,"
+                "max_holding_period,allowed_utc_hours,promotion_status,"
+                "promotion_live_ready,promotion_reason,wf_positive_fold_fraction,"
+                "wf_active_positive_fold_fraction,wf_non_negative_fold_fraction,"
+                "wf_total_evaluation_fills"
+            )
+            older.write_text(
+                older_header
+                + "\n"
+                + (
+                    "1,extended_low,AUDUSD EURUSD USDCAD USDCHF,6,18,5,"
+                    "0.5,0.35,0.03,0.07,16,6|7|8|9|10|11|12|13|14|20|21|22,"
+                    "PAPER_ONLY,False,almost promoted,0.6667,0.6667,0.8333,56"
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            newer.write_text(
+                newer_header
+                + "\n"
+                + (
+                    "1,near_promo,USDCHF USDCAD EURUSD AUDUSD,6,18,5,"
+                    "0.50,0.350,0.030,True,0.070,16,6|7|8|9|10|11|12|13|14|20|21|22,"
+                    "PAPER_ONLY,False,full data recheck weaker,0.462,0.600,0.769,102"
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            now = datetime(2026, 6, 26, tzinfo=timezone.utc)
+            os.utime(older, ((now - timedelta(hours=2)).timestamp(),) * 2)
+            os.utime(newer, ((now - timedelta(minutes=5)).timestamp(),) * 2)
+
+            summary = live_near_promotion.build_near_promotion_summary(
+                (str(older), str(newer)),
+                now_utc=now,
+            )
+
+        self.assertEqual(summary["superseded_count"], 1)
+        self.assertEqual(summary["scan_count"], 1)
+        self.assertEqual(summary["top_candidates"][0]["label"], "near_promo")
+        self.assertEqual(summary["top_candidates"][0]["source_path"], str(newer))
+        self.assertAlmostEqual(
+            summary["top_candidates"][0]["positive_fold_fraction"],
+            0.462,
+        )
+
     def test_cli_writes_json_and_text(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
