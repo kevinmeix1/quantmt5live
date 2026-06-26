@@ -29,6 +29,7 @@ DEFAULT_CANDIDATE_MAP_CONSENSUS_CSVS = (
     "outputs/backtests/live_watch_top4_macd_consensus.csv",
     "outputs/backtests/live_watch_adaptive_current_pressure_consensus.csv",
     "outputs/backtests/live_watch_adaptive_current_pressure_gated_consensus.csv",
+    "outputs/backtests/live_watch_no_usdjpy_confirm_20260626_consensus.csv",
     "outputs/backtests/live_watch_strategy_maps_live7_pressure_w960_summary.csv",
 )
 DEFAULT_BASKET_ACTIVITY_SCAN_CSV = (

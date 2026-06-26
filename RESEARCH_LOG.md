@@ -4419,7 +4419,18 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   current route: `EURGBP=volatility_squeeze`, `cross_rate_reversion`,
   `quality_trend`, `macd_momentum`, and `asset_adaptive_dual_squeeze` all had
   83.3% active-positive folds versus 100.0% for current.
+- Follow-up confirmation on the no-`USDJPY` variant:
+  `outputs/backtests/live_watch_no_usdjpy_confirm_20260626_w480_summary.csv`,
+  `..._w672_summary.csv`, `..._w960_summary.csv`, and
+  `outputs/backtests/live_watch_no_usdjpy_confirm_20260626_consensus.csv`.
+  W672 and W960 promoted, but W480 rejected with only 66.7% non-negative folds
+  and 58.8% active-positive folds. The three-window consensus is therefore
+  REJECT despite the attractive W960 slice.
+- Added the no-`USDJPY` consensus artifact to the default live-status candidate
+  map rollup, so the monitor keeps this rejection beside the single-window
+  optimizer promote row. Test coverage:
+  `.venv\Scripts\python.exe -m unittest tests.test_live_status_summary_script`.
 - Decision: keep the live command unchanged. The scan improves the evidence
-  set and flags a possible no-USDJPY defensive variant for future W480/W672
-  confirmation, but it does not justify changing live routing or disabling
-  attribution/cost/session brakes.
+  set, but the no-`USDJPY` defensive variant failed multi-window confirmation
+  and does not justify changing live routing or disabling attribution/cost/session
+  brakes.

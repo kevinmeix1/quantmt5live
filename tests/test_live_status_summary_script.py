@@ -198,6 +198,12 @@ class LiveStatusSummaryScriptTest(TestCase):
             live_status_summary.DEFAULT_OPTIMIZER_SCAN_CSVS,
         )
 
+    def test_default_candidate_map_consensus_includes_no_usdjpy_confirmation(self) -> None:
+        self.assertIn(
+            "outputs/backtests/live_watch_no_usdjpy_confirm_20260626_consensus.csv",
+            live_status_summary.DEFAULT_CANDIDATE_MAP_CONSENSUS_CSVS,
+        )
+
     def test_candidate_optimizer_evidence_flags_matching_rejection(self) -> None:
         evidence = live_status_summary._candidate_optimizer_evidence(
             {
