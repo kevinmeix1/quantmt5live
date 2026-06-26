@@ -567,6 +567,79 @@ class LiveNearPromotionTest(TestCase):
         self.assertEqual(summary["superseded_count"], 1)
         self.assertEqual(summary["scan_count"], 0)
 
+    def test_newer_quality_trend_consensus_suppresses_window_row(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            older = root / "quality_w960.csv"
+            newer = root / "quality_consensus.csv"
+            older.write_text(
+                "\n".join(
+                    [
+                        (
+                            "rank,label,symbols,kalman_min_abs_slope_bps,"
+                            "kalman_min_expected_edge_bps,"
+                            "macd_min_histogram_bps,macd_min_macd_bps,"
+                            "macd_min_trend_efficiency,"
+                            "min_combined_confidence,min_expected_edge_bps,"
+                            "max_holding_period,allowed_utc_hours,"
+                            "target_notional_usd,max_target_notional_usd,"
+                            "promotion_status,promotion_live_ready,"
+                            "promotion_reason,wf_positive_fold_fraction,"
+                            "wf_active_positive_fold_fraction,"
+                            "wf_non_negative_fold_fraction,"
+                            "wf_total_evaluation_fills"
+                        ),
+                        (
+                            "1,jpy_quality,USDJPY,0.2,4.0,1.25,0.75,"
+                            "0.15,0.25,1.25,16,0|1|2,100000,100000,"
+                            "PAPER_ONLY,False,near,0.8333,1.0,1.0,4"
+                        ),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            newer.write_text(
+                "\n".join(
+                    [
+                        (
+                            "rank,label,symbols,candidate_signature,"
+                            "consensus_status,all_live_ready,"
+                            "min_wf_positive_fold_fraction,"
+                            "min_wf_active_positive_fold_fraction,"
+                            "min_wf_non_negative_fold_fraction"
+                        ),
+                        (
+                            "1,jpy_quality,USDJPY,\"jpy_quality "
+                            "kalman_min_abs_slope_bps=0.2 "
+                            "kalman_min_expected_edge_bps=4.0 "
+                            "macd_min_histogram_bps=1.25 "
+                            "macd_min_macd_bps=0.75 "
+                            "macd_min_trend_efficiency=0.15 "
+                            "min_combined_confidence=0.25 "
+                            "min_expected_edge_bps=1.25 "
+                            "max_holding_period=16 allowed_utc_hours=0|1|2 "
+                            "target_notional_usd=100000 "
+                            "max_target_notional_usd=100000\","
+                            "REJECT,False,0.3333,0.3333,0.3333"
+                        ),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            now = datetime(2026, 6, 26, tzinfo=timezone.utc)
+            os.utime(older, ((now - timedelta(hours=2)).timestamp(),) * 2)
+            os.utime(newer, ((now - timedelta(minutes=5)).timestamp(),) * 2)
+
+            summary = live_near_promotion.build_near_promotion_summary(
+                (str(older), str(newer)),
+                now_utc=now,
+            )
+
+        self.assertEqual(summary["superseded_count"], 1)
+        self.assertEqual(summary["scan_count"], 0)
+
     def test_cli_writes_json_and_text(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

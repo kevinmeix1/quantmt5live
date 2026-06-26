@@ -137,6 +137,47 @@ class OptimizerPromotionConsensusScriptTest(TestCase):
         self.assertIn("min_holding_period=32", rows[0].candidate_signature)
         self.assertIn("max_spread_bps=5.0", rows[0].candidate_signature)
 
+    def test_builds_signature_for_quality_trend_optimizer_csv(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            first = root / "quality.csv"
+            first.write_text(
+                "\n".join(
+                    [
+                        (
+                            "label,symbols,kalman_min_abs_slope_bps,"
+                            "kalman_min_expected_edge_bps,"
+                            "macd_min_histogram_bps,macd_min_macd_bps,"
+                            "macd_min_trend_efficiency,"
+                            "min_combined_confidence,min_expected_edge_bps,"
+                            "max_holding_period,allowed_utc_hours,"
+                            "target_notional_usd,max_target_notional_usd,"
+                            "promotion_status,promotion_live_ready,return_pct,"
+                            "max_drawdown_pct,wf_positive_fold_fraction,"
+                            "wf_active_positive_fold_fraction,"
+                            "wf_non_negative_fold_fraction"
+                        ),
+                        (
+                            "jpy_quality,USDJPY,0.2,4.0,1.25,0.75,"
+                            "0.15,0.25,1.25,16,0|1|2,100000,100000,"
+                            "PAPER_ONLY,False,0.01,0.001,0.5,0.6,0.7"
+                        ),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            rows = build_consensus(read_observations([f"w480={first}"]))
+
+        self.assertIn("kalman_min_abs_slope_bps=0.2", rows[0].candidate_signature)
+        self.assertIn("kalman_min_expected_edge_bps=4.0", rows[0].candidate_signature)
+        self.assertIn("macd_min_histogram_bps=1.25", rows[0].candidate_signature)
+        self.assertIn("macd_min_macd_bps=0.75", rows[0].candidate_signature)
+        self.assertIn("min_combined_confidence=0.25", rows[0].candidate_signature)
+        self.assertIn("target_notional_usd=100000", rows[0].candidate_signature)
+        self.assertIn("max_target_notional_usd=100000", rows[0].candidate_signature)
+
     def test_missing_promotion_status_is_unvalidated(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

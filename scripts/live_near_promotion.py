@@ -398,6 +398,11 @@ def _normalize_candidate_signature(raw_signature: Any) -> str:
     opportunity_signature = _opportunity_probe_signature_from_text(signature)
     if opportunity_signature:
         return opportunity_signature
+    if signature.lower().startswith("quality:"):
+        return re.sub(r"\s+", "", signature.lower())
+    quality_signature = _quality_trend_signature_from_text(signature)
+    if quality_signature:
+        return quality_signature
     return "raw:" + re.sub(r"\s+", " ", signature).lower()
 
 
@@ -438,6 +443,11 @@ def _macd_signature_from_text(raw_signature: str) -> str:
 def _opportunity_probe_signature_from_text(raw_signature: str) -> str:
     fields = _key_value_fields(raw_signature)
     return _opportunity_probe_signature_from_fields(fields)
+
+
+def _quality_trend_signature_from_text(raw_signature: str) -> str:
+    fields = _key_value_fields(raw_signature)
+    return _quality_trend_signature_from_fields(fields)
 
 
 def _key_value_fields(raw_signature: str) -> dict[str, str]:
@@ -483,6 +493,9 @@ def _candidate_signature(raw_row: dict[str, str]) -> str:
     opportunity_signature = _opportunity_probe_signature(raw_row)
     if opportunity_signature:
         return opportunity_signature
+    quality_signature = _quality_trend_signature(raw_row)
+    if quality_signature:
+        return quality_signature
     for key in ("candidate_signature", "strategy_map", "strategy", "label"):
         value = raw_row.get(key, "").strip()
         if value:
@@ -538,6 +551,41 @@ def _opportunity_probe_signature_from_fields(fields: dict[str, str]) -> str:
         ("spread", _normalized_value(fields.get("max_spread_bps"))),
     )
     return "opportunity:" + ";".join(
+        f"{key}={value}" for key, value in signature_fields
+    )
+
+
+def _quality_trend_signature(raw_row: dict[str, str]) -> str:
+    fields = {key.lower(): value for key, value in raw_row.items()}
+    return _quality_trend_signature_from_fields(fields)
+
+
+def _quality_trend_signature_from_fields(fields: dict[str, str]) -> str:
+    required_keys = (
+        "kalman_min_abs_slope_bps",
+        "kalman_min_expected_edge_bps",
+        "macd_min_histogram_bps",
+        "macd_min_macd_bps",
+        "min_combined_confidence",
+        "min_expected_edge_bps",
+        "max_holding_period",
+    )
+    if not all(key in fields for key in required_keys):
+        return ""
+    signature_fields = (
+        ("kalman_slope", _normalized_value(fields.get("kalman_min_abs_slope_bps"))),
+        ("kalman_edge", _normalized_value(fields.get("kalman_min_expected_edge_bps"))),
+        ("hist", _normalized_value(fields.get("macd_min_histogram_bps"))),
+        ("macd", _normalized_value(fields.get("macd_min_macd_bps"))),
+        ("eff", _normalized_value(fields.get("macd_min_trend_efficiency"))),
+        ("confidence", _normalized_value(fields.get("min_combined_confidence"))),
+        ("edge", _normalized_value(fields.get("min_expected_edge_bps"))),
+        ("hold", _normalized_value(fields.get("max_holding_period"))),
+        ("hours", _normalized_hours(fields.get("allowed_utc_hours", ""))),
+        ("target", _normalized_value(fields.get("target_notional_usd"))),
+        ("max_target", _normalized_value(fields.get("max_target_notional_usd"))),
+    )
+    return "quality:" + ";".join(
         f"{key}={value}" for key, value in signature_fields
     )
 
