@@ -1583,6 +1583,7 @@ class LiveStatusSummaryScriptTest(TestCase):
                 json.dumps(
                     {
                         "scan_count": 1,
+                        "superseded_count": 3,
                         "top_candidates": [
                             {
                                 "source_path": str(optimizer_scan),
@@ -1699,7 +1700,9 @@ class LiveStatusSummaryScriptTest(TestCase):
             summary["optimizer_scans"]["top_candidates"][0]["source_stale"]
         )
         self.assertIn("optimizer_scans scans=1 top=micro_current", text)
-        self.assertIn("near_promotion candidates=1 top=micro_current", text)
+        self.assertIn("near_promotion candidates=1 superseded=3 top=micro_current", text)
+        self.assertEqual(summary["near_promotion"]["superseded_count"], 3)
+        self.assertIn("superseded=3", text)
         self.assertIn("blockers=positive_folds -33.7%", text)
         self.assertIn("age=", text)
         self.assertIn("stale=no", text)

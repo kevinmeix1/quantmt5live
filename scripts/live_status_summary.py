@@ -2035,6 +2035,7 @@ def _compact_near_promotion(summary: dict[str, Any] | None) -> dict[str, Any]:
         )
     return {
         "candidate_count": int(_float_or_zero(summary.get("scan_count"))),
+        "superseded_count": int(_float_or_zero(summary.get("superseded_count"))),
         "top_candidates": compact_rows,
     }
 
@@ -2422,6 +2423,7 @@ def _summary_text(summary: dict[str, Any]) -> str:
         lines.append(
             "near_promotion "
             f"candidates={near_promotion.get('candidate_count', 0)} "
+            f"superseded={near_promotion.get('superseded_count', 0)} "
             f"top={top.get('label', '')} "
             f"source={Path(top.get('source_path', '')).name if top.get('source_path') else 'n/a'} "
             f"status={top.get('promotion_status', '')} "

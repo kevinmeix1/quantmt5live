@@ -38,6 +38,7 @@ def build_near_promotion_summary(
 ) -> dict[str, Any]:
     now = now_utc or datetime.now(UTC)
     rows: list[dict[str, Any]] = []
+    evidence_rows: list[dict[str, Any]] = []
     for scan_path in _iter_scan_paths(paths):
         if not scan_path.exists():
             continue
@@ -54,15 +55,19 @@ def build_near_promotion_summary(
                 )
                 if not row:
                     continue
-                if row["promotion_live_ready"]:
-                    continue
                 if row["evaluation_fills"] < min_evaluation_fills:
                     continue
+                evidence_rows.append(row)
+                if row["promotion_live_ready"]:
+                    continue
                 rows.append(row)
+    superseded_count = _mark_superseded_by_newer_evidence(rows, evidence_rows)
+    rows = [row for row in rows if not row.pop("_superseded_by_newer_evidence", False)]
     rows.sort(key=_rank_key)
     return {
         "timestamp_utc": now.isoformat(),
         "scan_count": len(rows),
+        "superseded_count": superseded_count,
         "targets": {
             "positive_fold_fraction": POSITIVE_FOLD_TARGET,
             "active_positive_fold_fraction": ACTIVE_POSITIVE_FOLD_TARGET,
@@ -75,14 +80,24 @@ def build_near_promotion_summary(
 
 def _iter_scan_paths(paths: tuple[str, ...]) -> list[Path]:
     scan_paths: list[Path] = []
+    seen_paths: set[str] = set()
+
+    def add_scan_path(path: Path) -> None:
+        key = str(path.resolve()) if path.exists() else str(path)
+        if key in seen_paths:
+            return
+        seen_paths.add(key)
+        scan_paths.append(path)
+
     for raw_path in paths:
         path_text = str(raw_path)
         if any(token in path_text for token in ("*", "?", "[")):
             pattern_path = Path(path_text)
             parent = pattern_path.parent if pattern_path.parent != Path("") else Path(".")
-            scan_paths.extend(sorted(parent.glob(pattern_path.name)))
+            for scan_path in sorted(parent.glob(pattern_path.name)):
+                add_scan_path(scan_path)
             continue
-        scan_paths.append(Path(path_text))
+        add_scan_path(Path(path_text))
     return scan_paths
 
 
@@ -290,6 +305,39 @@ def _rank_key(row: dict[str, Any]) -> tuple[int, float, int, float, float, str]:
         row["source_age_minutes"],
         row["label"],
     )
+
+
+def _mark_superseded_by_newer_evidence(
+    rows: list[dict[str, Any]],
+    evidence_rows: list[dict[str, Any]],
+) -> int:
+    newest_mtime_by_candidate: dict[tuple[str, str], str] = {}
+    for row in evidence_rows:
+        key = _candidate_key(row)
+        current = newest_mtime_by_candidate.get(key)
+        mtime = row["source_mtime_utc"]
+        if current is None or mtime > current:
+            newest_mtime_by_candidate[key] = mtime
+
+    superseded_count = 0
+    for row in rows:
+        newest_mtime = newest_mtime_by_candidate.get(_candidate_key(row))
+        if newest_mtime is None:
+            continue
+        if row["source_mtime_utc"] < newest_mtime:
+            row["_superseded_by_newer_evidence"] = True
+            superseded_count += 1
+    return superseded_count
+
+
+def _candidate_key(row: dict[str, Any]) -> tuple[str, str]:
+    signature = str(row.get("candidate_signature") or row.get("label") or "").strip().lower()
+    symbols = _normalize_symbols(str(row.get("symbols") or ""))
+    return signature, symbols
+
+
+def _normalize_symbols(raw_symbols: str) -> str:
+    return " ".join(sorted(token.upper() for token in raw_symbols.split() if token))
 
 
 def _risk_metric(raw_row: dict[str, str], reason: str) -> float | None:
