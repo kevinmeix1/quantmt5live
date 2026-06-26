@@ -5,7 +5,9 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 
 from quanthack.backtesting.portfolio_fixed_warmup_walk_forward import (
+    FixedWarmupPromotionDecision,
     FixedWarmupPortfolioWalkForwardResult,
+    decide_fixed_warmup_promotion,
     run_fixed_warmup_portfolio_walk_forward,
 )
 from quanthack.backtesting.portfolio_strategy_compare import (
@@ -59,6 +61,12 @@ class SessionMomentumOptimizationCandidate:
     parameters: SessionMomentumParameterSet
     comparison_row: PortfolioStrategyComparisonRow
     walk_forward: FixedWarmupPortfolioWalkForwardResult | None = None
+
+    @property
+    def promotion_decision(self) -> FixedWarmupPromotionDecision | None:
+        if self.walk_forward is None:
+            return None
+        return decide_fixed_warmup_promotion(self.walk_forward)
 
     @property
     def rank_key(self) -> tuple[float, ...]:
@@ -195,6 +203,9 @@ def write_session_momentum_optimization_csv(
                 "wf_median_active_test_return_pct",
                 "wf_worst_test_drawdown_pct",
                 "wf_total_evaluation_fills",
+                "promotion_status",
+                "promotion_live_ready",
+                "promotion_reason",
             ],
         )
         writer.writeheader()
@@ -203,6 +214,7 @@ def write_session_momentum_optimization_csv(
             row = candidate.comparison_row
             metrics = row.competition_metrics
             walk_forward = candidate.walk_forward
+            promotion = candidate.promotion_decision
             writer.writerow(
                 {
                     "rank": rank,
@@ -256,6 +268,11 @@ def write_session_momentum_optimization_csv(
                     "wf_total_evaluation_fills": (
                         "" if walk_forward is None else walk_forward.total_evaluation_fills
                     ),
+                    "promotion_status": "" if promotion is None else promotion.status,
+                    "promotion_live_ready": (
+                        "" if promotion is None else promotion.live_ready
+                    ),
+                    "promotion_reason": "" if promotion is None else promotion.reason,
                 }
             )
 

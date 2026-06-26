@@ -75,6 +75,7 @@ def run(args: argparse.Namespace) -> None:
         params = candidate.parameters
         metrics = candidate.comparison_row.competition_metrics
         wf = candidate.walk_forward
+        promotion = candidate.promotion_decision
         wf_text = (
             ""
             if wf is None
@@ -85,6 +86,11 @@ def run(args: argparse.Namespace) -> None:
                 f"wf_nonneg={wf.non_negative_fold_fraction:.1%}, "
                 f"wf_active_med={wf.median_active_test_return_pct:.3%}"
             )
+        )
+        promotion_text = (
+            ""
+            if promotion is None
+            else f", promotion={promotion.status}"
         )
         print(
             f"  {rank}. {params.label}: "
@@ -100,6 +106,7 @@ def run(args: argparse.Namespace) -> None:
             f"final={money(metrics.final_equity)}, "
             f"trades={metrics.trade_count}"
             f"{wf_text}"
+            f"{promotion_text}"
         )
 
 
