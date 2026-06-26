@@ -213,6 +213,82 @@ class LiveStatusSummaryScriptTest(TestCase):
             live_status_summary.DEFAULT_CANDIDATE_MAP_CONSENSUS_CSVS,
         )
 
+    def test_candidate_map_consensus_reports_latest_source_separately(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            promoted = root / "older_promoted.csv"
+            latest_full_data = root / "latest_full_data.csv"
+            promoted.write_text(
+                "\n".join(
+                    [
+                        (
+                            "consensus_status,statuses,min_positive_fold_fraction,"
+                            "min_active_positive_fold_fraction,total_evaluation_fills,"
+                            "candidate_signature"
+                        ),
+                        "PROMOTE,PROMOTE|PROMOTE|PROMOTE,0.9000,1.0000,44,map=promote",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            latest_full_data.write_text(
+                "\n".join(
+                    [
+                        (
+                            "label,candidate_signature,statuses,consensus_status,"
+                            "min_wf_positive_fold_fraction,"
+                            "min_wf_active_positive_fold_fraction,"
+                            "min_wf_non_negative_fold_fraction"
+                        ),
+                        (
+                            "eurgbp_volsq,map=latest_full,"
+                            "PAPER_ONLY|PROMOTE|PROMOTE,PAPER_ONLY,"
+                            "0.5556,0.6250,0.7222"
+                        ),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            old_mtime = live_status_summary.datetime(
+                2026, 1, 1, tzinfo=live_status_summary.UTC
+            ).timestamp()
+            os.utime(promoted, (old_mtime, old_mtime))
+            os.utime(latest_full_data, (old_mtime + 60, old_mtime + 60))
+
+            candidate_map_consensus = live_status_summary.read_candidate_map_consensus(
+                (str(promoted), str(latest_full_data))
+            )
+
+        self.assertEqual(
+            Path(candidate_map_consensus["top_candidates"][0]["source_path"]).name,
+            "older_promoted.csv",
+        )
+        self.assertEqual(
+            Path(candidate_map_consensus["latest_candidate"]["source_path"]).name,
+            "latest_full_data.csv",
+        )
+
+        summary = live_status_summary.build_summary(
+            metrics=_metrics_row(positions_count="0"),
+            live_loop={"iteration": 4, "timestamp_utc": "2026-01-01T00:04:00Z"},
+            latest_order=None,
+            pair_analysis={"pairs": {}},
+            attribution={"symbols": {}},
+            diagnostics={"symbols": {}},
+            sentiment={"pairs": {}},
+            research_consensus=None,
+            candidate_map_consensus=candidate_map_consensus,
+            generated_at_utc="2026-01-01T00:05:00+00:00",
+        )
+        text = live_status_summary._summary_text(summary)
+
+        self.assertIn("candidate_maps candidates=2 top_consensus=PROMOTE", text)
+        self.assertIn("candidate_map_latest source=latest_full_data.csv", text)
+        self.assertIn("consensus=PAPER_ONLY", text)
+        self.assertIn("min_pos=55.6% min_active_pos=62.5% min_nonneg=72.2%", text)
+
     def test_candidate_optimizer_evidence_flags_matching_rejection(self) -> None:
         evidence = live_status_summary._candidate_optimizer_evidence(
             {

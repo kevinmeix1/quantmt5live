@@ -4504,3 +4504,30 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: keep the running live map and risk controls unchanged. The
   full-data evidence supports continued monitoring and research, but not a live
   route change, manual opportunity-probe order, or looser loss/session gates.
+
+## 2026-06-26 Candidate-map latest-source visibility
+
+- A 01:30 UTC monitor pass remained flat with equity 999,159.41, day P/L
+  -840.59, zero margin, no positions, and `EURUSD`/`USDCHF` still in
+  attribution `observe` state. The guarded live command still had
+  `--max-order-lots 0.25`, the sentiment brake, blocked symbol states, and the
+  small-only throttle intact.
+- The live status summary ranked `candidate_maps` by promotion quality, which
+  left an older three-window PROMOTE as the visible top row while the newest
+  full-data consensus was only visible indirectly through source files.
+- Added source mtime/age metadata to candidate-map consensus reads, retained the
+  quality-ranked top row, and added a separate `candidate_map_latest` line when
+  the freshest candidate-map source differs from the ranked top. The formatter
+  now reads both legacy `min_*` and full-data `min_wf_*` fold columns.
+- The regenerated `outputs/live_status_summary_latest.txt` now shows the older
+  top-ranked PROMOTE beside the latest full-data
+  `live_watch_strategy_maps_full20gb_live7_recheck_20260626_consensus.csv`
+  `PAPER_ONLY` row: 55.6% min positive folds, 62.5% min active-positive folds,
+  and 72.2% min non-negative folds.
+- A focused EURGBP volatility-squeeze refine remained too heavy to complete in
+  the live monitor window and produced no output artifact, so no route change
+  was considered from that partial run. Tests:
+  `.venv\Scripts\python.exe -m unittest tests.test_live_status_summary_script`.
+- Decision: no live map, sizing, or guardrail change. This is a visibility
+  refinement to keep the newest full-data evidence in front of the monitor while
+  still requiring confirmed fold stability before promotion.

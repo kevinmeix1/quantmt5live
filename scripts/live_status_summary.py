@@ -524,16 +524,33 @@ def read_research_consensus(path: str | Path) -> dict[str, str] | None:
 
 
 def read_candidate_map_consensus(paths: list[str] | tuple[str, ...]) -> dict[str, Any]:
-    rows: list[dict[str, str]] = []
+    rows: list[dict[str, Any]] = []
+    now_utc = datetime.now(UTC)
     for path in paths:
         consensus = read_research_consensus(path)
         if consensus is None:
             continue
         consensus = dict(consensus)
         consensus["source_path"] = str(path)
+        source_path = Path(path)
+        try:
+            source_mtime_utc = datetime.fromtimestamp(source_path.stat().st_mtime, UTC)
+        except OSError:
+            source_mtime_utc = None
+        if source_mtime_utc is not None:
+            consensus["source_mtime_utc"] = source_mtime_utc.isoformat()
+            consensus["source_age_minutes"] = max(
+                (now_utc - source_mtime_utc).total_seconds() / 60.0,
+                0.0,
+            )
         rows.append(consensus)
+    latest = max(rows, key=lambda row: row.get("source_mtime_utc", ""), default={})
     rows.sort(key=_candidate_map_rank_key)
-    return {"candidate_count": len(rows), "top_candidates": rows}
+    return {
+        "candidate_count": len(rows),
+        "top_candidates": rows,
+        "latest_candidate": latest,
+    }
 
 
 def read_basket_activity_scan(path: str | Path) -> dict[str, Any]:
@@ -2425,11 +2442,24 @@ def _summary_text(summary: dict[str, Any]) -> str:
             prefix +
             f"top_consensus={top_map.get('consensus_status', '')} "
             f"statuses={top_map.get('statuses', '')} "
-            f"min_pos={_format_pct(top_map.get('min_positive_fold_fraction'))} "
-            f"min_active_pos={_format_pct(top_map.get('min_active_positive_fold_fraction'))} "
+            f"min_pos={_format_first_pct(top_map, 'min_positive_fold_fraction', 'min_wf_positive_fold_fraction')} "
+            f"min_active_pos={_format_first_pct(top_map, 'min_active_positive_fold_fraction', 'min_wf_active_positive_fold_fraction')} "
             f"fills={top_map.get('total_evaluation_fills', '')} "
             f"candidate={top_map.get('candidate_signature', '')}"
         )
+        latest_map = candidate_map.get("latest_candidate", {})
+        if isinstance(latest_map, dict) and latest_map and latest_map != top_map:
+            lines.append(
+                "candidate_map_latest "
+                f"source={Path(latest_map.get('source_path', '')).name if latest_map.get('source_path') else 'n/a'} "
+                f"age={_format_age_minutes(latest_map.get('source_age_minutes'))} "
+                f"consensus={latest_map.get('consensus_status', '')} "
+                f"statuses={latest_map.get('statuses', '')} "
+                f"min_pos={_format_first_pct(latest_map, 'min_positive_fold_fraction', 'min_wf_positive_fold_fraction')} "
+                f"min_active_pos={_format_first_pct(latest_map, 'min_active_positive_fold_fraction', 'min_wf_active_positive_fold_fraction')} "
+                f"min_nonneg={_format_first_pct(latest_map, 'min_non_negative_fold_fraction', 'min_wf_non_negative_fold_fraction')} "
+                f"candidate={latest_map.get('candidate_signature') or latest_map.get('strategy_map', '')}"
+            )
     if parameter:
         lines.append(
             "parameters "
@@ -2516,6 +2546,10 @@ def _format_pct(raw_value: Any) -> str:
         return ""
 
 
+def _format_first_pct(row: dict[str, Any], *keys: str) -> str:
+    return _format_pct(_first_present(row, *keys))
+
+
 def _format_reason(raw_value: Any, max_length: int = 160) -> str:
     text = re.sub(r"\s+", " ", str(raw_value or "").strip())
     if len(text) <= max_length:
@@ -2548,13 +2582,37 @@ def _format_stale_quote_symbols(summary: dict[str, Any]) -> str:
     return ",".join(formatted)
 
 
-def _candidate_map_rank_key(row: dict[str, str]) -> tuple[int, float, float, float]:
+def _first_present(row: dict[str, Any], *keys: str) -> Any:
+    for key in keys:
+        value = row.get(key)
+        if value not in (None, ""):
+            return value
+    return None
+
+
+def _float_first_or_zero(row: dict[str, Any], *keys: str) -> float:
+    return _float_or_zero(_first_present(row, *keys))
+
+
+def _candidate_map_rank_key(row: dict[str, Any]) -> tuple[int, float, float, float]:
     status_rank = {"PROMOTE": 0, "PAPER_ONLY": 1, "REJECT": 2}
     return (
         status_rank.get(row.get("consensus_status", ""), 3),
-        -_float_or_zero(row.get("min_active_positive_fold_fraction")),
-        -_float_or_zero(row.get("min_positive_fold_fraction")),
-        _float_or_zero(row.get("max_worst_test_drawdown_pct")),
+        -_float_first_or_zero(
+            row,
+            "min_active_positive_fold_fraction",
+            "min_wf_active_positive_fold_fraction",
+        ),
+        -_float_first_or_zero(
+            row,
+            "min_positive_fold_fraction",
+            "min_wf_positive_fold_fraction",
+        ),
+        _float_first_or_zero(
+            row,
+            "max_worst_test_drawdown_pct",
+            "max_drawdown_pct",
+        ),
     )
 
 
