@@ -242,6 +242,69 @@ class LiveNearPromotionTest(TestCase):
             0.50,
         )
 
+    def test_newer_strategy_map_alias_suppresses_stale_label_alias(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            older = root / "older.csv"
+            newer = root / "newer.csv"
+            older.write_text(
+                "\n".join(
+                    [
+                        (
+                            "rank,label,symbols,strategy_map,promotion_status,"
+                            "promotion_live_ready,promotion_reason,"
+                            "wf_positive_fold_fraction,wf_active_positive_fold_fraction,"
+                            "wf_non_negative_fold_fraction,wf_total_evaluation_fills"
+                        ),
+                        (
+                            "1,top_3_best_symbol_strategies,AUDUSD EURUSD USDCHF,"
+                            "AUDUSD=macd_momentum EURUSD=macd_momentum "
+                            "USDCHF=macd_momentum,PAPER_ONLY,False,"
+                            "almost promoted,0.6667,0.80,0.8333,39"
+                        ),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            newer.write_text(
+                "\n".join(
+                    [
+                        (
+                            "strategy,symbols,promotion_status,promotion_live_ready,"
+                            "promotion_reason,positive_fold_fraction,"
+                            "active_positive_fold_fraction,non_negative_fold_fraction,"
+                            "total_evaluation_fills"
+                        ),
+                        (
+                            '"champion_ensemble with overrides '
+                            '(AUDUSD=macd_momentum, EURUSD=macd_momentum, '
+                            'USDCHF=macd_momentum)",USDCHF AUDUSD EURUSD,'
+                            "PAPER_ONLY,False,full data recheck still weak,"
+                            "0.6154,0.7273,0.8462,73"
+                        ),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            now = datetime(2026, 6, 26, tzinfo=timezone.utc)
+            os.utime(older, ((now - timedelta(hours=2)).timestamp(),) * 2)
+            os.utime(newer, ((now - timedelta(minutes=5)).timestamp(),) * 2)
+
+            summary = live_near_promotion.build_near_promotion_summary(
+                (str(older), str(newer)),
+                now_utc=now,
+            )
+
+        self.assertEqual(summary["superseded_count"], 1)
+        self.assertEqual(summary["scan_count"], 1)
+        self.assertEqual(summary["top_candidates"][0]["source_path"], str(newer))
+        self.assertAlmostEqual(
+            summary["top_candidates"][0]["positive_fold_fraction"],
+            0.6154,
+        )
+
     def test_cli_writes_json_and_text(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

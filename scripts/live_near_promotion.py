@@ -27,6 +27,10 @@ POSITIVE_FOLD_TARGET = 0.67
 ACTIVE_POSITIVE_FOLD_TARGET = 0.67
 NON_NEGATIVE_FOLD_TARGET = 0.70
 RISK_DISCIPLINE_TARGET = 95.0
+_STRATEGY_ASSIGNMENT_RE = re.compile(
+    r"\b([A-Z]{6})\s*=\s*([A-Za-z_][A-Za-z0-9_]*)\b",
+    re.IGNORECASE,
+)
 
 
 def build_near_promotion_summary(
@@ -331,9 +335,29 @@ def _mark_superseded_by_newer_evidence(
 
 
 def _candidate_key(row: dict[str, Any]) -> tuple[str, str]:
-    signature = str(row.get("candidate_signature") or row.get("label") or "").strip().lower()
+    signature = _normalize_candidate_signature(
+        row.get("candidate_signature") or row.get("label") or ""
+    )
     symbols = _normalize_symbols(str(row.get("symbols") or ""))
     return signature, symbols
+
+
+def _normalize_candidate_signature(raw_signature: Any) -> str:
+    signature = str(raw_signature or "").strip()
+    assignments = _strategy_assignments(signature)
+    if assignments:
+        assignment_text = " ".join(
+            f"{symbol}={strategy}" for symbol, strategy in sorted(assignments.items())
+        )
+        return f"map:{assignment_text}"
+    return "raw:" + re.sub(r"\s+", " ", signature).lower()
+
+
+def _strategy_assignments(raw_signature: str) -> dict[str, str]:
+    assignments: dict[str, str] = {}
+    for match in _STRATEGY_ASSIGNMENT_RE.finditer(raw_signature):
+        assignments[match.group(1).upper()] = match.group(2).lower()
+    return assignments
 
 
 def _normalize_symbols(raw_symbols: str) -> str:
