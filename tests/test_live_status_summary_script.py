@@ -216,6 +216,12 @@ class LiveStatusSummaryScriptTest(TestCase):
             live_status_summary.DEFAULT_OPTIMIZER_SCAN_CSVS,
         )
 
+    def test_default_optimizer_inputs_include_future_macd_w672_scans(self) -> None:
+        self.assertIn(
+            "outputs/backtests/live_watch_macd_*_w672.csv",
+            live_status_summary.DEFAULT_OPTIMIZER_SCAN_CSVS,
+        )
+
     def test_default_candidate_map_consensus_includes_no_usdjpy_confirmation(self) -> None:
         self.assertIn(
             "outputs/backtests/live_watch_no_usdjpy_confirm_20260626_consensus.csv",
