@@ -30,6 +30,7 @@ DEFAULT_CANDIDATE_MAP_CONSENSUS_CSVS = (
     "outputs/backtests/live_watch_adaptive_current_pressure_consensus.csv",
     "outputs/backtests/live_watch_adaptive_current_pressure_gated_consensus.csv",
     "outputs/backtests/live_watch_no_usdjpy_confirm_20260626_consensus.csv",
+    "outputs/backtests/live_watch_strategy_maps_full20gb_live7_recheck_20260626_consensus.csv",
     "outputs/backtests/live_watch_strategy_maps_live7_pressure_w960_summary.csv",
 )
 DEFAULT_BASKET_ACTIVITY_SCAN_CSV = (
@@ -2330,7 +2331,8 @@ def _summary_text(summary: dict[str, Any]) -> str:
             f"status={match.get('promotion_status', '')} "
             f"nonneg={match.get('wf_non_negative_fold_fraction', 0.0):.1%} "
             f"active_pos={match.get('wf_active_positive_fold_fraction', 0.0):.1%} "
-            f"fills={match.get('wf_total_evaluation_fills', 0)}"
+            f"fills={match.get('wf_total_evaluation_fills', 0)} "
+            f"reason={_format_reason(match.get('promotion_reason'))}"
         )
     if optimizer_scans.get("scan_count", 0) > 0:
         top = optimizer_scans.get("top_candidates", [{}])[0]

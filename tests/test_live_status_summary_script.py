@@ -204,6 +204,15 @@ class LiveStatusSummaryScriptTest(TestCase):
             live_status_summary.DEFAULT_CANDIDATE_MAP_CONSENSUS_CSVS,
         )
 
+    def test_default_candidate_map_consensus_includes_full_data_recheck(self) -> None:
+        self.assertIn(
+            (
+                "outputs/backtests/"
+                "live_watch_strategy_maps_full20gb_live7_recheck_20260626_consensus.csv"
+            ),
+            live_status_summary.DEFAULT_CANDIDATE_MAP_CONSENSUS_CSVS,
+        )
+
     def test_candidate_optimizer_evidence_flags_matching_rejection(self) -> None:
         evidence = live_status_summary._candidate_optimizer_evidence(
             {
@@ -625,10 +634,12 @@ class LiveStatusSummaryScriptTest(TestCase):
             generated_at_utc="2026-01-01T00:05:00+00:00",
         )
         text = live_status_summary._summary_text(summary)
-        self.assertIn("candidate_evidence", text)
+        candidate_line = next(
+            line for line in text.splitlines() if line.startswith("candidate_evidence ")
+        )
         self.assertIn(
             "reason=non-negative fold fraction 50.0% is below 70.0%",
-            text,
+            candidate_line,
         )
 
     def test_optimizer_scans_rank_all_rows_not_only_first(self) -> None:

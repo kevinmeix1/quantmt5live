@@ -4477,3 +4477,30 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: do not route AUDUSD to `opportunity_probe`, do not force a manual
   trade, and keep the current guarded live map unchanged until a candidate
   clears the full fold, fill, risk-discipline, sentiment, and attribution gates.
+
+## 2026-06-26 Full-data live7 strategy-map recheck
+
+- A 01:05 UTC monitor pass was still flat with equity 999,159.41, day P/L
+  -840.59, no margin, and no open positions. The guarded live loop remained
+  active, but all live strategy diagnostics were session-gated and
+  `EURUSD`/`USDCHF` stayed in `observe` until 2026-06-26T03:11:48Z.
+- Refreshed the full converted 15-minute dataset checks using
+  `data/full_20gb_15m_prices.csv` and `data/full_20gb_15m_quotes.csv`.
+  A directional-probe MACD recheck on the live MACD sleeve rejected all tested
+  near-promotion variants: the best micro variant was only 50.0%
+  active-positive and 50.0% non-negative across walk-forward folds.
+- Ran full-data W480/W672/W960 strategy-map comparisons for the live7 universe.
+  W672 and W960 promoted both current and no-`USDJPY`, but W480 rejected them
+  with 66.7% non-negative folds and 58.8% active-positive folds.
+- The resulting consensus file is
+  `outputs/backtests/live_watch_strategy_maps_full20gb_live7_recheck_20260626_consensus.csv`.
+  It ranks `eurgbp_volsq` and `top3_macd` as `PAPER_ONLY`, while current,
+  no-`USDJPY`, and the other tested live maps remain `REJECT` at consensus
+  because the W480 window misses fold-stability floors.
+- Added the full-data consensus artifact to the default live-status candidate
+  map rollup and fixed `candidate_evidence` summary text so rejected actionable
+  candidates print their exact rejection reason inline. Tests:
+  `.venv\Scripts\python.exe -m unittest tests.test_live_status_summary_script`.
+- Decision: keep the running live map and risk controls unchanged. The
+  full-data evidence supports continued monitoring and research, but not a live
+  route change, manual opportunity-probe order, or looser loss/session gates.
