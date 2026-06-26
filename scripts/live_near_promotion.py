@@ -38,8 +38,7 @@ def build_near_promotion_summary(
 ) -> dict[str, Any]:
     now = now_utc or datetime.now(UTC)
     rows: list[dict[str, Any]] = []
-    for path in paths:
-        scan_path = Path(path)
+    for scan_path in _iter_scan_paths(paths):
         if not scan_path.exists():
             continue
         mtime = datetime.fromtimestamp(scan_path.stat().st_mtime, UTC)
@@ -72,6 +71,19 @@ def build_near_promotion_summary(
         },
         "top_candidates": rows[:top_n],
     }
+
+
+def _iter_scan_paths(paths: tuple[str, ...]) -> list[Path]:
+    scan_paths: list[Path] = []
+    for raw_path in paths:
+        path_text = str(raw_path)
+        if any(token in path_text for token in ("*", "?", "[")):
+            pattern_path = Path(path_text)
+            parent = pattern_path.parent if pattern_path.parent != Path("") else Path(".")
+            scan_paths.extend(sorted(parent.glob(pattern_path.name)))
+            continue
+        scan_paths.append(Path(path_text))
+    return scan_paths
 
 
 def write_summary_json(summary: dict[str, Any], path: str | Path) -> None:

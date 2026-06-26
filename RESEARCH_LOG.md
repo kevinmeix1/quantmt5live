@@ -4531,3 +4531,38 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
 - Decision: no live map, sizing, or guardrail change. This is a visibility
   refinement to keep the newest full-data evidence in front of the monitor while
   still requiring confirmed fold stability before promotion.
+
+## 2026-06-26 Fixed-map sleeve validation and monitor glob expansion
+
+- A 01:43 UTC monitor pass remained flat with equity 999,159.41, day P/L
+  -840.59, zero margin, no positions, and quiet live stderr. MT5,
+  `live_guard.ps1`, `live_supervisor.ps1`, and the guarded `live-trade` process
+  were still running with `--max-order-lots 0.25`, sentiment brake, symbol-state
+  blocks, and the small-only throttle intact.
+- The live diagnostics showed actionable read-only pressure on `AUDUSD`,
+  `GBPUSD`, and `USDCAD`, but the current bucket was still session-gated and
+  `EURUSD`/`USDCHF` remained blocked in attribution `observe` until
+  2026-06-26T03:11:48Z. No manual or forced discretionary trade was placed.
+- A broad W480 custom strategy-map optimizer for research sleeves produced no
+  stdout, stderr, or summary after several minutes, so only that research
+  process was stopped. Live MT5 and guard processes were left untouched.
+- Ran bounded full-data fixed-map walk-forward validations on
+  `data/full_20gb_15m_prices.csv` and `data/full_20gb_15m_quotes.csv`:
+  - `GBPUSD=asset_adaptive_dual_squeeze` rejected on W480 with 50.0% positive
+    folds, 56.2% active-positive folds, 66.7% non-negative folds, and 134
+    evaluation fills.
+  - `EURGBP=volatility_squeeze` remained `PAPER_ONLY` on W480 with 55.6%
+    positive folds, 62.5% active-positive folds, 72.2% non-negative folds, and
+    130 evaluation fills.
+- Added `outputs/backtests/live_watch_fixed_map_*_summary.csv` to the default
+  optimizer scan list and fixed `scripts/live_near_promotion.py` to expand glob
+  inputs like `scripts/live_status_summary.py` already does. The regenerated
+  status summary now surfaces the `EURGBP=volatility_squeeze` fixed-map run as
+  `latest_optimizer_scan`, and the GBP asset-squeeze validation appears as
+  rejected evidence for the research-live GBPUSD candidate.
+- Tests:
+  `.venv\Scripts\python.exe -m unittest tests.test_live_status_summary_script tests.test_live_near_promotion_script`.
+- Decision: keep the current live map and all guardrails unchanged. The
+  `EURGBP=volatility_squeeze` sleeve is worth continued paper/watchlist
+  tracking, but it still misses the 67.0% live positive-fold and
+  active-positive-fold floors.

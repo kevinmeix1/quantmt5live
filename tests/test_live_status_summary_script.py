@@ -192,6 +192,12 @@ class LiveStatusSummaryScriptTest(TestCase):
             live_status_summary.DEFAULT_OPTIMIZER_SCAN_CSVS,
         )
 
+    def test_default_optimizer_inputs_include_future_fixed_map_summaries(self) -> None:
+        self.assertIn(
+            "outputs/backtests/live_watch_fixed_map_*_summary.csv",
+            live_status_summary.DEFAULT_OPTIMIZER_SCAN_CSVS,
+        )
+
     def test_default_optimizer_inputs_include_future_macd_w960_scans(self) -> None:
         self.assertIn(
             "outputs/backtests/live_watch_macd_*_w960.csv",

@@ -84,6 +84,40 @@ class LiveNearPromotionTest(TestCase):
 
         self.assertEqual(summary["top_candidates"][0]["source_path"], str(newer))
 
+    def test_build_summary_expands_glob_inputs(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            scan = root / "live_watch_fixed_map_candidate_w480_summary.csv"
+            scan.write_text(
+                "\n".join(
+                    [
+                        (
+                            "strategy,symbols,promotion_status,promotion_live_ready,"
+                            "promotion_reason,positive_fold_fraction,"
+                            "active_positive_fold_fraction,non_negative_fold_fraction,"
+                            "total_evaluation_fills"
+                        ),
+                        (
+                            "map,AUDUSD EURGBP,PAPER_ONLY,False,"
+                            "needs more positive folds,0.5556,0.6250,0.7222,130"
+                        ),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            summary = live_near_promotion.build_near_promotion_summary(
+                (str(root / "live_watch_fixed_map_*_summary.csv"),),
+                now_utc=datetime(2026, 6, 26, tzinfo=timezone.utc),
+            )
+
+        self.assertEqual(summary["scan_count"], 1)
+        self.assertEqual(
+            Path(summary["top_candidates"][0]["source_path"]).name,
+            "live_watch_fixed_map_candidate_w480_summary.csv",
+        )
+
     def test_cli_writes_json_and_text(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
