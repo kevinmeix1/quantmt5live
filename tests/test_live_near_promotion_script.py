@@ -305,6 +305,71 @@ class LiveNearPromotionTest(TestCase):
             0.6154,
         )
 
+    def test_newer_consensus_row_suppresses_stale_strategy_map_window(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            older = root / "window_w672_summary.csv"
+            newer = root / "window_consensus.csv"
+            strategy_map = (
+                "AUDUSD=macd_momentum EURGBP=macd_momentum "
+                "EURUSD=macd_momentum GBPUSD=macd_momentum "
+                "USDCAD=macd_momentum USDCHF=macd_momentum "
+                "USDJPY=macd_momentum"
+            )
+            older.write_text(
+                "\n".join(
+                    [
+                        (
+                            "rank,label,symbols,strategy_map,promotion_status,"
+                            "promotion_live_ready,promotion_reason,"
+                            "wf_positive_fold_fraction,"
+                            "wf_active_positive_fold_fraction,"
+                            "wf_non_negative_fold_fraction,"
+                            "wf_total_evaluation_fills"
+                        ),
+                        (
+                            "1,all_macd_momentum,AUDUSD EURGBP EURUSD GBPUSD "
+                            f"USDCAD USDCHF USDJPY,{strategy_map},"
+                            "PAPER_ONLY,False,almost promoted,0.6364,0.7000,"
+                            "0.7273,150"
+                        ),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            newer.write_text(
+                "\n".join(
+                    [
+                        (
+                            "rank,label,candidate_signature,strategy_map,"
+                            "consensus_status,all_live_ready,statuses,"
+                            "min_wf_positive_fold_fraction,"
+                            "min_wf_active_positive_fold_fraction,"
+                            "min_wf_non_negative_fold_fraction"
+                        ),
+                        (
+                            f"1,all_macd_momentum,{strategy_map},{strategy_map},"
+                            "REJECT,False,REJECT|PAPER_ONLY|PROMOTE,"
+                            "0.4444,0.5000,0.6111"
+                        ),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            now = datetime(2026, 6, 26, tzinfo=timezone.utc)
+            os.utime(older, ((now - timedelta(hours=2)).timestamp(),) * 2)
+            os.utime(newer, ((now - timedelta(minutes=5)).timestamp(),) * 2)
+
+            summary = live_near_promotion.build_near_promotion_summary(
+                (str(older), str(newer)),
+                now_utc=now,
+            )
+
+        self.assertEqual(summary["superseded_count"], 1)
+        self.assertEqual(summary["scan_count"], 0)
+
     def test_newer_parameterized_macd_alias_suppresses_stale_label_alias(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

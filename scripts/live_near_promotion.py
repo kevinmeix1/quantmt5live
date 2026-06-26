@@ -18,8 +18,12 @@ try:
     REPO_ROOT = Path(__file__).resolve().parents[1]
     if str(REPO_ROOT) not in sys.path:
         sys.path.insert(0, str(REPO_ROOT))
-    from scripts.live_status_summary import DEFAULT_OPTIMIZER_SCAN_CSVS
+    from scripts.live_status_summary import (
+        DEFAULT_CANDIDATE_MAP_CONSENSUS_CSVS,
+        DEFAULT_OPTIMIZER_SCAN_CSVS,
+    )
 except ImportError:  # pragma: no cover - direct script fallback
+    DEFAULT_CANDIDATE_MAP_CONSENSUS_CSVS = ()
     DEFAULT_OPTIMIZER_SCAN_CSVS = ()
 
 
@@ -59,9 +63,9 @@ def build_near_promotion_summary(
                 )
                 if not row:
                     continue
+                evidence_rows.append(row)
                 if row["evaluation_fills"] < min_evaluation_fills:
                     continue
-                evidence_rows.append(row)
                 if row["promotion_live_ready"]:
                     continue
                 rows.append(row)
@@ -155,7 +159,13 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> None:
     args = build_parser().parse_args(argv)
-    paths = tuple(args.scan_csv or DEFAULT_OPTIMIZER_SCAN_CSVS)
+    paths = tuple(
+        args.scan_csv
+        or (
+            *DEFAULT_OPTIMIZER_SCAN_CSVS,
+            *DEFAULT_CANDIDATE_MAP_CONSENSUS_CSVS,
+        )
+    )
     summary = build_near_promotion_summary(
         paths,
         top_n=args.top_n,
@@ -185,25 +195,45 @@ def _candidate_row(
     source_age_minutes: float,
     source_row_number: int,
 ) -> dict[str, Any] | None:
-    status = raw_row.get("promotion_status", "").strip()
+    status = (
+        raw_row.get("promotion_status", "")
+        or raw_row.get("consensus_status", "")
+    ).strip()
     if not status:
         return None
-    positive = _metric(raw_row, "wf_positive_fold_fraction", "positive_fold_fraction")
-    active = _metric(raw_row, "wf_active_fold_fraction", "active_fold_fraction")
+    positive = _metric(
+        raw_row,
+        "wf_positive_fold_fraction",
+        "positive_fold_fraction",
+        "min_wf_positive_fold_fraction",
+        "min_positive_fold_fraction",
+    )
+    active = _metric(
+        raw_row,
+        "wf_active_fold_fraction",
+        "active_fold_fraction",
+        "min_wf_active_fold_fraction",
+        "min_active_fold_fraction",
+    )
     active_positive = _metric(
         raw_row,
         "wf_active_positive_fold_fraction",
         "active_positive_fold_fraction",
+        "min_wf_active_positive_fold_fraction",
+        "min_active_positive_fold_fraction",
     )
     non_negative = _metric(
         raw_row,
         "wf_non_negative_fold_fraction",
         "non_negative_fold_fraction",
+        "min_wf_non_negative_fold_fraction",
+        "min_non_negative_fold_fraction",
     )
     median_active = _metric(
         raw_row,
         "wf_median_active_test_return_pct",
         "median_active_test_return_pct",
+        "min_median_active_test_return_pct",
     )
     drawdown = _metric(
         raw_row,
@@ -221,7 +251,10 @@ def _candidate_row(
             "trade_count",
         )
     )
-    reason = raw_row.get("promotion_reason", "").strip()
+    reason = (
+        raw_row.get("promotion_reason", "")
+        or raw_row.get("reasons", "")
+    ).strip()
     risk = _risk_metric(raw_row, reason)
     failed_gates = _failed_gates(
         positive=positive,
@@ -245,7 +278,10 @@ def _candidate_row(
         "symbols": raw_row.get("symbols", ""),
         "candidate_signature": _candidate_signature(raw_row),
         "promotion_status": status,
-        "promotion_live_ready": _boolish(raw_row.get("promotion_live_ready")),
+        "promotion_live_ready": _boolish(
+            raw_row.get("promotion_live_ready")
+            or raw_row.get("all_live_ready")
+        ),
         "promotion_reason": reason,
         "return_pct": _metric(raw_row, "return_pct"),
         "max_drawdown_pct": _metric(raw_row, "max_drawdown_pct"),
@@ -338,6 +374,8 @@ def _candidate_key(row: dict[str, Any]) -> tuple[str, str]:
     signature = _normalize_candidate_signature(
         row.get("candidate_signature") or row.get("label") or ""
     )
+    if signature.startswith("map:"):
+        return signature, ""
     symbols = _normalize_symbols(str(row.get("symbols") or ""))
     return signature, symbols
 
