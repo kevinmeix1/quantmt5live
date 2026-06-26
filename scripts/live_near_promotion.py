@@ -393,6 +393,11 @@ def _normalize_candidate_signature(raw_signature: Any) -> str:
     macd_signature = _macd_signature_from_text(signature)
     if macd_signature:
         return macd_signature
+    if signature.lower().startswith("opportunity:"):
+        return re.sub(r"\s+", "", signature.lower())
+    opportunity_signature = _opportunity_probe_signature_from_text(signature)
+    if opportunity_signature:
+        return opportunity_signature
     return "raw:" + re.sub(r"\s+", " ", signature).lower()
 
 
@@ -404,13 +409,7 @@ def _strategy_assignments(raw_signature: str) -> dict[str, str]:
 
 
 def _macd_signature_from_text(raw_signature: str) -> str:
-    fields = {
-        match.group("key").lower(): match.group("value")
-        for match in re.finditer(
-            r"(?P<key>[A-Za-z_][A-Za-z0-9_]*)=(?P<value>[^\s]+)",
-            raw_signature,
-        )
-    }
+    fields = _key_value_fields(raw_signature)
     if not all(key in fields for key in ("fast_window", "slow_window", "signal_window")):
         return ""
     signature_fields = (
@@ -434,6 +433,21 @@ def _macd_signature_from_text(raw_signature: str) -> str:
         ("hours", _normalized_hours(fields.get("allowed_utc_hours", ""))),
     )
     return "macd:" + ";".join(f"{key}={value}" for key, value in signature_fields)
+
+
+def _opportunity_probe_signature_from_text(raw_signature: str) -> str:
+    fields = _key_value_fields(raw_signature)
+    return _opportunity_probe_signature_from_fields(fields)
+
+
+def _key_value_fields(raw_signature: str) -> dict[str, str]:
+    return {
+        match.group("key").lower(): match.group("value")
+        for match in re.finditer(
+            r"(?P<key>[A-Za-z_][A-Za-z0-9_]*)=(?P<value>[^\s]+)",
+            raw_signature,
+        )
+    }
 
 
 def _normalize_symbols(raw_symbols: str) -> str:
@@ -466,6 +480,9 @@ def _candidate_signature(raw_row: dict[str, str]) -> str:
     parameter_signature = _parameter_signature(raw_row)
     if parameter_signature:
         return parameter_signature
+    opportunity_signature = _opportunity_probe_signature(raw_row)
+    if opportunity_signature:
+        return opportunity_signature
     for key in ("candidate_signature", "strategy_map", "strategy", "label"):
         value = raw_row.get(key, "").strip()
         if value:
@@ -495,6 +512,34 @@ def _parameter_signature(raw_row: dict[str, str]) -> str:
         ("hours", _normalized_hours(raw_row.get("allowed_utc_hours", ""))),
     )
     return "macd:" + ";".join(f"{key}={value}" for key, value in fields)
+
+
+def _opportunity_probe_signature(raw_row: dict[str, str]) -> str:
+    fields = {key.lower(): value for key, value in raw_row.items()}
+    return _opportunity_probe_signature_from_fields(fields)
+
+
+def _opportunity_probe_signature_from_fields(fields: dict[str, str]) -> str:
+    if not all(
+        key in fields for key in ("fast_lookback", "medium_lookback", "slow_lookback")
+    ):
+        return ""
+    signature_fields = (
+        ("fast", fields.get("fast_lookback", "")),
+        ("medium", fields.get("medium_lookback", "")),
+        ("slow", fields.get("slow_lookback", "")),
+        ("score", _normalized_value(fields.get("min_score"))),
+        ("exit", _normalized_value(fields.get("exit_score"))),
+        ("reverse", _normalized_value(fields.get("reverse_score"))),
+        ("move", _normalized_value(fields.get("min_fast_move_bps"))),
+        ("penalty", _normalized_value(fields.get("volatility_penalty"))),
+        ("minhold", _normalized_value(fields.get("min_holding_period"))),
+        ("maxhold", _normalized_value(fields.get("max_holding_period"))),
+        ("spread", _normalized_value(fields.get("max_spread_bps"))),
+    )
+    return "opportunity:" + ";".join(
+        f"{key}={value}" for key, value in signature_fields
+    )
 
 
 def _normalized_value(raw_value: Any) -> str:

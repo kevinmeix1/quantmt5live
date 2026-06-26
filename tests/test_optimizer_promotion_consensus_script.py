@@ -100,6 +100,43 @@ class OptimizerPromotionConsensusScriptTest(TestCase):
         self.assertIn("min_fast_move_bps=2.0", rows[0].candidate_signature)
         self.assertIn("allowed_utc_hours=10|11|12|13|14", rows[0].candidate_signature)
 
+    def test_builds_signature_for_opportunity_probe_optimizer_csv(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            first = root / "opportunity.csv"
+            first.write_text(
+                "\n".join(
+                    [
+                        (
+                            "label,symbols,fast_lookback,medium_lookback,"
+                            "slow_lookback,min_score,exit_score,reverse_score,"
+                            "min_fast_move_bps,volatility_penalty,"
+                            "min_holding_period,max_holding_period,max_spread_bps,"
+                            "promotion_status,promotion_live_ready,return_pct,"
+                            "max_drawdown_pct,wf_positive_fold_fraction,"
+                            "wf_active_positive_fold_fraction,"
+                            "wf_non_negative_fold_fraction"
+                        ),
+                        (
+                            "aud_probe,AUDUSD,4,12,32,5.0,0.25,5.5,3.5,"
+                            "0.75,32,144,5.0,PAPER_ONLY,False,0.01,0.001,"
+                            "0.5,0.6,0.7"
+                        ),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            rows = build_consensus(read_observations([f"w480={first}"]))
+
+        self.assertIn("medium_lookback=12", rows[0].candidate_signature)
+        self.assertIn("min_score=5.0", rows[0].candidate_signature)
+        self.assertIn("reverse_score=5.5", rows[0].candidate_signature)
+        self.assertIn("volatility_penalty=0.75", rows[0].candidate_signature)
+        self.assertIn("min_holding_period=32", rows[0].candidate_signature)
+        self.assertIn("max_spread_bps=5.0", rows[0].candidate_signature)
+
     def test_missing_promotion_status_is_unvalidated(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

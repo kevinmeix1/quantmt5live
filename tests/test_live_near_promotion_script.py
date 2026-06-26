@@ -502,6 +502,71 @@ class LiveNearPromotionTest(TestCase):
         self.assertEqual(summary["superseded_count"], 1)
         self.assertEqual(summary["scan_count"], 0)
 
+    def test_newer_opportunity_consensus_suppresses_window_row(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            older = root / "opportunity_w960.csv"
+            newer = root / "opportunity_consensus.csv"
+            older.write_text(
+                "\n".join(
+                    [
+                        (
+                            "rank,label,symbols,fast_lookback,medium_lookback,"
+                            "slow_lookback,min_score,exit_score,reverse_score,"
+                            "min_fast_move_bps,volatility_penalty,"
+                            "min_holding_period,max_holding_period,max_spread_bps,"
+                            "promotion_status,promotion_live_ready,"
+                            "promotion_reason,wf_positive_fold_fraction,"
+                            "wf_active_positive_fold_fraction,"
+                            "wf_non_negative_fold_fraction,"
+                            "wf_total_evaluation_fills"
+                        ),
+                        (
+                            "1,aud_probe,AUDUSD,4,12,32,5.0,0.25,5.5,"
+                            "3.5,0.75,32,144,5.0,PAPER_ONLY,False,near,"
+                            "0.8333,0.8333,0.8333,64"
+                        ),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            newer.write_text(
+                "\n".join(
+                    [
+                        (
+                            "rank,label,symbols,candidate_signature,"
+                            "consensus_status,all_live_ready,"
+                            "min_wf_positive_fold_fraction,"
+                            "min_wf_active_positive_fold_fraction,"
+                            "min_wf_non_negative_fold_fraction"
+                        ),
+                        (
+                            "1,aud_probe,AUDUSD,\"aud_probe fast_lookback=4 "
+                            "medium_lookback=12 slow_lookback=32 "
+                            "min_score=5.0 exit_score=0.25 "
+                            "reverse_score=5.5 min_fast_move_bps=3.5 "
+                            "volatility_penalty=0.75 min_holding_period=32 "
+                            "max_holding_period=144 max_spread_bps=5.0\","
+                            "REJECT,False,0.3333,0.3333,0.3333"
+                        ),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            now = datetime(2026, 6, 26, tzinfo=timezone.utc)
+            os.utime(older, ((now - timedelta(hours=2)).timestamp(),) * 2)
+            os.utime(newer, ((now - timedelta(minutes=5)).timestamp(),) * 2)
+
+            summary = live_near_promotion.build_near_promotion_summary(
+                (str(older), str(newer)),
+                now_utc=now,
+            )
+
+        self.assertEqual(summary["superseded_count"], 1)
+        self.assertEqual(summary["scan_count"], 0)
+
     def test_cli_writes_json_and_text(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
