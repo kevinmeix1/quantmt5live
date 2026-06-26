@@ -4434,3 +4434,22 @@ repeatable alpha — exactly the posture for a per-round-elimination format.
   set, but the no-`USDJPY` defensive variant failed multi-window confirmation
   and does not justify changing live routing or disabling attribution/cost/session
   brakes.
+
+## 2026-06-26 Optimizer-consensus conflict monitor refinement
+
+- Added an `optimizer_consensus_conflict` live-status warning so a fresh
+  single-window optimizer PROMOTE is explicitly cross-checked against the
+  candidate-map consensus rollup for the same symbol set and strategy map.
+- Current trigger: the W960
+  `live_watch_strategy_maps_eurgbp_pressure_refresh_20260626_w960_summary.csv`
+  top row promotes the six-symbol no-`USDJPY` map, but
+  `live_watch_no_usdjpy_confirm_20260626_consensus.csv` rejects that same map
+  because W480 missed the non-negative and active-positive fold floors.
+- The monitor now prints the conflict directly in
+  `outputs/live_status_summary_latest.txt`, including consensus statuses,
+  minimum non-negative/active-positive fold fractions, source files, and fills.
+  Tests:
+  `.venv\Scripts\python.exe -m unittest tests.test_live_status_summary_script`.
+- Decision: no trading/risk-control change. This is a visibility refinement
+  that protects live readiness by keeping broader confirmation failures next
+  to attractive one-window optimizer rows.

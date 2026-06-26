@@ -845,6 +845,122 @@ class LiveStatusSummaryScriptTest(TestCase):
         self.assertIn("optimizer_latest_conflict", text)
         self.assertIn("latest_source=latest_rejected.csv", text)
 
+    def test_optimizer_summary_flags_consensus_conflict(self) -> None:
+        summary = live_status_summary.build_summary(
+            metrics=_metrics_row(positions_count="0"),
+            live_loop={"iteration": 4, "timestamp_utc": "2026-01-01T12:00:00Z"},
+            latest_order=None,
+            pair_analysis={"pairs": {}},
+            attribution={"symbols": {}},
+            diagnostics={"symbols": {}},
+            sentiment={"pairs": {}},
+            research_consensus=None,
+            optimizer_scans={
+                "scan_count": 1,
+                "top_candidates": [
+                    {
+                        "source_path": "one_window_promoted.csv",
+                        "label": "best_per_symbol_positive_only",
+                        "symbols": "AUDUSD EURGBP",
+                        "strategy_map": (
+                            "AUDUSD=macd_momentum EURGBP=champion_ensemble"
+                        ),
+                        "promotion_status": "PROMOTE",
+                        "promotion_live_ready": True,
+                        "wf_active_positive_fold_fraction": 1.0,
+                        "wf_non_negative_fold_fraction": 1.0,
+                        "wf_median_active_test_return_pct": 0.001,
+                        "wf_total_evaluation_fills": 22,
+                    }
+                ],
+            },
+            candidate_map_consensus={
+                "candidate_count": 1,
+                "top_candidates": [
+                    {
+                        "source_path": "cross_window_consensus.csv",
+                        "strategy": (
+                            "champion_ensemble with overrides "
+                            "(AUDUSD=macd_momentum, EURGBP=champion_ensemble)"
+                        ),
+                        "symbols": "AUDUSD EURGBP",
+                        "candidate_signature": (
+                            "strategy=champion_ensemble with overrides "
+                            "(AUDUSD=macd_momentum, EURGBP=champion_ensemble) "
+                            "symbols=AUDUSD EURGBP"
+                        ),
+                        "consensus_status": "REJECT",
+                        "all_live_ready": "False",
+                        "statuses": "REJECT|PROMOTE|PROMOTE",
+                        "min_non_negative_fold_fraction": "0.6667",
+                        "min_active_positive_fold_fraction": "0.5882",
+                        "total_evaluation_fills": "341",
+                    }
+                ],
+            },
+            generated_at_utc="2026-01-01T12:01:00+00:00",
+        )
+
+        conflict = summary["optimizer_consensus_conflict"]
+        self.assertEqual(conflict["label"], "best_per_symbol_positive_only")
+        self.assertEqual(conflict["optimizer_status"], "PROMOTE")
+        self.assertEqual(conflict["consensus_status"], "REJECT")
+        self.assertFalse(conflict["consensus_live_ready"])
+        text = live_status_summary._summary_text(summary)
+        self.assertIn("optimizer_consensus_conflict", text)
+        self.assertIn("consensus_source=cross_window_consensus.csv", text)
+        self.assertIn("statuses=REJECT|PROMOTE|PROMOTE", text)
+
+    def test_optimizer_consensus_conflict_requires_strategy_match(self) -> None:
+        summary = live_status_summary.build_summary(
+            metrics=_metrics_row(positions_count="0"),
+            live_loop={"iteration": 4, "timestamp_utc": "2026-01-01T12:00:00Z"},
+            latest_order=None,
+            pair_analysis={"pairs": {}},
+            attribution={"symbols": {}},
+            diagnostics={"symbols": {}},
+            sentiment={"pairs": {}},
+            research_consensus=None,
+            optimizer_scans={
+                "scan_count": 1,
+                "top_candidates": [
+                    {
+                        "source_path": "one_window_promoted.csv",
+                        "label": "best_per_symbol_positive_only",
+                        "symbols": "AUDUSD EURGBP",
+                        "strategy_map": (
+                            "AUDUSD=macd_momentum EURGBP=champion_ensemble"
+                        ),
+                        "promotion_status": "PROMOTE",
+                        "promotion_live_ready": True,
+                    }
+                ],
+            },
+            candidate_map_consensus={
+                "candidate_count": 1,
+                "top_candidates": [
+                    {
+                        "source_path": "other_recipe_consensus.csv",
+                        "strategy": (
+                            "champion_ensemble with overrides "
+                            "(AUDUSD=quality_trend, EURGBP=champion_ensemble)"
+                        ),
+                        "symbols": "AUDUSD EURGBP",
+                        "candidate_signature": (
+                            "strategy=champion_ensemble with overrides "
+                            "(AUDUSD=quality_trend, EURGBP=champion_ensemble) "
+                            "symbols=AUDUSD EURGBP"
+                        ),
+                        "consensus_status": "REJECT",
+                        "all_live_ready": "False",
+                    }
+                ],
+            },
+            generated_at_utc="2026-01-01T12:01:00+00:00",
+        )
+
+        self.assertEqual(summary["optimizer_consensus_conflict"], {})
+
     def test_heuristic_evidence_matches_macd_scan_alias(self) -> None:
         evidence = live_status_summary._heuristic_optimizer_evidence(
             {

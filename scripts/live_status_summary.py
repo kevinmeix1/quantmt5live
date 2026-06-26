@@ -382,6 +382,7 @@ def build_summary(
         research_cycle=compact_research_cycle,
         pair_rows=pair_rows,
     )
+    compact_optimizer_scans = _compact_optimizer_scans(optimizer_scans)
     return {
         "timestamp_utc": generated_at,
         "status": status,
@@ -415,6 +416,10 @@ def build_summary(
             optimizer_scans,
         ),
         "candidate_map_consensus": candidate_map_consensus or {},
+        "optimizer_consensus_conflict": _optimizer_consensus_conflict(
+            compact_optimizer_scans,
+            candidate_map_consensus or {},
+        ),
         "parameter_consensus": parameter_consensus or {},
         "basket_activity_scan": _compact_basket_activity_scan(basket_activity_scan),
         "research_cycle": compact_research_cycle,
@@ -426,7 +431,7 @@ def build_summary(
             heuristic_only,
             optimizer_scans,
         ),
-        "optimizer_scans": _compact_optimizer_scans(optimizer_scans),
+        "optimizer_scans": compact_optimizer_scans,
         "near_promotion": _compact_near_promotion(near_promotion),
         "research_live_gate": research_live_gate,
         "research_live_optimizer_evidence": _research_live_optimizer_evidence(
@@ -1717,6 +1722,7 @@ def _compact_optimizer_scans(
                 "source_stale": _boolish(row.get("source_stale")),
                 "label": row.get("label", ""),
                 "symbols": row.get("symbols", ""),
+                "strategy_map": row.get("strategy_map", ""),
                 "promotion_status": row.get("promotion_status", ""),
                 "promotion_live_ready": _boolish(row.get("promotion_live_ready")),
                 "promotion_reason": row.get("promotion_reason", ""),
@@ -1792,6 +1798,132 @@ def _optimizer_latest_top_conflict(
     }
 
 
+def _optimizer_consensus_conflict(
+    optimizer_scans: dict[str, Any],
+    candidate_map: dict[str, Any],
+) -> dict[str, Any]:
+    if not optimizer_scans or not candidate_map:
+        return {}
+    consensus_rows = _candidate_map_rows(candidate_map)
+    if not consensus_rows:
+        return {}
+    candidates = list(optimizer_scans.get("top_candidates", []))
+    latest = optimizer_scans.get("latest_candidate", {})
+    if latest:
+        candidates.append(latest)
+    seen: set[tuple[str, str, str]] = set()
+    for candidate in candidates:
+        if not isinstance(candidate, dict):
+            continue
+        candidate_key = (
+            str(candidate.get("source_path", "")),
+            str(candidate.get("label", "")),
+            str(candidate.get("symbols", "")),
+        )
+        if candidate_key in seen:
+            continue
+        seen.add(candidate_key)
+        if not _optimizer_row_is_live_promotion(candidate):
+            continue
+        match = _matching_candidate_consensus_row(candidate, consensus_rows)
+        if not match or not _candidate_consensus_is_conflict(match):
+            continue
+        return {
+            "label": candidate.get("label", ""),
+            "symbols": candidate.get("symbols", ""),
+            "strategy_map": candidate.get("strategy_map", ""),
+            "optimizer_source_path": candidate.get("source_path", ""),
+            "optimizer_status": candidate.get("promotion_status", ""),
+            "optimizer_live_ready": bool(candidate.get("promotion_live_ready")),
+            "consensus_source_path": match.get("source_path", ""),
+            "consensus_status": match.get("consensus_status", ""),
+            "consensus_live_ready": _candidate_consensus_live_ready(match),
+            "consensus_statuses": match.get("statuses", ""),
+            "consensus_reason": match.get("reasons", ""),
+            "candidate_signature": match.get("candidate_signature", ""),
+            "min_non_negative_fold_fraction": _float_or_zero(
+                match.get("min_non_negative_fold_fraction")
+            ),
+            "min_active_positive_fold_fraction": _float_or_zero(
+                match.get("min_active_positive_fold_fraction")
+            ),
+            "total_evaluation_fills": int(
+                _float_or_zero(match.get("total_evaluation_fills"))
+            ),
+        }
+    return {}
+
+
+def _optimizer_row_is_live_promotion(row: dict[str, Any]) -> bool:
+    return (
+        str(row.get("promotion_status", "")).upper() == "PROMOTE"
+        and _boolish(row.get("promotion_live_ready"))
+    )
+
+
+def _matching_candidate_consensus_row(
+    optimizer_row: dict[str, Any],
+    consensus_rows: list[dict[str, Any]],
+) -> dict[str, Any]:
+    optimizer_symbols = _normalize_symbol_text(optimizer_row.get("symbols"))
+    if not optimizer_symbols:
+        return {}
+    optimizer_assignments = _strategy_assignments(optimizer_row.get("strategy_map"))
+    symbol_matches = [
+        row for row in consensus_rows
+        if _candidate_consensus_symbols(row) == optimizer_symbols
+    ]
+    if not optimizer_assignments:
+        return symbol_matches[0] if symbol_matches else {}
+    for row in symbol_matches:
+        row_assignments = _strategy_assignments(
+            " ".join(
+                str(row.get(key, ""))
+                for key in ("strategy", "candidate_signature")
+            )
+        )
+        if row_assignments and row_assignments == optimizer_assignments:
+            return row
+    return {}
+
+
+def _candidate_consensus_is_conflict(row: dict[str, Any]) -> bool:
+    status = str(row.get("consensus_status", "")).upper()
+    if status in {"REJECT", "PAPER_ONLY"}:
+        return True
+    return not _candidate_consensus_live_ready(row)
+
+
+def _candidate_consensus_live_ready(row: dict[str, Any]) -> bool:
+    raw_value = row.get("all_live_ready")
+    if raw_value in (None, ""):
+        return True
+    return _boolish(raw_value)
+
+
+def _candidate_consensus_symbols(row: dict[str, Any]) -> tuple[str, ...]:
+    symbols = _normalize_symbol_text(row.get("symbols"))
+    if symbols:
+        return symbols
+    signature = str(row.get("candidate_signature", ""))
+    match = re.search(r"\bsymbols=([A-Z0-9._ -]+)", signature)
+    return _normalize_symbol_text(match.group(1)) if match else ()
+
+
+def _strategy_assignments(value: Any) -> tuple[str, ...]:
+    return tuple(
+        sorted(
+            {
+                f"{symbol.upper()}={strategy.lower()}"
+                for symbol, strategy in re.findall(
+                    r"\b([A-Z]{6})=([A-Za-z0-9_]+)\b",
+                    str(value or ""),
+                )
+            }
+        )
+    )
+
+
 def _normalize_optimizer_label(value: Any) -> str:
     return re.sub(r"\s+", " ", str(value or "").strip()).lower()
 
@@ -1812,6 +1944,7 @@ def _compact_optimizer_scan_row(row: dict[str, Any]) -> dict[str, Any]:
         "source_row_index": int(_float_or_zero(row.get("source_row_index"))),
         "label": row.get("label", ""),
         "symbols": row.get("symbols", ""),
+        "strategy_map": row.get("strategy_map", ""),
         "promotion_status": row.get("promotion_status", ""),
         "promotion_live_ready": _boolish(row.get("promotion_live_ready")),
         "promotion_reason": row.get("promotion_reason", ""),
@@ -2007,6 +2140,7 @@ def _summary_text(summary: dict[str, Any]) -> str:
     candidate_evidence = summary.get("candidate_optimizer_evidence", {})
     heuristic_evidence = summary.get("heuristic_optimizer_evidence", {})
     optimizer_scans = summary.get("optimizer_scans", {})
+    optimizer_consensus_conflict = summary.get("optimizer_consensus_conflict", {})
     near_promotion = summary.get("near_promotion", {})
     research_live_gate = summary.get("research_live_gate", {})
     research_live_evidence = summary.get("research_live_optimizer_evidence", {})
@@ -2243,6 +2377,22 @@ def _summary_text(summary: dict[str, Any]) -> str:
                 f"latest_source={Path(conflict.get('latest_source_path', '')).name if conflict.get('latest_source_path') else 'n/a'} "
                 f"latest_status={conflict.get('latest_status', '')} "
                 f"reason={conflict.get('latest_reason', '')}"
+            )
+        if optimizer_consensus_conflict:
+            conflict = optimizer_consensus_conflict
+            lines.append(
+                "optimizer_consensus_conflict "
+                f"label={conflict.get('label', '')} "
+                f"symbols={conflict.get('symbols', '')} "
+                f"optimizer_source={Path(conflict.get('optimizer_source_path', '')).name if conflict.get('optimizer_source_path') else 'n/a'} "
+                f"optimizer_status={conflict.get('optimizer_status', '')} "
+                f"consensus_source={Path(conflict.get('consensus_source_path', '')).name if conflict.get('consensus_source_path') else 'n/a'} "
+                f"consensus={conflict.get('consensus_status', '')} "
+                f"live_ready={'yes' if conflict.get('consensus_live_ready') else 'no'} "
+                f"statuses={conflict.get('consensus_statuses', '')} "
+                f"nonneg={_format_pct(conflict.get('min_non_negative_fold_fraction'))} "
+                f"active_pos={_format_pct(conflict.get('min_active_positive_fold_fraction'))} "
+                f"fills={conflict.get('total_evaluation_fills', 0)}"
             )
     if near_promotion.get("candidate_count", 0) > 0:
         top = near_promotion.get("top_candidates", [{}])[0]
