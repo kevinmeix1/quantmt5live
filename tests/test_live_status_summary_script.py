@@ -237,6 +237,41 @@ class LiveStatusSummaryScriptTest(TestCase):
             live_status_summary.DEFAULT_CANDIDATE_MAP_CONSENSUS_CSVS,
         )
 
+    def test_default_candidate_map_consensus_includes_future_full_data_candidates(self) -> None:
+        self.assertIn(
+            "outputs/backtests/live_watch_candidate_*_full20gb_*_consensus.csv",
+            live_status_summary.DEFAULT_CANDIDATE_MAP_CONSENSUS_CSVS,
+        )
+
+    def test_candidate_map_consensus_expands_globs(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            first = root / "live_watch_candidate_alpha_full20gb_20260626_consensus.csv"
+            second = root / "live_watch_candidate_beta_full20gb_20260626_consensus.csv"
+            csv_header = (
+                "consensus_status,statuses,min_positive_fold_fraction,"
+                "min_active_positive_fold_fraction,total_evaluation_fills,"
+                "candidate_signature"
+            )
+            first.write_text(
+                csv_header + "\nPROMOTE,PROMOTE|PROMOTE|PROMOTE,0.7000,0.8000,44,map=alpha\n",
+                encoding="utf-8",
+            )
+            second.write_text(
+                csv_header + "\nPAPER_ONLY,PAPER_ONLY|PAPER_ONLY|PAPER_ONLY,0.6000,0.6250,55,map=beta\n",
+                encoding="utf-8",
+            )
+
+            candidate_map_consensus = live_status_summary.read_candidate_map_consensus(
+                (str(root / "live_watch_candidate_*_full20gb_*_consensus.csv"),)
+            )
+
+        self.assertEqual(candidate_map_consensus["candidate_count"], 2)
+        self.assertEqual(
+            candidate_map_consensus["top_candidates"][0]["candidate_signature"],
+            "map=alpha",
+        )
+
     def test_candidate_map_consensus_reports_latest_source_separately(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

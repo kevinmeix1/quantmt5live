@@ -31,6 +31,7 @@ DEFAULT_CANDIDATE_MAP_CONSENSUS_CSVS = (
     "outputs/backtests/live_watch_adaptive_current_pressure_gated_consensus.csv",
     "outputs/backtests/live_watch_no_usdjpy_confirm_20260626_consensus.csv",
     "outputs/backtests/live_watch_strategy_maps_full20gb_live7_recheck_20260626_consensus.csv",
+    "outputs/backtests/live_watch_candidate_*_full20gb_*_consensus.csv",
     "outputs/backtests/live_watch_strategy_maps_live7_pressure_w960_summary.csv",
 )
 DEFAULT_BASKET_ACTIVITY_SCAN_CSV = (
@@ -530,13 +531,17 @@ def read_research_consensus(path: str | Path) -> dict[str, str] | None:
 def read_candidate_map_consensus(paths: list[str] | tuple[str, ...]) -> dict[str, Any]:
     rows: list[dict[str, Any]] = []
     now_utc = datetime.now(UTC)
-    for path in paths:
+    seen_paths: set[Path] = set()
+    for source_path in _iter_optimizer_scan_paths(paths):
+        if source_path in seen_paths:
+            continue
+        seen_paths.add(source_path)
+        path = str(source_path)
         consensus = read_research_consensus(path)
         if consensus is None:
             continue
         consensus = dict(consensus)
         consensus["source_path"] = str(path)
-        source_path = Path(path)
         try:
             source_mtime_utc = datetime.fromtimestamp(source_path.stat().st_mtime, UTC)
         except OSError:
