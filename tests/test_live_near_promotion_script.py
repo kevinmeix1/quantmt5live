@@ -432,6 +432,76 @@ class LiveNearPromotionTest(TestCase):
             0.462,
         )
 
+    def test_newer_macd_parameter_consensus_suppresses_window_row(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            older = root / "window_w960.csv"
+            newer = root / "parameter_consensus.csv"
+            older.write_text(
+                "\n".join(
+                    [
+                        (
+                            "rank,label,symbols,fast_window,slow_window,"
+                            "signal_window,min_histogram_bps,"
+                            "exit_histogram_bps,min_macd_bps,"
+                            "min_histogram_slope_bps,"
+                            "require_macd_histogram_agreement,"
+                            "slippage_bps,cost_buffer,min_trend_efficiency,"
+                            "max_holding_period,allowed_utc_hours,"
+                            "promotion_status,promotion_live_ready,"
+                            "promotion_reason,wf_positive_fold_fraction,"
+                            "wf_active_positive_fold_fraction,"
+                            "wf_non_negative_fold_fraction,"
+                            "wf_total_evaluation_fills"
+                        ),
+                        (
+                            "1,micro,AUDUSD EURUSD,8,21,8,0.05,0.02,"
+                            "0.05,0.0,True,1.0,1.0,0.04,6,"
+                            "6|7|8,PAPER_ONLY,False,near,0.6154,"
+                            "0.7273,0.8462,81"
+                        ),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            newer.write_text(
+                "\n".join(
+                    [
+                        (
+                            "rank,label,symbols,candidate_signature,consensus_status,"
+                            "all_live_ready,min_wf_positive_fold_fraction,"
+                            "min_wf_active_positive_fold_fraction,"
+                            "min_wf_non_negative_fold_fraction"
+                        ),
+                        (
+                            "1,micro,AUDUSD EURUSD,\"micro fast_window=8 slow_window=21 "
+                            "signal_window=8 min_histogram_bps=0.05 "
+                            "exit_histogram_bps=0.02 min_macd_bps=0.05 "
+                            "min_histogram_slope_bps=0.0 "
+                            "require_macd_histogram_agreement=True "
+                            "slippage_bps=1.0 cost_buffer=1.0 "
+                            "min_trend_efficiency=0.04 "
+                            "max_holding_period=6 allowed_utc_hours=6|7|8\","
+                            "PAPER_ONLY,False,0.5556,0.6250,0.7222"
+                        ),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            now = datetime(2026, 6, 26, tzinfo=timezone.utc)
+            os.utime(older, ((now - timedelta(hours=2)).timestamp(),) * 2)
+            os.utime(newer, ((now - timedelta(minutes=5)).timestamp(),) * 2)
+
+            summary = live_near_promotion.build_near_promotion_summary(
+                (str(older), str(newer)),
+                now_utc=now,
+            )
+
+        self.assertEqual(summary["superseded_count"], 1)
+        self.assertEqual(summary["scan_count"], 0)
+
     def test_cli_writes_json_and_text(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

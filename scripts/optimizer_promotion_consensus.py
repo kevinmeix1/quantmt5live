@@ -10,6 +10,7 @@ from pathlib import Path
 class CandidateObservation:
     window: str
     label: str
+    symbols: str
     candidate_signature: str
     strategy_map: str
     promotion_status: str
@@ -24,6 +25,7 @@ class CandidateObservation:
 @dataclass(frozen=True)
 class ConsensusRow:
     label: str
+    symbols: str
     candidate_signature: str
     strategy_map: str
     windows_seen: tuple[str, ...]
@@ -61,15 +63,15 @@ class ConsensusRow:
 
 
 def build_consensus(observations: list[CandidateObservation]) -> list[ConsensusRow]:
-    grouped: dict[tuple[str, str], list[CandidateObservation]] = {}
+    grouped: dict[tuple[str, str, str], list[CandidateObservation]] = {}
     for observation in observations:
         grouped.setdefault(
-            (observation.label, observation.candidate_signature),
+            (observation.label, observation.symbols, observation.candidate_signature),
             [],
         ).append(observation)
 
     rows: list[ConsensusRow] = []
-    for (label, candidate_signature), group in grouped.items():
+    for (label, symbols, candidate_signature), group in grouped.items():
         ordered = sorted(group, key=lambda item: item.window)
         strategy_map = ordered[0].strategy_map
         statuses = tuple(item.promotion_status for item in ordered)
@@ -89,6 +91,7 @@ def build_consensus(observations: list[CandidateObservation]) -> list[ConsensusR
         rows.append(
             ConsensusRow(
                 label=label,
+                symbols=symbols,
                 candidate_signature=candidate_signature,
                 strategy_map=strategy_map,
                 windows_seen=tuple(item.window for item in ordered),
@@ -134,6 +137,7 @@ def _observation_from_row(
     return CandidateObservation(
         window=window,
         label=label,
+        symbols=_normalize_symbols(row.get("symbols", "")),
         candidate_signature=_candidate_signature(row),
         strategy_map=strategy_map,
         promotion_status=row.get("promotion_status", "") or "UNVALIDATED",
@@ -161,6 +165,7 @@ def write_consensus_csv(rows: list[ConsensusRow], path: str | Path) -> None:
             fieldnames=[
                 "rank",
                 "label",
+                "symbols",
                 "candidate_signature",
                 "strategy_map",
                 "windows_seen",
@@ -183,6 +188,7 @@ def write_consensus_csv(rows: list[ConsensusRow], path: str | Path) -> None:
                 {
                     "rank": rank,
                     "label": row.label,
+                    "symbols": row.symbols,
                     "candidate_signature": row.candidate_signature,
                     "strategy_map": row.strategy_map,
                     "windows_seen": "|".join(row.windows_seen),
@@ -217,9 +223,11 @@ def write_consensus_text(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     lines = ["Promotion consensus"]
     for rank, row in enumerate(rows[:limit], start=1):
+        symbols = f"symbols={row.symbols} " if row.symbols else ""
         lines.append(
             f"{rank}. {row.label}: consensus={row.consensus_status} "
             f"statuses={'|'.join(row.statuses)} "
+            f"{symbols}"
             f"min_pos={row.min_wf_positive_fold_fraction:.1%} "
             f"min_active_pos={row.min_wf_active_positive_fold_fraction:.1%} "
             f"min_nonneg={row.min_wf_non_negative_fold_fraction:.1%} "
@@ -287,8 +295,12 @@ def _candidate_signature(row: dict[str, str]) -> str:
         "threshold_bps",
         "exit_threshold_bps",
         "min_histogram_bps",
+        "exit_histogram_bps",
         "min_macd_bps",
         "min_histogram_slope_bps",
+        "require_macd_histogram_agreement",
+        "slippage_bps",
+        "cost_buffer",
         "min_trend_efficiency",
         "min_volatility_ratio",
         "max_volatility_ratio",
@@ -313,6 +325,16 @@ def _candidate_signature(row: dict[str, str]) -> str:
         if value != "":
             parts.append(f"{key}={value}")
     return " ".join(parts) if parts else label
+
+
+def _normalize_symbols(raw_symbols: str) -> str:
+    return " ".join(
+        sorted(
+            token.upper()
+            for token in raw_symbols.replace(",", " ").replace("|", " ").split()
+            if token
+        )
+    )
 
 
 def _parse_bool(raw_value: str) -> bool:

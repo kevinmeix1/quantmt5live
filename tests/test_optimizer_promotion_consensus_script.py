@@ -57,8 +57,10 @@ class OptimizerPromotionConsensusScriptTest(TestCase):
 
         self.assertIn("consensus_status", csv_text)
         self.assertIn("candidate_signature", csv_text)
+        self.assertIn("symbols", csv_text)
         self.assertIn("PAPER_ONLY", csv_text)
         self.assertIn("statuses=PAPER_ONLY|PROMOTE", text)
+        self.assertIn("symbols=AUDUSD", text)
         self.assertIn("candidate=AUDUSD=macd_momentum", text)
 
     def test_builds_signature_for_parameter_optimizer_csv(self) -> None:
@@ -75,6 +77,14 @@ class OptimizerPromotionConsensusScriptTest(TestCase):
 
         self.assertIn("fast_window=8", rows[0].candidate_signature)
         self.assertIn("min_histogram_bps=1.25", rows[0].candidate_signature)
+        self.assertIn("exit_histogram_bps=0.50", rows[0].candidate_signature)
+        self.assertIn(
+            "require_macd_histogram_agreement=True",
+            rows[0].candidate_signature,
+        )
+        self.assertIn("slippage_bps=1.0", rows[0].candidate_signature)
+        self.assertIn("cost_buffer=1.0", rows[0].candidate_signature)
+        self.assertEqual(rows[0].symbols, "AUDUSD EURUSD")
         self.assertEqual(rows[0].strategy_map, "")
 
     def test_builds_signature_for_multi_horizon_optimizer_csv(self) -> None:
@@ -127,6 +137,7 @@ def _observation(
     return CandidateObservation(
         window=window,
         label=label,
+        symbols="AUDUSD",
         candidate_signature="AUDUSD=macd_momentum",
         strategy_map="AUDUSD=macd_momentum",
         promotion_status=status,
@@ -150,23 +161,25 @@ def _write_input_csv(
     volatility_squeeze: bool = False,
 ) -> None:
     header = (
-        "label,strategy_map,promotion_status,promotion_live_ready,"
+        "label,symbols,strategy_map,promotion_status,promotion_live_ready,"
         "return_pct,max_drawdown_pct,wf_positive_fold_fraction,"
         "wf_active_positive_fold_fraction,wf_non_negative_fold_fraction"
     )
     row = (
-        "candidate,AUDUSD=macd_momentum,"
+        "candidate,AUDUSD,AUDUSD=macd_momentum,"
         f"{status},{live_ready},0.01,0.001,{positive_fraction},0.80,0.90"
     )
     if macd:
         header = (
-            "label,fast_window,slow_window,signal_window,min_histogram_bps,"
-            "min_macd_bps,promotion_status,promotion_live_ready,return_pct,"
+            "label,symbols,fast_window,slow_window,signal_window,min_histogram_bps,"
+            "exit_histogram_bps,min_macd_bps,min_histogram_slope_bps,"
+            "require_macd_histogram_agreement,slippage_bps,cost_buffer,"
+            "promotion_status,promotion_live_ready,return_pct,"
             "max_drawdown_pct,wf_positive_fold_fraction,"
             "wf_active_positive_fold_fraction,wf_non_negative_fold_fraction"
         )
         row = (
-            "candidate,8,21,8,1.25,0.75,"
+            "candidate,AUDUSD EURUSD,8,21,8,1.25,0.50,0.75,0.0,True,1.0,1.0,"
             f"{status},{live_ready},0.01,0.001,{positive_fraction},0.80,0.90"
         )
     if multi_horizon:

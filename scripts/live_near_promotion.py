@@ -388,6 +388,11 @@ def _normalize_candidate_signature(raw_signature: Any) -> str:
             f"{symbol}={strategy}" for symbol, strategy in sorted(assignments.items())
         )
         return f"map:{assignment_text}"
+    if signature.lower().startswith("macd:"):
+        return re.sub(r"\s+", "", signature.lower())
+    macd_signature = _macd_signature_from_text(signature)
+    if macd_signature:
+        return macd_signature
     return "raw:" + re.sub(r"\s+", " ", signature).lower()
 
 
@@ -396,6 +401,39 @@ def _strategy_assignments(raw_signature: str) -> dict[str, str]:
     for match in _STRATEGY_ASSIGNMENT_RE.finditer(raw_signature):
         assignments[match.group(1).upper()] = match.group(2).lower()
     return assignments
+
+
+def _macd_signature_from_text(raw_signature: str) -> str:
+    fields = {
+        match.group("key").lower(): match.group("value")
+        for match in re.finditer(
+            r"(?P<key>[A-Za-z_][A-Za-z0-9_]*)=(?P<value>[^\s]+)",
+            raw_signature,
+        )
+    }
+    if not all(key in fields for key in ("fast_window", "slow_window", "signal_window")):
+        return ""
+    signature_fields = (
+        ("fast", fields.get("fast_window", "")),
+        ("slow", fields.get("slow_window", "")),
+        ("signal", fields.get("signal_window", "")),
+        ("hist", _normalized_value(fields.get("min_histogram_bps"))),
+        ("exit", _normalized_value(fields.get("exit_histogram_bps"))),
+        ("macd", _normalized_value(fields.get("min_macd_bps"))),
+        ("slope", _normalized_value(fields.get("min_histogram_slope_bps"))),
+        (
+            "agree",
+            _normalized_value(
+                fields.get("require_macd_histogram_agreement") or "true"
+            ),
+        ),
+        ("slip", _normalized_value(fields.get("slippage_bps"))),
+        ("cost", _normalized_value(fields.get("cost_buffer"))),
+        ("eff", _normalized_value(fields.get("min_trend_efficiency"))),
+        ("hold", _normalized_value(fields.get("max_holding_period"))),
+        ("hours", _normalized_hours(fields.get("allowed_utc_hours", ""))),
+    )
+    return "macd:" + ";".join(f"{key}={value}" for key, value in signature_fields)
 
 
 def _normalize_symbols(raw_symbols: str) -> str:
